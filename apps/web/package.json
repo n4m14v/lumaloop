@@ -1,0 +1,32 @@
+{
+  "name": "@lumaloop/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@lumaloop/engine": "workspace:*",
+    "@lumaloop/level-data": "workspace:*",
+    "@lumaloop/level-schema": "workspace:*",
+    "@dnd-kit/core": "^6.3.1",
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.4.0",
+    "@react-three/postprocessing": "^3.0.4",
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/three": "^0.180.0",
+    "gsap": "^3.13.0",
+    "lucide-react": "^0.577.0",
+    "postprocessing": "^6.38.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.13",
+    "three": "^0.180.0",
+    "zustand": "^5.0.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && vite build",
+    "dev": "vite",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

@@ -1,0 +1,192 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  font-family: "IBM Plex Sans", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+}
+
+@theme {
+  --font-display: "Space Grotesk", sans-serif;
+  --font-sans: "IBM Plex Sans", sans-serif;
+}
+
+html {
+  background: #f6f0b3;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(125, 212, 255, 0.26), transparent 24%),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.42), transparent 20%),
+    linear-gradient(180deg, #f7f2be 0%, #efe7a3 100%);
+  color: #51606f;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.control-btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[#9cb0bf] bg-white/75 px-3 py-3 text-sm font-bold text-slate-600 transition hover:bg-white;
+}
+
+.control-btn-light {
+  @apply inline-flex items-center justify-center gap-2 rounded-[14px] border-2 border-[#a9bac8] bg-white/80 px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white;
+}
+
+select option {
+  color: #44515d;
+  background: #fffce8;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(129, 158, 180, 0.35);
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+main[class*="min-h-screen"] {
+  background:
+    linear-gradient(180deg, #f6f2e7 0%, #eef2ed 100%) !important;
+  color: #314256 !important;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(180, 203, 223, 0.22), transparent 22%),
+    linear-gradient(180deg, #f7f4ec 0%, #edf1eb 100%) !important;
+}
+
+[class*="shadow-"] {
+  box-shadow: none !important;
+}
+
+[class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+}
+
+button {
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease !important;
+}
+
+button:hover {
+  transform: none !important;
+}
+
+button[class*="bg-\\[\\#4fc3e8\\]"],
+button[class*="bg-\\[\\#76a6ce\\]"] {
+  background: #d8e6f2 !important;
+  border-color: #b7c8d8 !important;
+  color: #35506b !important;
+}
+
+button[class*="bg-\\[\\#4fc53f\\]"],
+div[class*="bg-\\[\\#7ce45a\\]"] {
+  background: #dcebd9 !important;
+  border-color: #b8cfb4 !important;
+  color: #355b3d !important;
+}
+
+button[class*="bg-\\[\\#4fc53f\\]"] svg,
+button[class*="bg-\\[\\#4fc3e8\\]"] svg,
+button[class*="bg-\\[\\#76a6ce\\]"] svg,
+div[class*="bg-\\[\\#7ce45a\\]"] svg {
+  fill: currentColor !important;
+}
+
+div[class*="bg-\\[\\#ece7b7\\]"],
+div[class*="bg-\\[\\#f6f1ba\\]"],
+div[class*="bg-\\[\\#f7f3c5\\]"],
+section[class*="bg-\\[\\#dce6a7\\]"],
+section[class*="bg-\\[\\#cfd7df\\]"],
+div[class*="bg-\\[\\#f8ffd9\\]"] {
+  background: #fbfaf5 !important;
+  border-color: #d6d9d6 !important;
+}
+
+div[class*="bg-white\\/50"],
+div[class*="bg-white\\/65"],
+div[class*="bg-white\\/70"],
+div[class*="bg-white\\/75"],
+div[class*="bg-white\\/80"],
+button[class*="bg-white\\/70"],
+button[class*="bg-white\\/80"] {
+  background: #ffffff !important;
+  border-color: #d7dfe5 !important;
+  color: #4a5b6d !important;
+}
+
+section[class*="bg-\\[\\#cfd7df\\]"] {
+  background: #f5f7fa !important;
+}
+
+section[class*="bg-\\[\\#dce6a7\\]"] {
+  background: #f2f5ef !important;
+}
+
+div[class*="bg-\\[\\#f8ffd9\\]"] {
+  background: #f8faf6 !important;
+}
+
+div[class*="bg-\\[\\#ece7b7\\]"] {
+  background: #f8f8f2 !important;
+}
+
+div[class*="bg-\\[\\#f6f1ba\\]"] {
+  background: #f3f5ef !important;
+}
+
+span[class*="bg-\\[\\#4fc3e8\\]"],
+span[class*="bg-\\[\\#7ce45a\\]"] {
+  background: #e8eef3 !important;
+  color: #4c6178 !important;
+}
+
+[class*="ring-\\[\\#95d5ee\\]"],
+[class*="ring-lime-300"] {
+  --tw-ring-color: rgba(171, 191, 206, 0.55) !important;
+}
+
+.control-btn,
+.control-btn-light {
+  border-color: #cbd5df !important;
+  background: #ffffff !important;
+  color: #47586a !important;
+}
+
+.font-display {
+  letter-spacing: -0.03em;
+}

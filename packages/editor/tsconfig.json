@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@lumaloop/engine": ["../engine/src/index.ts"],
+      "@lumaloop/level-schema": ["../level-schema/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

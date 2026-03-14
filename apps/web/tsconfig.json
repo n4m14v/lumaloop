@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "rootDir": "../..",
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@lumaloop/editor": ["../../packages/editor/src/index.ts"],
+      "@lumaloop/engine": ["../../packages/engine/src/index.ts"],
+      "@lumaloop/level-data": ["../../packages/level-data/src/index.ts"],
+      "@lumaloop/level-schema": ["../../packages/level-schema/src/index.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}
