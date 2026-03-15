@@ -14,6 +14,9 @@ const ROBOT_DEATH_STATUSES = new Set([
   "FAILED_INVALID_MOVE",
   "FAILED_WRONG_LIGHT",
 ]);
+const THEME_STORAGE_KEY = "lumaloop-theme";
+
+type ThemeMode = "dark" | "light";
 
 function countFilledSlots(slots: ReturnType<typeof createSlotsForLevel>) {
   return [...slots.main, ...slots.p1, ...slots.p2].filter(Boolean).length;
@@ -42,13 +45,34 @@ function calculateProjectedStars(
   return 0;
 }
 
-function renderStars(starCount: number) {
-  return Array.from({ length: 3 }, (_, index) => (index < starCount ? "★" : "☆")).join("");
+function getInitialTheme(): ThemeMode {
+  if (typeof window === "undefined") {
+    return "dark";
+  }
+
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedTheme === "dark" || storedTheme === "light") {
+    return storedTheme;
+  }
+
+  return "dark";
+}
+
+function renderScoreStars(starCount: number) {
+  return Array.from({ length: 3 }, (_, index) => (
+    <span
+      className={index < starCount ? "text-[#ffd76a] drop-shadow-[0_0_12px_rgba(255,215,106,0.42)]" : "text-white/80"}
+      key={index}
+    >
+      ★
+    </span>
+  ));
 }
 
 export function GameScreen() {
   const { locale, t } = useI18n();
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const lastResolvedSuccessRef = useRef<object | null>(null);
   const activeRoutine = useGameStore((state) => state.activeRoutine);
   const activeFrameIndex = useGameStore((state) => state.activeFrameIndex);
@@ -83,6 +107,11 @@ export function GameScreen() {
   useEffect(() => {
     ensureLevelProgram();
   }, [ensureLevelProgram, levelIndex]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   useEffect(() => {
     if (!isAutoRunning || activeFrameIndex !== null || !result || committedFrames >= result.trace.length) {
@@ -151,8 +180,8 @@ export function GameScreen() {
   const canStartRun = currentProgramLength > 0;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(120,207,255,0.36),transparent_22%),linear-gradient(180deg,#f8f4bb_0%,#f2efb0_48%,#efe6a0_100%)] px-3 py-4 text-slate-700 md:px-6 md:py-6">
-      <div className="mx-auto max-w-[1640px]">
+    <main className="min-h-screen px-4 py-6 text-[var(--text-primary)] md:px-6">
+      <div className="mx-auto max-w-[1920px]">
         <ProgramWorkspace
           activeRoutine={activeRoutine}
           allowedCommands={level.allowedCommands}
@@ -164,9 +193,9 @@ export function GameScreen() {
           routines={slots}
           showAllActions={showAllActions}
           scene={
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-[auto_1fr_auto] md:items-center">
+                <div className="flex items-center gap-3">
                   <GameMenu
                     cameraRotationLocked={isRotationLocked}
                     level={level}
@@ -179,48 +208,52 @@ export function GameScreen() {
                     onSetRobotColorId={setRobotColorId}
                     onSetShowAllActions={setShowAllActions}
                     onSetSpeed={setSpeed}
+                    onSetTheme={setTheme}
                     onStep={stepRun}
                     result={result}
                     robotColorId={robotColorId}
                     showAllActions={showAllActions}
                     speed={speed}
+                    theme={theme}
                   />
-                  <button
-                    className="inline-flex items-center gap-2 rounded-[18px] border-2 border-[#57a8c4] bg-[#4fc3e8] px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white shadow-[0_8px_0_rgba(44,130,160,0.7)] transition hover:translate-y-[1px]"
-                    onClick={stopRun}
-                    type="button"
-                  >
+                  <button className="ui-button h-11 px-4 text-xs uppercase tracking-[0.08em]" onClick={stopRun} type="button">
                     <RotateCcw className="h-4 w-4" />
                     {t.reset}
                   </button>
                 </div>
 
-                <div className="hidden min-w-[280px] rounded-[18px] border-2 border-[#8aa9c7] bg-[#76a6ce] px-6 py-3 text-center text-2xl text-white shadow-[0_8px_0_rgba(91,128,164,0.55)] md:block">
-                  {t.solvePuzzle}
+                <div className="text-center">
+                  <h1 className="font-display text-[clamp(2rem,2.8vw,3rem)] font-semibold tracking-tight text-[var(--text-primary)]">
+                    LUMALOOP
+                    <span className="mx-3 text-[var(--text-muted)]">|</span>
+                    <span className="font-sans font-normal text-[var(--text-secondary)]">{t.workspaceCanvas}</span>
+                  </h1>
                 </div>
 
-                <button
-                  className="inline-flex items-center gap-3 rounded-[18px] border-2 border-[#51b53b] bg-[#4fc53f] px-7 py-4 text-base font-black uppercase tracking-[0.18em] text-white shadow-[0_10px_0_rgba(63,143,50,0.7)] transition hover:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-                  disabled={!isAutoRunning && !canStartRun}
-                  onClick={() => {
-                    if (isAutoRunning) {
-                      toggleAutoRunning(false);
-                      return;
-                    }
-                    if (!canStartRun) {
-                      return;
-                    }
-                    startAutoRun();
-                  }}
-                  type="button"
-                >
-                  <Play className="h-5 w-5 fill-white" />
-                  {isAutoRunning ? t.pause : t.play}
-                </button>
+                <div className="flex justify-start md:justify-end">
+                  <button
+                    className="ui-button-accent inline-flex h-11 min-w-[140px] items-center justify-center gap-2.5 rounded-[12px] px-5 text-sm font-semibold uppercase tracking-[0.08em] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!isAutoRunning && !canStartRun}
+                    onClick={() => {
+                      if (isAutoRunning) {
+                        toggleAutoRunning(false);
+                        return;
+                      }
+                      if (!canStartRun) {
+                        return;
+                      }
+                      startAutoRun();
+                    }}
+                    type="button"
+                  >
+                    <Play className="h-4 w-4 fill-current" />
+                    {isAutoRunning ? t.pause : t.play}
+                  </button>
+                </div>
               </div>
 
-              <div className="rounded-[24px] border-2 border-[#d6d08a] bg-[#ece7b7] p-3">
-                <div className="relative">
+              <div className="ui-panel rounded-[16px] p-2.5 md:p-3.5">
+                <div className="relative overflow-hidden rounded-[12px]">
                   <GameCanvas
                     activeFrame={activeFrame}
                     committedRobot={committedRobot}
@@ -236,32 +269,24 @@ export function GameScreen() {
                     showVictorySequence={showVictorySequence}
                   />
                   {showSuccessPopup ? (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(47,56,67,0.42)] backdrop-blur-[2px]">
-                      <div className="w-[min(92%,360px)] rounded-[26px] border-2 border-[#8fcf6a] bg-[#f8ffd9] p-6 text-center shadow-[0_12px_0_rgba(126,177,87,0.55)]">
-                        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#7ce45a] text-white shadow-[0_6px_0_rgba(88,171,57,0.45)]">
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(12,16,24,0.62)] backdrop-blur-sm">
+                      <div className="ui-panel w-[min(92%,380px)] rounded-[24px] p-6 text-center">
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--panel-border)] bg-[var(--panel-bg-soft)] text-[var(--accent)] shadow-[0_0_24px_var(--accent-shadow)]">
                           <Sparkles className="h-7 w-7" />
                         </div>
-                        <h2 className="font-display text-3xl text-slate-700">{t.puzzleSolved}</h2>
-                        <p className="mt-3 text-3xl font-black tracking-[0.08em] text-[#4e6580]">
-                          {renderStars(result?.score.starsEarned ?? 0)}
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                          {t.successBody}
-                        </p>
-                        <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                        <h2 className="font-display text-3xl font-semibold">{t.puzzleSolved}</h2>
+                        <p className="mt-4 flex justify-center gap-3 text-4xl">{renderScoreStars(result?.score.starsEarned ?? 0)}</p>
+                        <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">{t.successBody}</p>
+                        <p className="mt-3 text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">
                           {t.programSize(result?.score.programLength ?? currentProgramLength)}
                           {level.metadata?.idealSolutionLength ? ` - ${t.idealSize(level.metadata.idealSolutionLength)}` : ""}
                         </p>
-                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                          <button
-                            className="inline-flex items-center justify-center gap-2 rounded-[18px] border-2 border-[#57a8c4] bg-[#4fc3e8] px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_8px_0_rgba(44,130,160,0.7)] transition hover:translate-y-[1px]"
-                            onClick={stopRun}
-                            type="button"
-                          >
+                        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                          <button className="ui-button h-12 justify-center text-sm uppercase tracking-[0.08em]" onClick={stopRun} type="button">
                             {t.replay}
                           </button>
                           <button
-                            className="inline-flex items-center justify-center gap-2 rounded-[18px] border-2 border-[#51b53b] bg-[#4fc53f] px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_8px_0_rgba(63,143,50,0.7)] transition hover:translate-y-[1px] disabled:translate-y-0 disabled:shadow-none"
+                            className="ui-button-accent h-12 rounded-[14px] px-4 text-sm uppercase tracking-[0.08em] disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={!hasNextLevel}
                             onClick={() => {
                               if (!hasNextLevel) {
@@ -281,26 +306,22 @@ export function GameScreen() {
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-4">
-                <div className="rounded-[18px] border-2 border-[#c5cb91] bg-white/50 px-4 py-3 shadow-[0_6px_0_rgba(198,202,140,0.6)]">
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{t.targets}</p>
-                  <p className="mt-1 text-2xl font-black text-slate-700">{litTargets.length} / {totalTargets}</p>
+              <div className="grid gap-3 xl:grid-cols-4">
+                <div className="ui-panel rounded-[14px] px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">{t.targets}</p>
+                  <p className="mt-1 text-3xl font-light tracking-tight text-[var(--text-primary)]">[{litTargets.length}/{totalTargets}]</p>
                 </div>
-                <div className="rounded-[18px] border-2 border-[#c5cb91] bg-white/50 px-4 py-3 shadow-[0_6px_0_rgba(198,202,140,0.6)]">
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{t.steps}</p>
-                  <p className="mt-1 text-2xl font-black text-slate-700">{committedFrames}</p>
+                <div className="ui-panel rounded-[14px] px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">{t.steps}</p>
+                  <p className="mt-1 text-3xl font-light tracking-tight text-[var(--text-primary)]">[{committedFrames}]</p>
                 </div>
-                <div className="rounded-[18px] border-2 border-[#c5cb91] bg-white/50 px-4 py-3 shadow-[0_6px_0_rgba(198,202,140,0.6)]">
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{t.score}</p>
-                  <p className="mt-1 text-2xl font-black text-slate-700">{renderStars(displayedScore.starsEarned)}</p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    {t.sizeSummary(displayedScore.programLength)}
-                    {level.metadata?.idealSolutionLength ? ` - ${t.idealSize(level.metadata.idealSolutionLength)}` : ""}
-                  </p>
+                <div className="ui-panel rounded-[14px] px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">{t.score}</p>
+                  <p className="mt-2 flex gap-2 text-4xl leading-none">{renderScoreStars(displayedScore.starsEarned)}</p>
                 </div>
-                <div className="rounded-[18px] border-2 border-[#c5cb91] bg-white/50 px-4 py-3 shadow-[0_6px_0_rgba(198,202,140,0.6)]">
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{t.hint}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">{level.metadata?.designerNotes ?? t.defaultHint}</p>
+                <div className="ui-panel rounded-[14px] px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">{t.hint}</p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">{level.metadata?.designerNotes ?? t.defaultHint}</p>
                 </div>
               </div>
             </div>

@@ -26,6 +26,7 @@ type Messages = {
   concept: string;
   debugger: string;
   defaultHint: string;
+  darkMode: string;
   execution: string;
   executionFailed: string;
   failureReasons: Record<RunStatus, string>;
@@ -37,6 +38,7 @@ type Messages = {
   levelOnly: string;
   levelOptionLabel: (index: number, name: string) => string;
   lockedForLevel: string;
+  lightMode: string;
   mainRoutine: string;
   menu: string;
   menuIdleStatus: string;
@@ -49,6 +51,7 @@ type Messages = {
   play: string;
   proc1Routine: string;
   proc2Routine: string;
+  proceduralHierarchy: string;
   programmingPuzzle: string;
   programSize: (value: number) => string;
   puzzleMenu: string;
@@ -72,7 +75,9 @@ type Messages = {
   steps: string;
   successBody: string;
   targets: string;
+  theme: string;
   tools: string;
+  workspaceCanvas: string;
 };
 
 const messages: Record<Locale, Messages> = {
@@ -98,6 +103,7 @@ const messages: Record<Locale, Messages> = {
     concept: "Concept",
     debugger: "Debugger",
     defaultHint: "Light every goal tile.",
+    darkMode: "Dark",
     execution: "Execution",
     executionFailed: "Execution failed.",
     failureReasons: {
@@ -119,6 +125,7 @@ const messages: Record<Locale, Messages> = {
     levelOnly: "Level Only",
     levelOptionLabel: (index, name) => `Level ${index} - ${name}`,
     lockedForLevel: "Locked for this level",
+    lightMode: "Light",
     mainRoutine: "Main",
     menu: "Menu",
     menuIdleStatus: "Build a small program and press play.",
@@ -131,6 +138,7 @@ const messages: Record<Locale, Messages> = {
     play: "Play",
     proc1Routine: "Proc 1",
     proc2Routine: "Proc 2",
+    proceduralHierarchy: "Procedural Hierarchy",
     programmingPuzzle: "Programming puzzle",
     programSize: (value) => `Program Size ${value}`,
     puzzleMenu: "Puzzle Menu",
@@ -165,7 +173,9 @@ const messages: Record<Locale, Messages> = {
     steps: "Steps",
     successBody: "All targets are lit. You can replay this level or move on to the next puzzle.",
     targets: "Targets",
+    theme: "Theme",
     tools: "Tools",
+    workspaceCanvas: "Workspace Canvas",
   },
   ru: {
     actions: "Команды",
@@ -189,6 +199,7 @@ const messages: Record<Locale, Messages> = {
     concept: "Идея",
     debugger: "Отладка",
     defaultHint: "Зажгите каждую целевую плитку.",
+    darkMode: "Темная",
     execution: "Выполнение",
     executionFailed: "Выполнение завершилось ошибкой.",
     failureReasons: {
@@ -210,6 +221,7 @@ const messages: Record<Locale, Messages> = {
     levelOnly: "Только уровень",
     levelOptionLabel: (index, name) => `Уровень ${index} - ${name}`,
     lockedForLevel: "Недоступно на этом уровне",
+    lightMode: "Светлая",
     mainRoutine: "Основная",
     menu: "Меню",
     menuIdleStatus: "Соберите программу и нажмите запуск.",
@@ -222,6 +234,7 @@ const messages: Record<Locale, Messages> = {
     play: "Старт",
     proc1Routine: "Проц. 1",
     proc2Routine: "Проц. 2",
+    proceduralHierarchy: "Иерархия процедур",
     programmingPuzzle: "Головоломка по программированию",
     programSize: (value) => `Размер программы ${value}`,
     puzzleMenu: "Меню уровня",
@@ -256,7 +269,9 @@ const messages: Record<Locale, Messages> = {
     steps: "Шаги",
     successBody: "Все цели зажжены. Можно переиграть уровень или перейти к следующей головоломке.",
     targets: "Цели",
+    theme: "Тема",
     tools: "Инструменты",
+    workspaceCanvas: "Рабочее полотно",
   },
   he: {
     actions: "פקודות",
@@ -280,6 +295,7 @@ const messages: Record<Locale, Messages> = {
     concept: "רעיון",
     debugger: "דיבאגר",
     defaultHint: "האירו כל אריח יעד.",
+    darkMode: "כהה",
     execution: "הרצה",
     executionFailed: "ההרצה נכשלה.",
     failureReasons: {
@@ -301,6 +317,7 @@ const messages: Record<Locale, Messages> = {
     levelOnly: "רק לשלב",
     levelOptionLabel: (index, name) => `שלב ${index} - ${name}`,
     lockedForLevel: "נעול בשלב הזה",
+    lightMode: "בהיר",
     mainRoutine: "ראשית",
     menu: "תפריט",
     menuIdleStatus: "בנו תוכנית קצרה ולחצו הפעלה.",
@@ -313,6 +330,7 @@ const messages: Record<Locale, Messages> = {
     play: "הפעל",
     proc1Routine: "פרוצדורה 1",
     proc2Routine: "פרוצדורה 2",
+    proceduralHierarchy: "היררכיית פרוצדורות",
     programmingPuzzle: "חידת תכנות",
     programSize: (value) => `גודל תוכנית ${value}`,
     puzzleMenu: "תפריט שלב",
@@ -347,7 +365,9 @@ const messages: Record<Locale, Messages> = {
     steps: "צעדים",
     successBody: "כל היעדים מוארים. אפשר להפעיל שוב את השלב או לעבור לחידה הבאה.",
     targets: "יעדים",
+    theme: "ערכת נושא",
     tools: "כלים",
+    workspaceCanvas: "משטח עבודה",
   },
 };
 

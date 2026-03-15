@@ -476,16 +476,16 @@ export function GameCanvas({
 
   return (
     <div
-      className={`relative h-[420px] w-full overflow-hidden rounded-[28px] border-2 border-[#c6cf94] bg-[#f6f1ba] md:h-[620px] ${isRotationLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
+      className={`relative h-[420px] w-full overflow-hidden rounded-[22px] border border-[var(--panel-border)] md:h-[640px] ${isRotationLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
       onPointerCancel={handlePointerEnd}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
-      style={{ touchAction: "none" }}
+      style={{ background: "var(--canvas-inner)", touchAction: "none" }}
     >
       {showResetViewButton ? (
         <button
-          className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-[16px] border-2 border-[#8ca9bf] bg-white/85 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-slate-600 shadow-[0_6px_0_rgba(140,169,191,0.28)] transition hover:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          className="ui-button absolute right-4 top-4 z-10 px-3 py-2 text-xs uppercase tracking-[0.08em] disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isRotationLocked}
           onClick={(event) => {
             event.stopPropagation();
@@ -499,7 +499,7 @@ export function GameCanvas({
         </button>
       ) : null}
       <Canvas shadows dpr={[1, 2]}>
-        <color attach="background" args={["#e8e2b4"]} />
+        <color attach="background" args={["#d7dfe6"]} />
         <PerspectiveCamera makeDefault far={100} fov={28} near={0.1} position={[14, 12, 14]} />
         <CameraRig elevation={orbitElevation} level={level} orbitAngle={orbitAzimuth} />
         <ambientLight intensity={1.15} />

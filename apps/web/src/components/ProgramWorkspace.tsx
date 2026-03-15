@@ -15,7 +15,7 @@ import { ALL_COMMANDS, type RoutineSlots } from "../features/game/store";
 import { useI18n } from "../i18n/I18nProvider";
 import { getRoutineLabel } from "../i18n/translations";
 
-const ICON_STROKE = 2.5;
+const ICON_STROKE = 1.7;
 
 const commandMeta: Record<
   Command,
@@ -46,20 +46,15 @@ function CommandTile({
   return (
     <div
       className={[
-        "flex h-full w-full items-center justify-center rounded-[14px] border-2 transition",
+        "relative flex h-full w-full items-center justify-center rounded-[10px] border transition",
         isActive
-          ? "border-[#6ea8ff] bg-[#eef6ff] text-[#1677ff]"
-          : "border-[#7d8691] bg-[#d8dde3] text-[#374151]",
+          ? "border-[var(--accent)] bg-[var(--panel-bg-soft)] text-[var(--text-primary)] shadow-[0_0_0_1px_var(--accent),0_0_20px_var(--accent-shadow)]"
+          : "border-[var(--panel-border)] bg-[var(--panel-bg)] text-[var(--text-secondary)]",
       ].join(" ")}
     >
-      <Icon
-        absoluteStrokeWidth
-        aria-hidden="true"
-        className="h-[60%] w-[60%]"
-        strokeWidth={ICON_STROKE}
-      />
+      <Icon absoluteStrokeWidth aria-hidden="true" className="h-[52%] w-[52%]" strokeWidth={ICON_STROKE} />
       {meta.badge ? (
-        <span className="absolute bottom-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-[#7b848f] bg-[#f7fafc] text-[10px] font-black leading-none text-[#374151]">
+        <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-[4px] border border-[var(--panel-border)] bg-[var(--panel-bg-strong)] text-[8px] font-bold text-[var(--text-secondary)]">
           {meta.badge}
         </span>
       ) : null}
@@ -90,8 +85,10 @@ function Slot({
   return (
     <div
       className={[
-        "relative aspect-square rounded-[16px] border-2 p-1 transition",
-        isCurrent ? "border-[#6ea8ff] bg-[#edf6ff]" : "border-[#8d949d] bg-[#cdd2d8]",
+        "relative aspect-square rounded-[12px] border p-1.5 transition",
+        isCurrent
+          ? "border-[var(--accent)] bg-[var(--panel-bg-soft)] shadow-[0_0_0_1px_var(--accent),0_0_18px_var(--accent-shadow)]"
+          : "border-[var(--panel-border)] bg-[rgba(255,255,255,0.03)] dark:bg-[rgba(0,0,0,0.1)]",
       ].join(" ")}
     >
       {command ? (
@@ -108,10 +105,10 @@ function Slot({
         <button
           aria-label={t.addCommandToSlot(routineLabel, index + 1)}
           className={[
-            "flex h-full w-full items-center justify-center rounded-[12px] border-2 border-dashed text-[11px] font-black uppercase tracking-[0.18em]",
+            "flex h-full w-full items-center justify-center rounded-[8px] border border-dashed text-[10px] uppercase tracking-[0.12em]",
             disabled
-              ? "border-[#c2c8cf] bg-[#f2f4f6] text-[#b0b6bf]"
-              : "border-[#a4abb3] bg-[#eef1f4] text-[#8b95a0]",
+              ? "border-[var(--panel-border)] text-[var(--text-muted)]"
+              : "border-[var(--panel-border)] text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--text-secondary)]",
           ].join(" ")}
           disabled={disabled}
           type="button"
@@ -149,9 +146,9 @@ function RoutineSection({
   return (
     <section
       className={[
-        "rounded-[18px] border-2 p-3",
-        isActive ? "border-[#6ea8ff] bg-[#f6fbff]" : "border-[#7b848f] bg-[#d2d7dd]",
-        isLocked ? "opacity-70" : "",
+        "ui-panel relative rounded-[16px] p-3 transition",
+        isActive ? "ui-panel-active" : "",
+        isLocked ? "opacity-60" : "",
       ].join(" ")}
       onClick={() => {
         if (!isLocked) {
@@ -159,24 +156,30 @@ function RoutineSection({
         }
       }}
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <button className="text-start" disabled={isLocked} type="button">
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#445062]">{label}</p>
-          <p className="text-xs font-semibold text-[#667180]">
-            {isLocked ? t.lockedForLevel : t.routineSlots(slots.filter(Boolean).length, slots.length)}
+      {/* Removed vertical selection line */}
+
+      <div className="mb-3.5 flex items-center justify-between gap-2.5">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-primary)]">{label.toUpperCase()}</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            {isLocked ? t.lockedForLevel : `[${t.routineSlots(slots.filter(Boolean).length, slots.length)}]`}
           </p>
-        </button>
+        </div>
         <button
-          className="rounded-full border border-[#aab2bc] bg-[#eef1f4] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#596373]"
+          className="ui-button h-8 rounded-[8px] px-3 py-1.5 text-xs uppercase tracking-[0.06em]"
           disabled={isLocked}
-          onClick={onClear}
+          onClick={(event) => {
+            event.stopPropagation();
+            onClear();
+          }}
           type="button"
         >
           {t.clear}
         </button>
       </div>
+
       {slots.length > 0 ? (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2.5">
           {slots.map((command, index) => (
             <Slot
               command={command}
@@ -191,7 +194,7 @@ function RoutineSection({
           ))}
         </div>
       ) : (
-        <div className="flex h-[74px] items-center justify-center rounded-[14px] border-2 border-dashed border-[#a4abb3] bg-[#eceff2] text-[11px] font-black uppercase tracking-[0.18em] text-[#8b95a0]">
+        <div className="flex h-[72px] items-center justify-center rounded-[12px] border border-dashed border-[var(--panel-border)] text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
           {t.noSlots}
         </div>
       )}
@@ -217,30 +220,20 @@ function ActionButton({
     <button
       aria-label={label}
       className={[
-        "aspect-square w-[64px] rounded-[16px] border-2 p-1 transition",
+        "relative aspect-square rounded-[12px] border transition",
         disabled
-          ? "border-[#a8afb7] bg-[#e6e9ed] text-[#9aa2ac]"
-          : "border-[#7d8691] bg-[#d8dde3] text-[#374151] hover:bg-[#e4e8ed]",
+          ? "border-[var(--panel-border)] bg-[rgba(27,32,42,0.34)] text-[var(--text-muted)]"
+          : "border-[var(--panel-border)] bg-[var(--panel-bg)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:shadow-[0_0_18px_var(--accent-shadow)]",
       ].join(" ")}
       disabled={disabled}
       onClick={onClick}
       title={label}
       type="button"
     >
-      <div
-        className={[
-          "relative flex h-full w-full items-center justify-center rounded-[12px] border",
-          disabled ? "border-[#c3cad2] bg-[#f2f4f7]" : "border-[#adb5be] bg-[#eef1f4]",
-        ].join(" ")}
-      >
-        <Icon
-          absoluteStrokeWidth
-          aria-hidden="true"
-          className="h-[60%] w-[60%]"
-          strokeWidth={ICON_STROKE}
-        />
+      <div className="relative flex h-full w-full items-center justify-center">
+        <Icon absoluteStrokeWidth aria-hidden="true" className="h-[40%] w-[40%]" strokeWidth={ICON_STROKE} />
         {meta.badge ? (
-          <span className="absolute bottom-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-[#7b848f] bg-[#f7fafc] text-[10px] font-black leading-none text-[#374151]">
+          <span className="absolute bottom-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-md border border-[var(--panel-border)] bg-[var(--panel-bg-strong)] text-[10px] font-bold text-[var(--text-secondary)]">
             {meta.badge}
           </span>
         ) : null}
@@ -276,22 +269,21 @@ export function ProgramWorkspace({
   const visibleCommands = showAllActions ? ALL_COMMANDS : allowedCommands;
   const p1Enabled = showAllActions || allowedCommands.includes("CALL_P1");
   const p2Enabled = showAllActions || allowedCommands.includes("CALL_P2");
+  const visibleCount = showAllActions ? ALL_COMMANDS.length : allowedCommands.length;
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_356px] xl:items-start">
+    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
       <div>{scene}</div>
 
-      <aside className="space-y-4 xl:sticky xl:top-4">
-        <section className="rounded-[18px] border-2 border-[#7b848f] bg-[#d2d7dd] p-3">
-          <div className="mb-3 flex items-center justify-between gap-3">
+      <aside className="space-y-3 xl:sticky xl:top-6">
+        <section className="ui-panel rounded-[16px] p-3.5">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#445062]">{t.actions}</p>
-              <p className="text-xs font-semibold text-[#667180]">
-                {showAllActions ? t.showingFullCommandSet : t.showingLevelCommands}
-              </p>
+              <p className="text-[12px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.actions}</p>
             </div>
+            <span className="text-sm text-[var(--text-muted)]">[{visibleCount}/{ALL_COMMANDS.length}]</span>
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-3">
             {visibleCommands.map((command) => (
               <ActionButton
                 command={command}
@@ -302,6 +294,10 @@ export function ProgramWorkspace({
             ))}
           </div>
         </section>
+
+        <div className="px-1">
+          <p className="text-[12px] uppercase tracking-[0.06em] text-[var(--text-primary)]">{t.proceduralHierarchy}</p>
+        </div>
 
         <RoutineSection
           currentPointer={currentPointer}
