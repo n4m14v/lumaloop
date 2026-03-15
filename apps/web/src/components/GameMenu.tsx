@@ -1,6 +1,6 @@
-import { useState, type ChangeEventHandler, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
-import { ChevronDown, Menu, Moon, SunMedium, X } from "lucide-react";
+import { Check, ChevronRight, Menu, X } from "lucide-react";
 
 import type { LevelDefinition, RunResult } from "@lumaloop/engine";
 
@@ -9,7 +9,7 @@ import type { PlaybackSpeed } from "../features/game/store";
 import { useI18n } from "../i18n/I18nProvider";
 import { LOCALE_OPTIONS, getRunStatusMessage } from "../i18n/translations";
 
-type ThemeMode = "dark" | "light";
+type SubmenuId = "language" | "level" | "actions" | "robot" | "status" | "hint";
 
 function SegmentButton({
   active,
@@ -23,7 +23,7 @@ function SegmentButton({
   return (
     <button
       className={[
-        "inline-flex items-center justify-center rounded-[12px] px-3 py-2 text-xs font-medium transition",
+        "inline-flex items-center justify-center rounded-[12px] px-3 py-2 text-[11px] font-medium transition",
         active
           ? "ui-button-accent"
           : "ui-button border-[var(--panel-border)] bg-transparent text-[var(--text-secondary)]",
@@ -36,84 +36,98 @@ function SegmentButton({
   );
 }
 
-function ThemeSwitch({
-  checked,
-  labelOff,
-  labelOn,
-  onChange,
+function OptionList({
+  className,
+  options,
 }: {
-  checked: boolean;
-  labelOff: string;
-  labelOn: string;
-  onChange: () => void;
+  className?: string;
+  options: Array<{
+    active: boolean;
+    label: string;
+    onClick: () => void;
+  }>;
 }) {
   return (
-    <div className="ui-panel-soft flex items-center justify-between rounded-[18px] px-4 py-3">
-      <div className="flex items-center gap-2 text-sm">
-        <SunMedium className={`h-4 w-4 ${checked ? "text-[var(--text-muted)]" : "text-[var(--text-primary)]"}`} />
-        <span className={checked ? "text-[var(--text-muted)]" : "text-[var(--text-primary)]"}>{labelOff}</span>
-      </div>
-
-      <button
-        aria-checked={checked}
-        className={[
-          "relative inline-flex h-8 w-14 items-center rounded-full border transition",
-          checked
-            ? "border-[var(--accent)] bg-[var(--accent-soft)] shadow-[0_0_16px_var(--accent-shadow)]"
-            : "border-[var(--panel-border)] bg-[var(--panel-bg)]",
-        ].join(" ")}
-        onClick={onChange}
-        role="switch"
-        type="button"
-      >
-        <span
+    <div className={["space-y-1", className ?? ""].join(" ").trim()}>
+      {options.map((option) => (
+        <button
           className={[
-            "absolute h-6 w-6 rounded-full border transition-all",
-            checked
-              ? "left-[1.65rem] border-[var(--accent)] bg-[var(--accent)]"
-              : "left-1 border-[var(--panel-border)] bg-[var(--panel-bg-strong)]",
+            "flex w-full items-center justify-between rounded-[10px] px-3 py-2 text-left text-[13px] transition",
+            option.active
+              ? "bg-[var(--accent-soft)] text-[var(--text-primary)]"
+              : "text-[var(--text-secondary)] hover:bg-white/5",
           ].join(" ")}
-        />
-      </button>
-
-      <div className="flex items-center gap-2 text-sm">
-        <Moon className={`h-4 w-4 ${checked ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`} />
-        <span className={checked ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}>{labelOn}</span>
-      </div>
+          key={option.label}
+          onClick={option.onClick}
+          type="button"
+        >
+          <span>{option.label}</span>
+          {option.active ? <Check className="h-4 w-4 text-[var(--accent)]" /> : null}
+        </button>
+      ))}
     </div>
   );
 }
 
-function SelectField({
+function SubmenuRow({
+  active,
+  children,
+  id,
   isRtl,
   label,
-  onChange,
+  onCancelClose,
+  onScheduleClose,
+  onOpen,
   value,
-  children,
 }: {
+  active: boolean;
+  children: ReactNode;
+  id: SubmenuId;
   isRtl: boolean;
   label: string;
-  onChange: ChangeEventHandler<HTMLSelectElement>;
-  value: string | number;
-  children: ReactNode;
+  onCancelClose: () => void;
+  onScheduleClose: () => void;
+  onOpen: (id: SubmenuId) => void;
+  value?: string;
 }) {
   return (
-    <section>
-      <label className="mb-2 block text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">{label}</label>
-      <div className="relative">
-        <select
-          className={`ui-input appearance-none py-2.5 text-xs ${isRtl ? "pl-12 pr-4" : "pr-12 pl-4"}`}
-          onChange={onChange}
-          value={value}
+    <div
+      className="relative"
+      onMouseEnter={() => {
+        onCancelClose();
+        onOpen(id);
+      }}
+      onMouseLeave={onScheduleClose}
+    >
+      <button
+        className={[
+          "ui-button flex w-full items-center justify-between px-4 py-2.5 text-left text-[10px] uppercase tracking-[0.08em]",
+          active ? "border-[var(--accent)]" : "",
+        ].join(" ")}
+        onClick={() => onOpen(id)}
+        onFocus={() => onOpen(id)}
+        type="button"
+      >
+        <span className="text-[var(--text-primary)]">{label}</span>
+        <span className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
+          {value ? <span className="max-w-[118px] truncate normal-case tracking-normal">{value}</span> : null}
+          <ChevronRight className={`h-4 w-4 transition ${active ? (isRtl ? "-rotate-180" : "rotate-90") : ""}`} />
+        </span>
+      </button>
+
+      {active ? (
+        <div
+          className={[
+            "ui-panel absolute top-[calc(100%+8px)] z-30 w-[280px] rounded-[16px] p-3.5 sm:top-0",
+            isRtl ? "right-0 sm:right-[calc(100%+10px)]" : "left-0 sm:left-[calc(100%+10px)]",
+          ].join(" ")}
+          onMouseEnter={onCancelClose}
+          onMouseLeave={onScheduleClose}
         >
           {children}
-        </select>
-        <ChevronDown
-          className={`pointer-events-none absolute top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--text-muted)] ${isRtl ? "left-4" : "right-4"}`}
-          strokeWidth={1.9}
-        />
-      </div>
-    </section>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -124,11 +138,12 @@ export function GameMenu({
   onLevelChange,
   onSetRobotColorId,
   onSetShowAllActions,
-  onSetTheme,
+  scoreStars,
   result,
   robotColorId,
   showAllActions,
-  theme,
+  stepsTaken,
+  targetsSummary,
 }: {
   cameraRotationLocked: boolean;
   level: LevelDefinition;
@@ -141,100 +156,184 @@ export function GameMenu({
   onSetRobotColorId: (value: RobotColorId) => void;
   onSetShowAllActions: (value: boolean) => void;
   onSetSpeed: (speed: PlaybackSpeed) => void;
-  onSetTheme: (theme: ThemeMode) => void;
   onStep: () => void;
+  scoreStars: number;
   result: RunResult | null;
   robotColorId: RobotColorId;
   showAllActions: boolean;
   speed: PlaybackSpeed;
-  theme: ThemeMode;
+  stepsTaken: number;
+  targetsSummary: string;
 }) {
   const { isRtl, locale, setLocale, t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState<SubmenuId | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const statusMessage = getRunStatusMessage(locale, result, "menu");
+  const hintText = level.metadata?.designerNotes ?? t.defaultHint;
+
+  const currentLocaleLabel = useMemo(
+    () => LOCALE_OPTIONS.find((option) => option.value === locale)?.label ?? locale,
+    [locale],
+  );
+
+  function openSubmenu(id: SubmenuId) {
+    setActiveSubmenu(id);
+  }
+
+  function cancelScheduledClose() {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }
+
+  function scheduleClose() {
+    cancelScheduledClose();
+    closeTimerRef.current = window.setTimeout(() => {
+      setActiveSubmenu(null);
+      closeTimerRef.current = null;
+    }, 140);
+  }
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+        setActiveSubmenu(null);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [open]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
-        className="ui-button h-11 px-4 text-xs uppercase tracking-[0.08em]"
-        onClick={() => setOpen((value) => !value)}
+        aria-label={t.menu}
+        className="ui-button h-9 w-9 justify-center px-0"
+        onClick={() => {
+          setOpen((value) => !value);
+          setActiveSubmenu(null);
+        }}
+        title={t.menu}
         type="button"
       >
         <Menu className="h-4 w-4" />
-        {t.menu}
-        <ChevronDown className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open ? (
         <div
           className={[
-            "ui-panel absolute top-[calc(100%+10px)] z-20 w-[320px] rounded-[16px] p-4 text-[var(--text-primary)]",
+            "ui-panel absolute top-[calc(100%+10px)] z-20 w-[264px] max-h-[calc(100vh-96px)] overflow-visible rounded-[16px] p-3.5 text-[var(--text-primary)]",
             isRtl ? "right-0" : "left-0",
           ].join(" ")}
         >
-          <div className="mb-5 flex items-start justify-between gap-4">
+          <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">{t.puzzleMenu}</p>
-              <h2 className="mt-1 text-2xl font-semibold tracking-tight">{level.name}</h2>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{t.puzzleMenu}</p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight">{level.name}</h2>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                <span>
+                  {t.targets} <span className="text-[var(--text-primary)]">{targetsSummary}</span>
+                </span>
+                <span>
+                  {t.steps} <span className="text-[var(--text-primary)]">[{stepsTaken}]</span>
+                </span>
+                <span>
+                  {t.score}{" "}
+                  <span className="tracking-[0.16em] text-[#ffd76a]">
+                    {Array.from({ length: 3 }, (_, index) => (index < scoreStars ? "★" : "☆")).join("")}
+                  </span>
+                </span>
+              </div>
             </div>
             <button className="ui-button h-8 w-8 justify-center" onClick={() => setOpen(false)} type="button">
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="space-y-4">
-            <section>
-              <label className="mb-2 block text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">{t.theme}</label>
-              <ThemeSwitch
-                checked={theme === "dark"}
-                labelOff={t.lightMode}
-                labelOn={t.darkMode}
-                onChange={() => onSetTheme(theme === "dark" ? "light" : "dark")}
-              />
-            </section>
-
-            <SelectField
+          <div className="space-y-2">
+            <SubmenuRow
+              active={activeSubmenu === "language"}
+              id="language"
               isRtl={isRtl}
               label={t.language}
-              onChange={(event) => setLocale(event.target.value as typeof locale)}
-              value={locale}
+              onCancelClose={cancelScheduledClose}
+              onScheduleClose={scheduleClose}
+              onOpen={openSubmenu}
+              value={currentLocaleLabel}
             >
-              {LOCALE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectField>
+              <OptionList
+                options={LOCALE_OPTIONS.map((option) => ({
+                  active: option.value === locale,
+                  label: option.label,
+                  onClick: () => setLocale(option.value as typeof locale),
+                }))}
+              />
+            </SubmenuRow>
 
-            <SelectField
+            <SubmenuRow
+              active={activeSubmenu === "level"}
+              id="level"
               isRtl={isRtl}
               label={t.level}
-              onChange={(event) => onLevelChange(Number(event.target.value))}
-              value={levelIndex}
+              onCancelClose={cancelScheduledClose}
+              onScheduleClose={scheduleClose}
+              onOpen={openSubmenu}
+              value={`${levelIndex + 1}`}
             >
-              {levels.map((levelOption, index) => (
-                <option key={levelOption.id} value={index}>
-                  {t.levelOptionLabel(index + 1, levelOption.name)}
-                </option>
-              ))}
-            </SelectField>
+              <OptionList
+                className="max-h-[min(26rem,calc(100vh-10rem))] overflow-y-auto pr-1"
+                options={levels.map((levelOption, index) => ({
+                  active: index === levelIndex,
+                  label: t.levelOptionLabel(index + 1, levelOption.name),
+                  onClick: () => onLevelChange(index),
+                }))}
+              />
+            </SubmenuRow>
 
-            <section>
-              <p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">{t.actionView}</p>
+            <SubmenuRow
+              active={activeSubmenu === "actions"}
+              id="actions"
+              isRtl={isRtl}
+              label={t.actionView}
+              onCancelClose={cancelScheduledClose}
+              onScheduleClose={scheduleClose}
+              onOpen={openSubmenu}
+              value={showAllActions ? t.allActions : t.levelOnly}
+            >
               <div className="grid grid-cols-2 gap-2">
                 <SegmentButton active={showAllActions} label={t.allActions} onClick={() => onSetShowAllActions(true)} />
                 <SegmentButton active={!showAllActions} label={t.levelOnly} onClick={() => onSetShowAllActions(false)} />
               </div>
-            </section>
+            </SubmenuRow>
 
-            <section>
-              <p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">{t.robotColor}</p>
+            <SubmenuRow
+              active={activeSubmenu === "robot"}
+              id="robot"
+              isRtl={isRtl}
+              label={t.robotColor}
+              onCancelClose={cancelScheduledClose}
+              onScheduleClose={scheduleClose}
+              onOpen={openSubmenu}
+              value={robotColorId}
+            >
               <div className="grid grid-cols-4 gap-2">
                 {ROBOT_COLOR_IDS.map((colorId) => (
                   <button
                     aria-label={colorId}
                     className={[
-                      "h-9 rounded-[10px] border transition",
+                      "h-10 rounded-[10px] border transition",
                       robotColorId === colorId
                         ? "border-[var(--accent)] shadow-[0_0_0_1px_var(--accent),0_0_18px_var(--accent-shadow)]"
                         : "border-[var(--panel-border)]",
@@ -246,13 +345,34 @@ export function GameMenu({
                   />
                 ))}
               </div>
-            </section>
+            </SubmenuRow>
 
-            <section className="ui-panel-soft rounded-[18px] p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">{t.status}</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{statusMessage}</p>
-              <p className="mt-2 text-xs text-[var(--text-muted)]">{level.metadata?.concept ?? t.programmingPuzzle}</p>
-            </section>
+            <SubmenuRow
+              active={activeSubmenu === "status"}
+              id="status"
+              isRtl={isRtl}
+              label={t.status}
+              onCancelClose={cancelScheduledClose}
+              onScheduleClose={scheduleClose}
+              onOpen={openSubmenu}
+            >
+              <div>
+                <p className="text-[13px] leading-5 text-[var(--text-secondary)]">{statusMessage}</p>
+                <p className="mt-2 text-xs text-[var(--text-muted)]">{level.metadata?.concept ?? t.programmingPuzzle}</p>
+              </div>
+            </SubmenuRow>
+
+            <SubmenuRow
+              active={activeSubmenu === "hint"}
+              id="hint"
+              isRtl={isRtl}
+              label={t.hint}
+              onCancelClose={cancelScheduledClose}
+              onScheduleClose={scheduleClose}
+              onOpen={openSubmenu}
+            >
+              <p className="text-[13px] leading-5 text-[var(--text-secondary)]">{hintText}</p>
+            </SubmenuRow>
           </div>
         </div>
       ) : null}

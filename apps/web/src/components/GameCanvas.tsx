@@ -3,7 +3,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Edges, PerspectiveCamera } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
-import { RotateCcw } from "lucide-react";
 import gsap from "gsap";
 import type { Group, MeshBasicMaterial, MeshStandardMaterial, PointLight } from "three";
 import { AdditiveBlending, DoubleSide } from "three";
@@ -69,7 +68,7 @@ function CameraRig({
   useLayoutEffect(() => {
     const { maxHeight, planeSize } = getBoardMetrics(level);
     const targetY = maxHeight * 0.35;
-    const radius = Math.max(29, planeSize * 1.34);
+    const radius = Math.max(35, planeSize * 1.52);
     const planarRadius = Math.cos(elevation) * radius;
 
     camera.position.set(
@@ -315,21 +314,9 @@ function GridFloor({ level }: { level: LevelDefinition }) {
   return <group>{tiles}</group>;
 }
 
-export function GameCanvas({
-  activeFrame,
-  committedRobot,
-  failurePulse,
-  failurePulseToken,
-  isRotationLocked,
-  litTargets,
-  level,
-  onFrameComplete,
-  onVictorySequenceComplete,
-  quarterTurns,
-  robotColorId,
-  showVictorySequence,
-}: {
+interface GameCanvasProps {
   activeFrame: TraceFrame | null;
+  className?: string;
   committedRobot: RobotState;
   failurePulse: boolean;
   failurePulseToken: object | null;
@@ -341,7 +328,23 @@ export function GameCanvas({
   quarterTurns: number;
   robotColorId: RobotColorId;
   showVictorySequence: boolean;
-}) {
+}
+
+export function GameCanvas({
+  activeFrame,
+  className,
+  committedRobot,
+  failurePulse,
+  failurePulseToken,
+  isRotationLocked,
+  litTargets,
+  level,
+  onFrameComplete,
+  onVictorySequenceComplete,
+  quarterTurns,
+  robotColorId,
+  showVictorySequence,
+}: GameCanvasProps) {
   const { centerX, centerZ } = getBoardMetrics(level);
   const [victoryBeamActive, setVictoryBeamActive] = useState(showVictorySequence);
   const [orbitAzimuth, setOrbitAzimuth] = useState(CAMERA_BASE_AZIMUTH - quarterTurns * (Math.PI / 2));
@@ -360,10 +363,6 @@ export function GameCanvas({
   const activeTileKey =
     activeFrame === null ? null : `${activeFrame.robotAfter.x},${activeFrame.robotAfter.y},${activeFrame.robotAfter.z}`;
   const failureTileKey = failurePulse ? `${committedRobot.x},${committedRobot.y},${committedRobot.z}` : null;
-  const showResetViewButton =
-    Math.abs(orbitAzimuth - CAMERA_BASE_AZIMUTH) > 0.01 ||
-    Math.abs(orbitElevation - CAMERA_BASE_ELEVATION) > 0.01;
-
   function setAzimuth(angle: number) {
     orbitAzimuthRef.current = angle;
     setOrbitAzimuth(angle);
@@ -476,30 +475,14 @@ export function GameCanvas({
 
   return (
     <div
-      className={`relative h-[420px] w-full overflow-hidden rounded-[22px] border border-[var(--panel-border)] md:h-[640px] ${isRotationLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
+      className={`${className ?? "relative h-[420px] w-full overflow-hidden md:h-[640px]"} ${isRotationLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
       onPointerCancel={handlePointerEnd}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
-      style={{ background: "var(--canvas-inner)", touchAction: "none" }}
+      style={{ touchAction: "none" }}
     >
-      {showResetViewButton ? (
-        <button
-          className="ui-button absolute right-4 top-4 z-10 px-3 py-2 text-xs uppercase tracking-[0.08em] disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={isRotationLocked}
-          onClick={(event) => {
-            event.stopPropagation();
-            resetView();
-          }}
-          onPointerDown={(event) => event.stopPropagation()}
-          type="button"
-        >
-          <RotateCcw className="h-4 w-4" />
-          View
-        </button>
-      ) : null}
-      <Canvas shadows dpr={[1, 2]}>
-        <color attach="background" args={["#d7dfe6"]} />
+      <Canvas gl={{ alpha: true }} shadows dpr={[1, 2]}>
         <PerspectiveCamera makeDefault far={100} fov={28} near={0.1} position={[14, 12, 14]} />
         <CameraRig elevation={orbitElevation} level={level} orbitAngle={orbitAzimuth} />
         <ambientLight intensity={1.15} />

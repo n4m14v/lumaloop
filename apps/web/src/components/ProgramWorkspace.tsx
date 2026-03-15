@@ -166,7 +166,7 @@ function RoutineSection({
           </p>
         </div>
         <button
-          className="ui-button h-8 rounded-[8px] px-3 py-1.5 text-xs uppercase tracking-[0.06em]"
+          className="ui-button h-8 rounded-[8px] px-2.5 py-1.5 text-[10px] uppercase tracking-[0.04em]"
           disabled={isLocked}
           onClick={(event) => {
             event.stopPropagation();
@@ -272,68 +272,70 @@ export function ProgramWorkspace({
   const visibleCount = showAllActions ? ALL_COMMANDS.length : allowedCommands.length;
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
-      <div>{scene}</div>
+    <section className="relative min-h-[calc(100vh-3rem)]">
+      {scene}
 
-      <aside className="space-y-3 xl:sticky xl:top-6">
-        <section className="ui-panel rounded-[16px] p-3.5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[12px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.actions}</p>
+      <aside className="pointer-events-auto relative z-20 ml-auto mt-6 w-full max-w-[340px] xl:absolute xl:top-0 xl:right-0 xl:bottom-0 xl:mt-0 xl:max-w-none xl:w-[340px] xl:overflow-y-auto xl:pb-4">
+        <div className="space-y-3 xl:min-h-full">
+          <section className="ui-panel rounded-[16px] p-3.5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[12px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.actions}</p>
+              </div>
+              <span className="text-sm text-[var(--text-muted)]">[{visibleCount}/{ALL_COMMANDS.length}]</span>
             </div>
-            <span className="text-sm text-[var(--text-muted)]">[{visibleCount}/{ALL_COMMANDS.length}]</span>
-          </div>
-          <div className="grid grid-cols-4 gap-3">
-            {visibleCommands.map((command) => (
-              <ActionButton
-                command={command}
-                disabled={!showAllActions && !allowedCommands.includes(command)}
-                key={command}
-                onClick={() => onAppendCommand(command)}
-              />
-            ))}
-          </div>
-        </section>
+            <div className="grid grid-cols-4 gap-3">
+              {visibleCommands.map((command) => (
+                <ActionButton
+                  command={command}
+                  disabled={!showAllActions && !allowedCommands.includes(command)}
+                  key={command}
+                  onClick={() => onAppendCommand(command)}
+                />
+              ))}
+            </div>
+          </section>
 
-        <div className="px-1">
-          <p className="text-[12px] uppercase tracking-[0.06em] text-[var(--text-primary)]">{t.proceduralHierarchy}</p>
+          <div className="px-1">
+            <p className="text-[12px] uppercase tracking-[0.06em] text-[var(--text-primary)]">{t.proceduralHierarchy}</p>
+          </div>
+
+          <RoutineSection
+            currentPointer={currentPointer}
+            isActive={activeRoutine === "main"}
+            isLocked={false}
+            label={getRoutineLabel(locale, "main")}
+            onClear={() => onClearRoutine("main")}
+            onRemove={(index) => onRemoveCommand("main", index)}
+            onSelect={() => onSelectRoutine("main")}
+            routine="main"
+            slots={routines.main}
+          />
+
+          <RoutineSection
+            currentPointer={currentPointer}
+            isActive={activeRoutine === "p1"}
+            isLocked={!p1Enabled}
+            label={getRoutineLabel(locale, "p1")}
+            onClear={() => onClearRoutine("p1")}
+            onRemove={(index) => onRemoveCommand("p1", index)}
+            onSelect={() => onSelectRoutine("p1")}
+            routine="p1"
+            slots={routines.p1}
+          />
+
+          <RoutineSection
+            currentPointer={currentPointer}
+            isActive={activeRoutine === "p2"}
+            isLocked={!p2Enabled}
+            label={getRoutineLabel(locale, "p2")}
+            onClear={() => onClearRoutine("p2")}
+            onRemove={(index) => onRemoveCommand("p2", index)}
+            onSelect={() => onSelectRoutine("p2")}
+            routine="p2"
+            slots={routines.p2}
+          />
         </div>
-
-        <RoutineSection
-          currentPointer={currentPointer}
-          isActive={activeRoutine === "main"}
-          isLocked={false}
-          label={getRoutineLabel(locale, "main")}
-          onClear={() => onClearRoutine("main")}
-          onRemove={(index) => onRemoveCommand("main", index)}
-          onSelect={() => onSelectRoutine("main")}
-          routine="main"
-          slots={routines.main}
-        />
-
-        <RoutineSection
-          currentPointer={currentPointer}
-          isActive={activeRoutine === "p1"}
-          isLocked={!p1Enabled}
-          label={getRoutineLabel(locale, "p1")}
-          onClear={() => onClearRoutine("p1")}
-          onRemove={(index) => onRemoveCommand("p1", index)}
-          onSelect={() => onSelectRoutine("p1")}
-          routine="p1"
-          slots={routines.p1}
-        />
-
-        <RoutineSection
-          currentPointer={currentPointer}
-          isActive={activeRoutine === "p2"}
-          isLocked={!p2Enabled}
-          label={getRoutineLabel(locale, "p2")}
-          onClear={() => onClearRoutine("p2")}
-          onRemove={(index) => onRemoveCommand("p2", index)}
-          onSelect={() => onSelectRoutine("p2")}
-          routine="p2"
-          slots={routines.p2}
-        />
       </aside>
     </section>
   );

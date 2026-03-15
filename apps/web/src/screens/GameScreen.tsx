@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Play, RotateCcw, Sparkles } from "lucide-react";
+import { Play, Sparkles } from "lucide-react";
 
 import { GameCanvas } from "../components/GameCanvas";
 import { GameMenu } from "../components/GameMenu";
 import { ProgramWorkspace } from "../components/ProgramWorkspace";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { campaignLevels, createSlotsForLevel, useGameStore } from "../features/game/store";
 import { useI18n } from "../i18n/I18nProvider";
 import { localizeLevel } from "../i18n/translations";
@@ -180,7 +181,7 @@ export function GameScreen() {
   const canStartRun = currentProgramLength > 0;
 
   return (
-    <main className="min-h-screen px-4 py-6 text-[var(--text-primary)] md:px-6">
+    <main className="relative min-h-screen px-4 py-3 text-[var(--text-primary)] md:px-6 md:py-4">
       <div className="mx-auto max-w-[1920px]">
         <ProgramWorkspace
           activeRoutine={activeRoutine}
@@ -193,84 +194,89 @@ export function GameScreen() {
           routines={slots}
           showAllActions={showAllActions}
           scene={
-            <div className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-[auto_1fr_auto] md:items-center">
-                <div className="flex items-center gap-3">
-                  <GameMenu
-                    cameraRotationLocked={isRotationLocked}
-                    level={level}
-                    levels={localizedLevels}
-                    levelIndex={levelIndex}
-                    onLevelChange={setLevelIndex}
-                    onReset={stopRun}
-                    onRotateLeft={() => rotateCamera(-1)}
-                    onRotateRight={() => rotateCamera(1)}
-                    onSetRobotColorId={setRobotColorId}
-                    onSetShowAllActions={setShowAllActions}
-                    onSetSpeed={setSpeed}
-                    onSetTheme={setTheme}
-                    onStep={stepRun}
-                    result={result}
-                    robotColorId={robotColorId}
-                    showAllActions={showAllActions}
-                    speed={speed}
-                    theme={theme}
-                  />
-                  <button className="ui-button h-11 px-4 text-xs uppercase tracking-[0.08em]" onClick={stopRun} type="button">
-                    <RotateCcw className="h-4 w-4" />
-                    {t.reset}
-                  </button>
+            <>
+              <GameCanvas
+                activeFrame={activeFrame}
+                className="fixed inset-0 h-screen w-screen overflow-hidden xl:-translate-x-[182px]"
+                committedRobot={committedRobot}
+                failurePulse={failurePulse}
+                failurePulseToken={failurePulseToken}
+                isRotationLocked={isRotationLocked}
+                level={level}
+                litTargets={litTargets}
+                onFrameComplete={settleFrame}
+                onVictorySequenceComplete={() => setIsVictorySequenceComplete(true)}
+                quarterTurns={cameraQuarterTurns}
+                robotColorId={robotColorId}
+                showVictorySequence={showVictorySequence}
+              />
+
+              <div className="pointer-events-none relative z-10 flex min-h-[calc(100vh-3rem)] flex-col">
+                <div className="pointer-events-none relative xl:pr-[364px]">
+                  <div className="ui-gloss-panel pointer-events-auto grid gap-3 px-4 py-2.5 md:grid-cols-[auto_1fr_auto] md:items-center xl:pr-20">
+                    <div className="flex items-center gap-2">
+                      <ThemeToggle
+                        onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
+                        theme={theme}
+                      />
+                      <GameMenu
+                      cameraRotationLocked={isRotationLocked}
+                      level={level}
+                      levels={localizedLevels}
+                      levelIndex={levelIndex}
+                        onLevelChange={setLevelIndex}
+                        onReset={stopRun}
+                        onRotateLeft={() => rotateCamera(-1)}
+                        onRotateRight={() => rotateCamera(1)}
+                        onSetRobotColorId={setRobotColorId}
+                      onSetShowAllActions={setShowAllActions}
+                      onSetSpeed={setSpeed}
+                      onStep={stepRun}
+                      scoreStars={displayedScore.starsEarned}
+                      result={result}
+                      robotColorId={robotColorId}
+                      showAllActions={showAllActions}
+                        speed={speed}
+                        stepsTaken={committedFrames}
+                        targetsSummary={`[${litTargets.length}/${totalTargets}]`}
+                      />
+                    </div>
+
+                    <div className="text-center">
+                      <h1 className="font-display text-[clamp(1.6rem,2.2vw,2.4rem)] font-semibold tracking-tight text-[var(--text-primary)]">
+                        LUMALOOP
+                      </h1>
+                    </div>
+
+                    <div className="flex items-center justify-start gap-2 md:justify-end">
+                      <button
+                        className="ui-button-accent inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-[12px] px-4 text-xs font-semibold uppercase tracking-[0.08em] disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={!isAutoRunning && !canStartRun}
+                        onClick={() => {
+                          if (isAutoRunning) {
+                            toggleAutoRunning(false);
+                            return;
+                          }
+                          if (!canStartRun) {
+                            return;
+                          }
+                          startAutoRun();
+                        }}
+                        type="button"
+                      >
+                        <Play className="h-4 w-4 fill-current" />
+                        {isAutoRunning ? t.pause : t.play}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="text-center">
-                  <h1 className="font-display text-[clamp(2rem,2.8vw,3rem)] font-semibold tracking-tight text-[var(--text-primary)]">
-                    LUMALOOP
-                    <span className="mx-3 text-[var(--text-muted)]">|</span>
-                    <span className="font-sans font-normal text-[var(--text-secondary)]">{t.workspaceCanvas}</span>
-                  </h1>
-                </div>
+                <div className="flex-1" />
 
-                <div className="flex justify-start md:justify-end">
-                  <button
-                    className="ui-button-accent inline-flex h-11 min-w-[140px] items-center justify-center gap-2.5 rounded-[12px] px-5 text-sm font-semibold uppercase tracking-[0.08em] disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!isAutoRunning && !canStartRun}
-                    onClick={() => {
-                      if (isAutoRunning) {
-                        toggleAutoRunning(false);
-                        return;
-                      }
-                      if (!canStartRun) {
-                        return;
-                      }
-                      startAutoRun();
-                    }}
-                    type="button"
-                  >
-                    <Play className="h-4 w-4 fill-current" />
-                    {isAutoRunning ? t.pause : t.play}
-                  </button>
-                </div>
-              </div>
-
-              <div className="ui-panel rounded-[16px] p-2.5 md:p-3.5">
-                <div className="relative overflow-hidden rounded-[12px]">
-                  <GameCanvas
-                    activeFrame={activeFrame}
-                    committedRobot={committedRobot}
-                    failurePulse={failurePulse}
-                    failurePulseToken={failurePulseToken}
-                    isRotationLocked={isRotationLocked}
-                    level={level}
-                    litTargets={litTargets}
-                    onFrameComplete={settleFrame}
-                    onVictorySequenceComplete={() => setIsVictorySequenceComplete(true)}
-                    quarterTurns={cameraQuarterTurns}
-                    robotColorId={robotColorId}
-                    showVictorySequence={showVictorySequence}
-                  />
+                <div className="pointer-events-none pb-2 pt-6 xl:pr-[364px]">
                   {showSuccessPopup ? (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(12,16,24,0.62)] backdrop-blur-sm">
-                      <div className="ui-panel w-[min(92%,380px)] rounded-[24px] p-6 text-center">
+                    <div className="mb-5 flex justify-center">
+                      <div className="ui-panel pointer-events-auto w-[min(92%,380px)] rounded-[24px] p-6 text-center">
                         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--panel-border)] bg-[var(--panel-bg-soft)] text-[var(--accent)] shadow-[0_0_24px_var(--accent-shadow)]">
                           <Sparkles className="h-7 w-7" />
                         </div>
@@ -303,28 +309,10 @@ export function GameScreen() {
                       </div>
                     </div>
                   ) : null}
-                </div>
-              </div>
 
-              <div className="grid gap-3 xl:grid-cols-4">
-                <div className="ui-panel rounded-[14px] px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">{t.targets}</p>
-                  <p className="mt-1 text-3xl font-light tracking-tight text-[var(--text-primary)]">[{litTargets.length}/{totalTargets}]</p>
-                </div>
-                <div className="ui-panel rounded-[14px] px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">{t.steps}</p>
-                  <p className="mt-1 text-3xl font-light tracking-tight text-[var(--text-primary)]">[{committedFrames}]</p>
-                </div>
-                <div className="ui-panel rounded-[14px] px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">{t.score}</p>
-                  <p className="mt-2 flex gap-2 text-4xl leading-none">{renderScoreStars(displayedScore.starsEarned)}</p>
-                </div>
-                <div className="ui-panel rounded-[14px] px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">{t.hint}</p>
-                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">{level.metadata?.designerNotes ?? t.defaultHint}</p>
                 </div>
               </div>
-            </div>
+            </>
           }
         />
       </div>
