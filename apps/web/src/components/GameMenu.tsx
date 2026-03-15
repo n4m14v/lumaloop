@@ -4,11 +4,13 @@ import { ChevronDown, Menu, RotateCcw, RotateCw, StepForward, X } from "lucide-r
 
 import type { LevelDefinition, RunResult } from "@lumaloop/engine";
 
+import { ROBOT_COLOR_IDS, ROBOT_PALETTES, type RobotColorId } from "../features/game/robotColors";
 import type { PlaybackSpeed } from "../features/game/store";
 import { useI18n } from "../i18n/I18nProvider";
 import { LOCALE_OPTIONS, getRunStatusMessage } from "../i18n/translations";
 
 export function GameMenu({
+  cameraRotationLocked,
   level,
   levels,
   levelIndex,
@@ -16,13 +18,16 @@ export function GameMenu({
   onReset,
   onRotateLeft,
   onRotateRight,
+  onSetRobotColorId,
   onSetShowAllActions,
   onSetSpeed,
   onStep,
   result,
+  robotColorId,
   showAllActions,
   speed,
 }: {
+  cameraRotationLocked: boolean;
   level: LevelDefinition;
   levels: LevelDefinition[];
   levelIndex: number;
@@ -30,10 +35,12 @@ export function GameMenu({
   onReset: () => void;
   onRotateLeft: () => void;
   onRotateRight: () => void;
+  onSetRobotColorId: (value: RobotColorId) => void;
   onSetShowAllActions: (value: boolean) => void;
   onSetSpeed: (speed: PlaybackSpeed) => void;
   onStep: () => void;
   result: RunResult | null;
+  robotColorId: RobotColorId;
   showAllActions: boolean;
   speed: PlaybackSpeed;
 }) {
@@ -129,12 +136,47 @@ export function GameMenu({
             <button className="control-btn-light" onClick={onReset} type="button">
               <RotateCcw className="h-4 w-4" /> {t.reset}
             </button>
-            <button className="control-btn-light" onClick={onRotateLeft} type="button">
+            <button
+              className={[
+                "control-btn-light",
+                cameraRotationLocked ? "cursor-not-allowed opacity-50" : "",
+              ].join(" ")}
+              disabled={cameraRotationLocked}
+              onClick={onRotateLeft}
+              type="button"
+            >
               <RotateCcw className="h-4 w-4" /> {t.cameraLeft}
             </button>
-            <button className="control-btn-light" onClick={onRotateRight} type="button">
+            <button
+              className={[
+                "control-btn-light",
+                cameraRotationLocked ? "cursor-not-allowed opacity-50" : "",
+              ].join(" ")}
+              disabled={cameraRotationLocked}
+              onClick={onRotateRight}
+              type="button"
+            >
               <RotateCw className="h-4 w-4" /> {t.cameraRight}
             </button>
+          </div>
+
+          <p className="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{t.robotColor}</p>
+          <div className="mb-4 grid grid-cols-4 gap-2">
+            {ROBOT_COLOR_IDS.map((colorId) => (
+              <button
+                aria-label={colorId}
+                className={[
+                  "h-11 rounded-[14px] border-2 transition",
+                  robotColorId === colorId
+                    ? "border-slate-700 shadow-[0_0_0_2px_rgba(255,255,255,0.9)_inset]"
+                    : "border-[#b7c6d2]",
+                ].join(" ")}
+                key={colorId}
+                onClick={() => onSetRobotColorId(colorId)}
+                style={{ backgroundColor: ROBOT_PALETTES[colorId].swatch }}
+                type="button"
+              />
+            ))}
           </div>
 
           <p className="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{t.actionView}</p>

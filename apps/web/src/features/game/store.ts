@@ -16,6 +16,8 @@ import {
   world05Recursion,
 } from "@lumaloop/level-data";
 
+import type { RobotColorId } from "./robotColors";
+
 export type SlotCommand = Command | null;
 export type RoutineSlots = Record<RoutineName, SlotCommand[]>;
 export type PlaybackSpeed = 1 | 2 | 4;
@@ -101,6 +103,7 @@ interface GameStoreState {
   levelIndex: number;
   programs: Record<string, RoutineSlots>;
   result: RunResult | null;
+  robotColorId: RobotColorId;
   showAllActions: boolean;
   speed: PlaybackSpeed;
   activeFrameIndex: number | null;
@@ -111,6 +114,7 @@ interface GameStoreState {
   removeCommand: (routine: RoutineName, index: number) => void;
   rotateCamera: (delta: number) => void;
   setActiveRoutine: (routine: RoutineName) => void;
+  setRobotColorId: (value: RobotColorId) => void;
   setShowAllActions: (value: boolean) => void;
   setLevelIndex: (levelIndex: number) => void;
   setSpeed: (speed: PlaybackSpeed) => void;
@@ -134,6 +138,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   levelIndex: 0,
   programs: {},
   result: null,
+  robotColorId: "classic",
   showAllActions: true,
   speed: 1,
   activeFrameIndex: null,
@@ -261,6 +266,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
   setActiveRoutine: (routine) => {
     set({ activeRoutine: routine });
+  },
+  setRobotColorId: (value) => {
+    set({ robotColorId: value });
   },
   setShowAllActions: (value) => {
     const state = get();

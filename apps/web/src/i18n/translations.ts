@@ -56,6 +56,7 @@ type Messages = {
   removeCommandFromSlot: (routineLabel: string, index: number) => string;
   replay: string;
   reset: string;
+  robotColor: string;
   right: string;
   routineSlots: (filled: number, total: number) => string;
   score: string;
@@ -137,6 +138,7 @@ const messages: Record<Locale, Messages> = {
     removeCommandFromSlot: (routineLabel, index) => `Remove command from ${routineLabel} slot ${index}`,
     replay: "Replay",
     reset: "Reset",
+    robotColor: "Robot Color",
     right: "Right",
     routineSlots: (filled, total) => `${filled} / ${total}`,
     score: "Score",
@@ -227,6 +229,7 @@ const messages: Record<Locale, Messages> = {
     removeCommandFromSlot: (routineLabel, index) => `Убрать команду из ${routineLabel}, ячейка ${index}`,
     replay: "Повтор",
     reset: "Сброс",
+    robotColor: "Цвет робота",
     right: "Вправо",
     routineSlots: (filled, total) => `${filled} / ${total}`,
     score: "Счет",
@@ -317,6 +320,7 @@ const messages: Record<Locale, Messages> = {
     removeCommandFromSlot: (routineLabel, index) => `הסר פקודה מ${routineLabel}, משבצת ${index}`,
     replay: "הפעל שוב",
     reset: "איפוס",
+    robotColor: "צבע הרובוט",
     right: "ימינה",
     routineSlots: (filled, total) => `${filled} / ${total}`,
     score: "ציון",

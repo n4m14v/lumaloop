@@ -9,6 +9,12 @@ import { campaignLevels, createSlotsForLevel, useGameStore } from "../features/g
 import { useI18n } from "../i18n/I18nProvider";
 import { localizeLevel } from "../i18n/translations";
 
+const ROBOT_DEATH_STATUSES = new Set([
+  "FAILED_INVALID_JUMP",
+  "FAILED_INVALID_MOVE",
+  "FAILED_WRONG_LIGHT",
+]);
+
 function countFilledSlots(slots: ReturnType<typeof createSlotsForLevel>) {
   return [...slots.main, ...slots.p1, ...slots.p2].filter(Boolean).length;
 }
@@ -57,9 +63,11 @@ export function GameScreen() {
   const queueNextFrame = useGameStore((state) => state.queueNextFrame);
   const removeCommand = useGameStore((state) => state.removeCommand);
   const result = useGameStore((state) => state.result);
+  const robotColorId = useGameStore((state) => state.robotColorId);
   const rotateCamera = useGameStore((state) => state.rotateCamera);
   const setActiveRoutine = useGameStore((state) => state.setActiveRoutine);
   const setLevelIndex = useGameStore((state) => state.setLevelIndex);
+  const setRobotColorId = useGameStore((state) => state.setRobotColorId);
   const setShowAllActions = useGameStore((state) => state.setShowAllActions);
   const setSpeed = useGameStore((state) => state.setSpeed);
   const settleFrame = useGameStore((state) => state.settleFrame);
@@ -118,7 +126,12 @@ export function GameScreen() {
   const litTargets = lastCommittedFrame?.activatedTargetIds ?? [];
   const currentPointer = activeFrame?.pointer;
   const totalTargets = level.board.filter((tile) => tile.kind === "TARGET").length;
-  const failurePulse = Boolean(result && committedFrames >= result.trace.length && result.status !== "SUCCESS");
+  const failurePulse = Boolean(
+    result &&
+      committedFrames >= result.trace.length &&
+      ROBOT_DEATH_STATUSES.has(result.status),
+  );
+  const failurePulseToken = failurePulse ? result : null;
   const currentProgramLength = countFilledSlots(slots);
   const projectedStars = calculateProjectedStars(currentProgramLength, level.stars);
   const displayedScore = result?.score ?? {
@@ -134,6 +147,8 @@ export function GameScreen() {
   const showVictorySequence = isSuccessResolved && !isVictorySequenceComplete;
   const showSuccessPopup = isSuccessResolved && isVictorySequenceComplete;
   const hasNextLevel = levelIndex < campaignLevels.length - 1;
+  const isRotationLocked = isAutoRunning || activeFrame !== null || showVictorySequence || showSuccessPopup;
+  const canStartRun = currentProgramLength > 0;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(120,207,255,0.36),transparent_22%),linear-gradient(180deg,#f8f4bb_0%,#f2efb0_48%,#efe6a0_100%)] px-3 py-4 text-slate-700 md:px-6 md:py-6">
@@ -153,6 +168,7 @@ export function GameScreen() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <GameMenu
+                    cameraRotationLocked={isRotationLocked}
                     level={level}
                     levels={localizedLevels}
                     levelIndex={levelIndex}
@@ -160,10 +176,12 @@ export function GameScreen() {
                     onReset={stopRun}
                     onRotateLeft={() => rotateCamera(-1)}
                     onRotateRight={() => rotateCamera(1)}
+                    onSetRobotColorId={setRobotColorId}
                     onSetShowAllActions={setShowAllActions}
                     onSetSpeed={setSpeed}
                     onStep={stepRun}
                     result={result}
+                    robotColorId={robotColorId}
                     showAllActions={showAllActions}
                     speed={speed}
                   />
@@ -181,16 +199,20 @@ export function GameScreen() {
                   {t.solvePuzzle}
                 </div>
 
-                <button
-                  className="inline-flex items-center gap-3 rounded-[18px] border-2 border-[#51b53b] bg-[#4fc53f] px-7 py-4 text-base font-black uppercase tracking-[0.18em] text-white shadow-[0_10px_0_rgba(63,143,50,0.7)] transition hover:translate-y-[1px]"
-                  onClick={() => {
-                    if (isAutoRunning) {
-                      toggleAutoRunning(false);
-                      return;
-                    }
-                    startAutoRun();
-                  }}
-                  type="button"
+	                <button
+	                  className="inline-flex items-center gap-3 rounded-[18px] border-2 border-[#51b53b] bg-[#4fc53f] px-7 py-4 text-base font-black uppercase tracking-[0.18em] text-white shadow-[0_10px_0_rgba(63,143,50,0.7)] transition hover:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+	                  disabled={!isAutoRunning && !canStartRun}
+	                  onClick={() => {
+	                    if (isAutoRunning) {
+	                      toggleAutoRunning(false);
+	                      return;
+	                    }
+	                    if (!canStartRun) {
+	                      return;
+	                    }
+	                    startAutoRun();
+	                  }}
+	                  type="button"
                 >
                   <Play className="h-5 w-5 fill-white" />
                   {isAutoRunning ? t.pause : t.play}
@@ -203,15 +225,18 @@ export function GameScreen() {
                     activeFrame={activeFrame}
                     committedRobot={committedRobot}
                     failurePulse={failurePulse}
+                    failurePulseToken={failurePulseToken}
+                    isRotationLocked={isRotationLocked}
                     level={level}
                     litTargets={litTargets}
                     onFrameComplete={settleFrame}
                     onVictorySequenceComplete={() => setIsVictorySequenceComplete(true)}
                     quarterTurns={cameraQuarterTurns}
+                    robotColorId={robotColorId}
                     showVictorySequence={showVictorySequence}
                   />
                   {showSuccessPopup ? (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(244,239,181,0.58)] backdrop-blur-[2px]">
+	                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(47,56,67,0.42)] backdrop-blur-[2px]">
                       <div className="w-[min(92%,360px)] rounded-[26px] border-2 border-[#8fcf6a] bg-[#f8ffd9] p-6 text-center shadow-[0_12px_0_rgba(126,177,87,0.55)]">
                         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#7ce45a] text-white shadow-[0_6px_0_rgba(88,171,57,0.45)]">
                           <Sparkles className="h-7 w-7" />
