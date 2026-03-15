@@ -112,7 +112,7 @@ const messages: Record<Locale, Messages> = {
       SUCCESS: "Puzzle solved.",
     },
     hint: "Hint",
-    idealSize: (value) => `Ideal ${value}`,
+    idealSize: (value) => `Ideal Size ${value}`,
     language: "Language",
     left: "Left",
     level: "Level",
@@ -203,7 +203,7 @@ const messages: Record<Locale, Messages> = {
       SUCCESS: "Уровень пройден.",
     },
     hint: "Подсказка",
-    idealSize: (value) => `Идеал ${value}`,
+    idealSize: (value) => `Идеальный размер ${value}`,
     language: "Язык",
     left: "Влево",
     level: "Уровень",
@@ -294,7 +294,7 @@ const messages: Record<Locale, Messages> = {
       SUCCESS: "השלב נפתר.",
     },
     hint: "רמז",
-    idealSize: (value) => `אידיאלי ${value}`,
+    idealSize: (value) => `גודל אידיאלי ${value}`,
     language: "שפה",
     left: "שמאלה",
     level: "שלב",
@@ -432,7 +432,7 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
     "world-05-level-01": {
       name: "Рекурсивные лампы",
       concept: "Рекурсия может выразить повторяющийся шаблон до последней лампы",
-      designerNotes: "Используйте MAIN: P1 и P1: LIGHT, FORWARD, P1. Успех наступает, как только зажжена последняя цель.",
+      designerNotes: "Используйте MAIN: P1 и P1: LIGHT, FORWARD, P1. Идеал 4 означает четыре заполненных слота программы, а не четыре выполненных шага.",
     },
   },
   he: {
@@ -509,7 +509,7 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
     "world-05-level-01": {
       name: "מנורות רקורסיביות",
       concept: "רקורסיה יכולה לתאר דפוס חוזר עד שהמנורה האחרונה מסיימת את ההרצה",
-      designerNotes: "השתמשו ב-MAIN: P1 וב-P1: LIGHT, FORWARD, P1. ההרצה מצליחה ברגע שהיעד האחרון נדלק.",
+      designerNotes: "השתמשו ב-MAIN: P1 וב-P1: LIGHT, FORWARD, P1. האידיאל 4 מתייחס לארבעה סלוטים ממולאים בתוכנית, לא לארבע פעולות שמתבצעות בפועל.",
     },
   },
 };

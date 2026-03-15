@@ -128,8 +128,8 @@ export function GameScreen() {
   const totalTargets = level.board.filter((tile) => tile.kind === "TARGET").length;
   const failurePulse = Boolean(
     result &&
-      committedFrames >= result.trace.length &&
-      ROBOT_DEATH_STATUSES.has(result.status),
+    committedFrames >= result.trace.length &&
+    ROBOT_DEATH_STATUSES.has(result.status),
   );
   const failurePulseToken = failurePulse ? result : null;
   const currentProgramLength = countFilledSlots(slots);
@@ -141,8 +141,8 @@ export function GameScreen() {
   };
   const isSuccessResolved = Boolean(
     result &&
-      result.status === "SUCCESS" &&
-      committedFrames >= result.trace.length,
+    result.status === "SUCCESS" &&
+    committedFrames >= result.trace.length,
   );
   const showVictorySequence = isSuccessResolved && !isVictorySequenceComplete;
   const showSuccessPopup = isSuccessResolved && isVictorySequenceComplete;
@@ -199,20 +199,20 @@ export function GameScreen() {
                   {t.solvePuzzle}
                 </div>
 
-	                <button
-	                  className="inline-flex items-center gap-3 rounded-[18px] border-2 border-[#51b53b] bg-[#4fc53f] px-7 py-4 text-base font-black uppercase tracking-[0.18em] text-white shadow-[0_10px_0_rgba(63,143,50,0.7)] transition hover:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-	                  disabled={!isAutoRunning && !canStartRun}
-	                  onClick={() => {
-	                    if (isAutoRunning) {
-	                      toggleAutoRunning(false);
-	                      return;
-	                    }
-	                    if (!canStartRun) {
-	                      return;
-	                    }
-	                    startAutoRun();
-	                  }}
-	                  type="button"
+                <button
+                  className="inline-flex items-center gap-3 rounded-[18px] border-2 border-[#51b53b] bg-[#4fc53f] px-7 py-4 text-base font-black uppercase tracking-[0.18em] text-white shadow-[0_10px_0_rgba(63,143,50,0.7)] transition hover:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                  disabled={!isAutoRunning && !canStartRun}
+                  onClick={() => {
+                    if (isAutoRunning) {
+                      toggleAutoRunning(false);
+                      return;
+                    }
+                    if (!canStartRun) {
+                      return;
+                    }
+                    startAutoRun();
+                  }}
+                  type="button"
                 >
                   <Play className="h-5 w-5 fill-white" />
                   {isAutoRunning ? t.pause : t.play}
@@ -236,7 +236,7 @@ export function GameScreen() {
                     showVictorySequence={showVictorySequence}
                   />
                   {showSuccessPopup ? (
-	                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(47,56,67,0.42)] backdrop-blur-[2px]">
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(47,56,67,0.42)] backdrop-blur-[2px]">
                       <div className="w-[min(92%,360px)] rounded-[26px] border-2 border-[#8fcf6a] bg-[#f8ffd9] p-6 text-center shadow-[0_12px_0_rgba(126,177,87,0.55)]">
                         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#7ce45a] text-white shadow-[0_6px_0_rgba(88,171,57,0.45)]">
                           <Sparkles className="h-7 w-7" />

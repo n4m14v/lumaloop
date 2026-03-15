@@ -17,7 +17,8 @@ export const world05Recursion: LevelDefinition[] = [
     stars: { one: 5, two: 4, three: 4 },
     metadata: {
       concept: "Recursion can express a repeating pattern until the final lamp ends the run",
-      designerNotes: "Use MAIN: P1 and P1: LIGHT, FORWARD, P1. The run succeeds as soon as the last target is lit.",
+      designerNotes:
+        "Use MAIN: P1 and P1: LIGHT, FORWARD, P1. The ideal 4 refers to four filled program slots, not four executed steps.",
       idealSolutionLength: 4,
     },
   },

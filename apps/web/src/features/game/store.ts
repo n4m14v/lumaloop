@@ -275,9 +275,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const level = getLevel(state.levelIndex);
     const activeRoutine =
       !value &&
-      level &&
-      ((state.activeRoutine === "p1" && !level.allowedCommands.includes("CALL_P1")) ||
-        (state.activeRoutine === "p2" && !level.allowedCommands.includes("CALL_P2")))
+        level &&
+        ((state.activeRoutine === "p1" && !level.allowedCommands.includes("CALL_P1")) ||
+          (state.activeRoutine === "p2" && !level.allowedCommands.includes("CALL_P2")))
         ? "main"
         : state.activeRoutine;
 
@@ -301,9 +301,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       programs: state.programs[level.id]
         ? state.programs
         : {
-            ...state.programs,
-            [level.id]: createRoutineSlots(level),
-          },
+          ...state.programs,
+          [level.id]: createRoutineSlots(level),
+        },
       result: null,
     });
   },
@@ -322,9 +322,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const level = getLevel(state.levelIndex);
     const completedLevelIds =
       level &&
-      isComplete &&
-      state.result.status === "SUCCESS" &&
-      !state.completedLevelIds.includes(level.id)
+        isComplete &&
+        state.result.status === "SUCCESS" &&
+        !state.completedLevelIds.includes(level.id)
         ? [...state.completedLevelIds, level.id]
         : state.completedLevelIds;
 
@@ -354,8 +354,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const shouldAnimate = result.trace.length > 0;
     const completedLevelIds =
       result.status === "SUCCESS" &&
-      !shouldAnimate &&
-      !state.completedLevelIds.includes(level.id)
+        !shouldAnimate &&
+        !state.completedLevelIds.includes(level.id)
         ? [...state.completedLevelIds, level.id]
         : state.completedLevelIds;
 
