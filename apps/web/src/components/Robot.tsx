@@ -12,11 +12,13 @@ import { ROBOT_PALETTES, type RobotColorId } from "../features/game/robotColors"
 const TILE_SIZE = 2.4;
 const BLOCK_HEIGHT = 1.1;
 const MODEL_FOOT_OFFSET = 0.08;
-const MODEL_URL = "https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb";
+const MODEL_URL = "/models/RobotExpressive.glb";
 const MODEL_SCALE = 0.42;
 const DEFAULT_SURPRISE_INFLUENCE = 0.2;
 const FORWARD_MOVE_DURATION = 0.98;
 const FORWARD_WALK_TIME_SCALE = 1.1;
+const ROBOT_METAL_ENV_INTENSITY = 1.15;
+const ROBOT_RIM_LIGHT_INTENSITY = 0.46;
 export const ROBOT_VICTORY_EMOTE_DELAY_MS = 900;
 export const ROBOT_VICTORY_BEAM_EXIT_START_SECONDS = 1.46;
 export const ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS = 1.2;
@@ -34,6 +36,7 @@ type RobotProps = {
   onFrameComplete: () => void;
   onVictorySequenceComplete: () => void;
   robot: RobotState;
+  theme: "dark" | "light";
   victorySequenceActive: boolean;
 };
 
@@ -123,6 +126,24 @@ function supportsColor(material: Material): material is Material & { color: Colo
   return "color" in material && material.color instanceof Color;
 }
 
+function supportsStandardSurface(
+  material: Material,
+): material is Material & {
+  color: Color;
+  emissiveIntensity: number;
+  envMapIntensity: number;
+  metalness: number;
+  roughness: number;
+} {
+  return (
+    supportsColor(material) &&
+    "emissiveIntensity" in material &&
+    "envMapIntensity" in material &&
+    "metalness" in material &&
+    "roughness" in material
+  );
+}
+
 type MorphCapableObject = Object3D & {
   morphTargetDictionary?: Record<string, number>;
   morphTargetInfluences?: number[];
@@ -152,6 +173,7 @@ export function Robot({
   onFrameComplete,
   onVictorySequenceComplete,
   robot,
+  theme,
   victorySequenceActive,
 }: RobotProps) {
   const rootRef = useRef<Group>(null);
@@ -262,6 +284,17 @@ export function Robot({
         if ("emissiveIntensity" in material) {
           emissiveMaterials.push(material);
         }
+        if (supportsStandardSurface(material)) {
+          const hsl = { h: 0, s: 0, l: 0 };
+          material.color.getHSL(hsl);
+          const isBodySurface = hsl.l > 0.18 && hsl.s > 0.08;
+          const isTrimSurface = hsl.l <= 0.18 || hsl.s <= 0.08;
+
+          material.envMapIntensity = ROBOT_METAL_ENV_INTENSITY;
+          material.metalness = isBodySurface ? 0.72 : isTrimSurface ? 0.58 : 0.65;
+          material.roughness = isBodySurface ? 0.42 : isTrimSurface ? 0.5 : 0.46;
+          material.emissiveIntensity = Math.max(material.emissiveIntensity, isBodySurface ? 0.22 : 0.12);
+        }
         if (supportsOpacity(material)) {
           material.transparent = true;
           fadeMaterials.push(material);
@@ -281,6 +314,8 @@ export function Robot({
   useEffect(() => {
     const primary = new Color(palette.gltfPrimary);
     const accent = new Color(palette.gltfAccent);
+    const lightLift = new Color("#f7f9fc");
+    const isLightTheme = theme === "light";
 
     for (const { material, originalColor } of tintMaterialsRef.current) {
       const hsl = { h: 0, s: 0, l: 0 };
@@ -288,22 +323,34 @@ export function Robot({
 
       if (hsl.l < 0.14 || hsl.s < 0.08) {
         material.color.copy(originalColor);
+        if (isLightTheme && hsl.l > 0.06) {
+          material.color.lerp(lightLift, 0.12);
+        }
         continue;
       }
 
       if (hsl.h > 0.04 && hsl.h < 0.16 && hsl.s > 0.18) {
         material.color.lerpColors(originalColor, primary, 0.92);
+        if (isLightTheme) {
+          material.color.lerp(lightLift, 0.16);
+        }
         continue;
       }
 
       if (hsl.h > 0.08 && hsl.h < 0.18 && hsl.l > 0.55) {
         material.color.lerpColors(originalColor, accent, 0.45);
+        if (isLightTheme) {
+          material.color.lerp(lightLift, 0.22);
+        }
         continue;
       }
 
       material.color.copy(originalColor);
+      if (isLightTheme) {
+        material.color.lerp(lightLift, 0.14);
+      }
     }
-  }, [palette]);
+  }, [palette, theme]);
 
   useEffect(() => {
     setMorphInfluence(surpriseMorphsRef.current, DEFAULT_SURPRISE_INFLUENCE);
@@ -654,6 +701,7 @@ export function Robot({
         <circleGeometry args={[0.62, 32]} />
         <meshBasicMaterial color="#05131d" opacity={0.2} ref={shadowRef} transparent />
       </mesh>
+      <pointLight color="#d7f0ff" distance={7.5} intensity={ROBOT_RIM_LIGHT_INTENSITY} position={[-1.6, 2.2, -1.8]} />
       <pointLight color="#5bc8ff" distance={5.5} intensity={0.7} position={[0, 1.8, 0.6]} ref={statusLightRef} />
       <pointLight color="#ff5656" distance={4} intensity={0} position={[0, 1.4, 0]} ref={failureLightRef} />
       <group ref={modelRef}>

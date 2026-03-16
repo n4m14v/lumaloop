@@ -210,6 +210,7 @@ export function GameScreen() {
                 quarterTurns={cameraQuarterTurns}
                 robotColorId={robotColorId}
                 showVictorySequence={showVictorySequence}
+                theme={theme}
               />
 
               <div className="pointer-events-none relative z-10 flex min-h-[calc(100vh-3rem)] flex-col">

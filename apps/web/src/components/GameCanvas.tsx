@@ -27,6 +27,9 @@ const CAMERA_BASE_AZIMUTH = Math.PI / 4;
 const CAMERA_BASE_ELEVATION = 0.68;
 const CAMERA_MIN_ELEVATION = 0.34;
 const CAMERA_MAX_ELEVATION = 1.12;
+const CAMERA_ZOOM_MIN = 0.88;
+const CAMERA_ZOOM_MAX = 1.14;
+const CAMERA_ZOOM_STEP = 0.0009;
 const FAILURE_BLINK_RISE_DURATION = 0.24;
 const FAILURE_BLINK_HOLD_DURATION = 0.18;
 const FAILURE_BLINK_FALL_DURATION = 0.26;
@@ -62,17 +65,19 @@ function CameraRig({
   elevation,
   level,
   orbitAngle,
+  zoom,
 }: {
   elevation: number;
   level: LevelDefinition;
   orbitAngle: number;
+  zoom: number;
 }) {
   const { camera } = useThree();
 
   useLayoutEffect(() => {
     const { maxHeight, planeSize } = getBoardMetrics(level);
     const targetY = maxHeight * 0.35;
-    const radius = Math.max(35, planeSize * 1.52);
+    const radius = Math.max(35, planeSize * 1.52) * zoom;
     const planarRadius = Math.cos(elevation) * radius;
 
     camera.position.set(
@@ -82,7 +87,7 @@ function CameraRig({
     );
     camera.lookAt(0, targetY, 0);
     camera.updateProjectionMatrix();
-  }, [camera, elevation, level, orbitAngle]);
+  }, [camera, elevation, level, orbitAngle, zoom]);
 
   return null;
 }
@@ -409,6 +414,7 @@ interface GameCanvasProps {
   quarterTurns: number;
   robotColorId: RobotColorId;
   showVictorySequence: boolean;
+  theme: "dark" | "light";
 }
 
 export function GameCanvas({
@@ -425,11 +431,13 @@ export function GameCanvas({
   quarterTurns,
   robotColorId,
   showVictorySequence,
+  theme,
 }: GameCanvasProps) {
   const { centerX, centerZ } = getBoardMetrics(level);
   const [victoryBeamActive, setVictoryBeamActive] = useState(showVictorySequence);
   const [orbitAzimuth, setOrbitAzimuth] = useState(CAMERA_BASE_AZIMUTH - quarterTurns * (Math.PI / 2));
   const [orbitElevation, setOrbitElevation] = useState(CAMERA_BASE_ELEVATION);
+  const [zoom, setZoom] = useState(1);
   const dragStateRef = useRef<{
     pointerId: number;
     startAzimuth: number;
@@ -472,7 +480,13 @@ export function GameCanvas({
   function resetView(duration = 0.28) {
     dragStateRef.current = null;
     setElevation(CAMERA_BASE_ELEVATION);
+    setZoom(1);
     animateAzimuth(CAMERA_BASE_AZIMUTH, duration);
+  }
+
+  function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setZoom((currentZoom) => clamp(currentZoom + event.deltaY * CAMERA_ZOOM_STEP, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX));
   }
 
   useEffect(() => {
@@ -537,7 +551,7 @@ export function GameCanvas({
 
     const nextAzimuth = dragState.startAzimuth + (event.clientX - dragState.startX) * DRAG_AZIMUTH_RADIANS_PER_PIXEL;
     const nextElevation =
-      dragState.startElevation - (event.clientY - dragState.startY) * DRAG_ELEVATION_RADIANS_PER_PIXEL;
+      dragState.startElevation + (event.clientY - dragState.startY) * DRAG_ELEVATION_RADIANS_PER_PIXEL;
     setAzimuth(nextAzimuth);
     setElevation(nextElevation);
   }
@@ -561,11 +575,12 @@ export function GameCanvas({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
+      onWheel={handleWheel}
       style={{ touchAction: "none" }}
     >
       <Canvas gl={{ alpha: true }} shadows dpr={[1, 2]}>
         <PerspectiveCamera makeDefault far={100} fov={28} near={0.1} position={[14, 12, 14]} />
-        <CameraRig elevation={orbitElevation} level={level} orbitAngle={orbitAzimuth} />
+        <CameraRig elevation={orbitElevation} level={level} orbitAngle={orbitAzimuth} zoom={zoom} />
         <ambientLight intensity={1.15} />
         <directionalLight
           castShadow
@@ -602,6 +617,7 @@ export function GameCanvas({
             onFrameComplete={onFrameComplete}
             onVictorySequenceComplete={onVictorySequenceComplete}
             robot={committedRobot}
+            theme={theme}
             victorySequenceActive={showVictorySequence}
           />
         </group>
