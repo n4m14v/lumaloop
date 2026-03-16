@@ -138,7 +138,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   levelIndex: 0,
   programs: {},
   result: null,
-  robotColorId: "classic",
+  robotColorId: "gold",
   showAllActions: true,
   speed: 1,
   activeFrameIndex: null,

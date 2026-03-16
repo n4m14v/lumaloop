@@ -316,6 +316,9 @@ export function Robot({
     const accent = new Color(palette.gltfAccent);
     const lightLift = new Color("#f7f9fc");
     const isLightTheme = theme === "light";
+    const baseBodyLift = isLightTheme ? 0.22 : 0.14;
+    const baseAccentLift = isLightTheme ? 0.28 : 0.18;
+    const baseTrimLift = isLightTheme ? 0.14 : 0.06;
 
     for (const { material, originalColor } of tintMaterialsRef.current) {
       const hsl = { h: 0, s: 0, l: 0 };
@@ -324,31 +327,25 @@ export function Robot({
       if (hsl.l < 0.14 || hsl.s < 0.08) {
         material.color.copy(originalColor);
         if (isLightTheme && hsl.l > 0.06) {
-          material.color.lerp(lightLift, 0.12);
+          material.color.lerp(lightLift, baseTrimLift);
         }
         continue;
       }
 
       if (hsl.h > 0.04 && hsl.h < 0.16 && hsl.s > 0.18) {
         material.color.lerpColors(originalColor, primary, 0.92);
-        if (isLightTheme) {
-          material.color.lerp(lightLift, 0.16);
-        }
+        material.color.lerp(lightLift, baseBodyLift);
         continue;
       }
 
       if (hsl.h > 0.08 && hsl.h < 0.18 && hsl.l > 0.55) {
         material.color.lerpColors(originalColor, accent, 0.45);
-        if (isLightTheme) {
-          material.color.lerp(lightLift, 0.22);
-        }
+        material.color.lerp(lightLift, baseAccentLift);
         continue;
       }
 
       material.color.copy(originalColor);
-      if (isLightTheme) {
-        material.color.lerp(lightLift, 0.14);
-      }
+      material.color.lerp(lightLift, baseTrimLift);
     }
   }, [palette, theme]);
 

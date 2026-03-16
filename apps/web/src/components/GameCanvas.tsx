@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Edges, PerspectiveCamera } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import gsap from "gsap";
 import type { Group, MeshBasicMaterial, MeshStandardMaterial, PointLight } from "three";
@@ -34,6 +34,9 @@ const FAILURE_BLINK_RISE_DURATION = 0.24;
 const FAILURE_BLINK_HOLD_DURATION = 0.18;
 const FAILURE_BLINK_FALL_DURATION = 0.26;
 const FAILURE_BLINK_COUNT = 2;
+const LOW_TILE_FLOAT_AMPLITUDE = 0.18;
+const LOW_TILE_FLOAT_SPEED = 1.05;
+const LOW_TILE_FLOAT_BASE_LIFT = 0.08;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -107,7 +110,8 @@ function TileBlock({
 }) {
   const topMaterialRef = useRef<MeshStandardMaterial>(null);
   const stackCount = tile.z + 1;
-  const topColor = isLit ? "#87ff6c" : tile.kind === "TARGET" ? "#4ca8ff" : tile.kind === "BLOCKED" ? "#98adbf" : "#dfe4ea";
+  const topColor =
+    isLit ? "#87ff6c" : tile.kind === "TARGET" ? "#4ca8ff" : tile.kind === "BLOCKED" ? "#98adbf" : "#dfe4ea";
   const sideColor = tile.kind === "BLOCKED" ? "#8597a9" : "#bcc5ce";
   const emissive = isLit ? "#66ff55" : tile.kind === "TARGET" ? "#3f8fff" : "#5f7b95";
   const baseEmissiveIntensity = isLit ? 1.3 : tile.kind === "TARGET" ? 0.48 : 0.14;
@@ -375,24 +379,57 @@ function VictoryBeam({
   );
 }
 
+function FloatingFloorTile({
+  animated,
+  x,
+  y,
+}: {
+  animated: boolean;
+  x: number;
+  y: number;
+}) {
+  const groupRef = useRef<Group>(null);
+  const phase = x * 0.45 + y * 0.6;
+
+  useFrame(({ clock }) => {
+    const group = groupRef.current;
+    if (!group) {
+      return;
+    }
+
+    group.position.y = animated
+      ? 0.05 +
+        LOW_TILE_FLOAT_BASE_LIFT +
+        Math.sin(clock.getElapsedTime() * LOW_TILE_FLOAT_SPEED + phase) * LOW_TILE_FLOAT_AMPLITUDE
+      : 0.05;
+  });
+
+  return (
+    <group position={[x * TILE_SIZE, 0.05, y * TILE_SIZE]} ref={groupRef}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[2, 0.1, 2]} />
+        <meshStandardMaterial color="#d0d6de" />
+        <meshStandardMaterial color="#d0d6de" />
+        <meshStandardMaterial color="#edf1f5" />
+        <meshStandardMaterial color="#b3bdc8" />
+        <meshStandardMaterial color="#d0d6de" />
+        <meshStandardMaterial color="#d0d6de" />
+        <Edges color="#707985" scale={1} threshold={15} />
+      </mesh>
+    </group>
+  );
+}
+
 function GridFloor({ level }: { level: LevelDefinition }) {
   const { minX, maxX, minY, maxY } = getBoardMetrics(level);
   const padding = 2;
   const tiles = [];
+  const occupiedTiles = new Set(level.board.map((tile) => `${tile.x},${tile.y}`));
 
   for (let x = minX - padding; x <= maxX + padding; x += 1) {
     for (let y = minY - padding; y <= maxY + padding; y += 1) {
       tiles.push(
-        <mesh castShadow key={`${x},${y}`} position={[x * TILE_SIZE, 0.05, y * TILE_SIZE]} receiveShadow>
-          <boxGeometry args={[2, 0.1, 2]} />
-          <meshStandardMaterial color="#d0d6de" />
-          <meshStandardMaterial color="#d0d6de" />
-          <meshStandardMaterial color="#edf1f5" />
-          <meshStandardMaterial color="#b3bdc8" />
-          <meshStandardMaterial color="#d0d6de" />
-          <meshStandardMaterial color="#d0d6de" />
-          <Edges color="#707985" scale={1} threshold={15} />
-        </mesh>,
+        <FloatingFloorTile animated={!occupiedTiles.has(`${x},${y}`)} key={`${x},${y}`} x={x} y={y} />,
       );
     }
   }
@@ -518,6 +555,20 @@ export function GameCanvas({
     previousQuarterTurnsRef.current = quarterTurns;
     resetView(0.24);
   }, [level.id]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const parallaxX = Math.sin(orbitAzimuth) * 28;
+    const parallaxY = (orbitElevation - CAMERA_BASE_ELEVATION) * -42;
+
+    root.style.setProperty("--space-parallax-x", `${parallaxX.toFixed(2)}px`);
+    root.style.setProperty("--space-parallax-y", `${parallaxY.toFixed(2)}px`);
+
+    return () => {
+      root.style.setProperty("--space-parallax-x", "0px");
+      root.style.setProperty("--space-parallax-y", "0px");
+    };
+  }, [orbitAzimuth, orbitElevation]);
 
   useEffect(() => {
     if (!isRotationLocked) {

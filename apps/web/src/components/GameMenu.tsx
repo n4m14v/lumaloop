@@ -302,7 +302,7 @@ export function GameMenu({
               onOpen={openSubmenu}
               value={robotColorId}
             >
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {ROBOT_COLOR_IDS.map((colorId) => (
                   <button
                     aria-label={colorId}
