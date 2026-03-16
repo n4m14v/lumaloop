@@ -101,20 +101,28 @@ function TileBlock({
   isActive,
   isLit,
   tile,
+  victoryGlow,
 }: {
   failureBlink: boolean;
   failurePulseToken: object | null;
   isActive: boolean;
   isLit: boolean;
   tile: LevelDefinition["board"][number];
+  victoryGlow: boolean;
 }) {
   const topMaterialRef = useRef<MeshStandardMaterial>(null);
+  const targetCoreMaterialRef = useRef<MeshBasicMaterial>(null);
+  const targetSuccessGlowRef = useRef<MeshBasicMaterial>(null);
+  const targetLightRef = useRef<PointLight>(null);
+  const targetOrbGroupRef = useRef<Group>(null);
   const stackCount = tile.z + 1;
+  const isTarget = tile.kind === "TARGET";
+  const chamberCenterY = stackCount * BLOCK_HEIGHT * 0.5;
   const topColor =
-    isLit ? "#87ff6c" : tile.kind === "TARGET" ? "#4ca8ff" : tile.kind === "BLOCKED" ? "#98adbf" : "#dfe4ea";
+    isLit ? "#87ff6c" : isTarget ? "#89d8ff" : tile.kind === "BLOCKED" ? "#98adbf" : "#dfe4ea";
   const sideColor = tile.kind === "BLOCKED" ? "#8597a9" : "#bcc5ce";
-  const emissive = isLit ? "#66ff55" : tile.kind === "TARGET" ? "#3f8fff" : "#5f7b95";
-  const baseEmissiveIntensity = isLit ? 1.3 : tile.kind === "TARGET" ? 0.48 : 0.14;
+  const emissive = isLit ? "#66ff55" : isTarget ? "#7fc8ff" : "#5f7b95";
+  const baseEmissiveIntensity = isLit ? 1.3 : isTarget ? 0.38 : 0.14;
 
   useEffect(() => {
     const topMaterial = topMaterialRef.current;
@@ -221,30 +229,216 @@ function TileBlock({
     };
   }, [baseEmissiveIntensity, failureBlink, failurePulseToken]);
 
+  useEffect(() => {
+    if (!isTarget || !targetCoreMaterialRef.current || !targetLightRef.current) {
+      return;
+    }
+
+    const coreMaterial = targetCoreMaterialRef.current;
+    const coreLight = targetLightRef.current;
+    const successGlowMaterial = targetSuccessGlowRef.current;
+    const baseOpacity = isLit ? 1 : 0.92;
+    const baseScale = isLit ? 1.2 : 1;
+    const baseIntensity = isLit ? 1.45 : 0.72;
+    const baseColor = new Color(isLit ? "#86f6ff" : "#5adfff");
+    const timeline = gsap.timeline();
+
+    gsap.set(coreMaterial.color, { r: baseColor.r, g: baseColor.g, b: baseColor.b });
+    gsap.set(coreMaterial, { opacity: baseOpacity });
+    if (successGlowMaterial) {
+      gsap.set(successGlowMaterial, { opacity: 0 });
+      gsap.set(successGlowMaterial.color, { r: 1, g: 0.97, b: 0.78 });
+    }
+    gsap.set(coreLight.color, { r: baseColor.r, g: baseColor.g, b: baseColor.b });
+    gsap.set(coreLight, { intensity: baseIntensity });
+    if (targetOrbGroupRef.current) {
+      gsap.set(targetOrbGroupRef.current.scale, { x: baseScale, y: baseScale, z: baseScale });
+    }
+
+    if (victoryGlow) {
+      const victoryColor = new Color("#ffe57a");
+      timeline.to(coreMaterial, { duration: 0.28, ease: "power2.out", opacity: 0 }, 0);
+      timeline.to(coreMaterial.color, {
+        duration: 0.28,
+        ease: "power2.out",
+        r: victoryColor.r,
+        g: victoryColor.g,
+        b: victoryColor.b,
+      }, 0);
+      if (successGlowMaterial) {
+        timeline.to(successGlowMaterial, { duration: 0.32, ease: "power2.out", opacity: 0.95 }, 0.04);
+      }
+      timeline.to(coreLight.color, {
+        duration: 0.42,
+        ease: "power2.out",
+        r: victoryColor.r,
+        g: victoryColor.g,
+        b: victoryColor.b,
+      }, 0);
+      timeline.to(coreLight, { duration: 0.4, ease: "power2.out", intensity: 4.6 }, 0);
+      if (targetOrbGroupRef.current) {
+        timeline.to(targetOrbGroupRef.current.scale, { duration: 0.22, ease: "power2.out", x: 1, y: 1, z: 1 }, 0);
+      }
+    } else {
+      timeline.to(coreMaterial, { duration: 0.24, ease: "power2.out", opacity: baseOpacity }, 0);
+      if (successGlowMaterial) {
+        timeline.to(successGlowMaterial, { duration: 0.18, ease: "power2.out", opacity: 0 }, 0);
+      }
+      timeline.to(coreLight, { duration: 0.24, ease: "power2.out", intensity: baseIntensity }, 0);
+      if (targetOrbGroupRef.current) {
+        timeline.to(targetOrbGroupRef.current.scale, { duration: 0.24, ease: "power2.out", x: baseScale, y: baseScale, z: baseScale }, 0);
+      }
+    }
+
+    return () => {
+      timeline.kill();
+    };
+  }, [isLit, isTarget, victoryGlow]);
+
+  useFrame(({ clock }) => {
+    if (!isTarget || !targetOrbGroupRef.current) {
+      return;
+    }
+
+    const t = clock.getElapsedTime();
+    targetOrbGroupRef.current.position.y = chamberCenterY + Math.sin(t * 1.8 + tile.x * 0.4 + tile.y * 0.35) * 0.02;
+  });
+
   return (
     <group position={[tile.x * TILE_SIZE, 0, tile.y * TILE_SIZE]}>
       {Array.from({ length: stackCount }, (_, layer) => (
         <mesh castShadow key={layer} position={[0, BLOCK_HEIGHT * (layer + 0.5), 0]} receiveShadow>
           <boxGeometry args={[1.92, BLOCK_HEIGHT, 1.92]} />
-          <meshStandardMaterial color={sideColor} />
-          <meshStandardMaterial color={sideColor} />
-          <meshStandardMaterial color={topColor} />
-          <meshStandardMaterial color="#9ea8b3" />
-          <meshStandardMaterial color={sideColor} />
-          <meshStandardMaterial color={sideColor} />
+          {isTarget ? (
+            <>
+              <meshPhysicalMaterial
+                color="#b7e5ff"
+                metalness={0.02}
+                opacity={0.3}
+                roughness={0.06}
+                thickness={1.4}
+                transmission={0.66}
+                transparent
+              />
+              <meshPhysicalMaterial
+                color="#b7e5ff"
+                metalness={0.02}
+                opacity={0.3}
+                roughness={0.06}
+                thickness={1.4}
+                transmission={0.66}
+                transparent
+              />
+              <meshPhysicalMaterial
+                color="#d8f4ff"
+                metalness={0.02}
+                opacity={0.26}
+                roughness={0.04}
+                thickness={1.1}
+                transmission={0.72}
+                transparent
+              />
+              <meshStandardMaterial color="#90a1b2" />
+              <meshPhysicalMaterial
+                color="#b7e5ff"
+                metalness={0.02}
+                opacity={0.3}
+                roughness={0.06}
+                thickness={1.4}
+                transmission={0.66}
+                transparent
+              />
+              <meshPhysicalMaterial
+                color="#b7e5ff"
+                metalness={0.02}
+                opacity={0.3}
+                roughness={0.06}
+                thickness={1.4}
+                transmission={0.66}
+                transparent
+              />
+            </>
+          ) : (
+            <>
+              <meshStandardMaterial color={sideColor} />
+              <meshStandardMaterial color={sideColor} />
+              <meshStandardMaterial color={topColor} />
+              <meshStandardMaterial color="#9ea8b3" />
+              <meshStandardMaterial color={sideColor} />
+              <meshStandardMaterial color={sideColor} />
+            </>
+          )}
           <Edges color="#69717b" scale={1} threshold={15} />
         </mesh>
       ))}
       <mesh castShadow receiveShadow position={[0, stackCount * BLOCK_HEIGHT + 0.06, 0]}>
         <boxGeometry args={[2, 0.14, 2]} />
-        <meshStandardMaterial
-          color={topColor}
-          emissive={emissive}
-          emissiveIntensity={baseEmissiveIntensity}
-          ref={topMaterialRef}
-        />
+        {isTarget ? (
+          <meshPhysicalMaterial
+            color="#d5f1ff"
+            emissive={emissive}
+            emissiveIntensity={Math.max(baseEmissiveIntensity - 0.08, 0.2)}
+            metalness={0.04}
+            opacity={0.46}
+            ref={topMaterialRef}
+            roughness={0.05}
+            thickness={0.9}
+            transmission={0.68}
+            transparent
+          />
+        ) : (
+          <meshStandardMaterial
+            color={topColor}
+            emissive={emissive}
+            emissiveIntensity={baseEmissiveIntensity}
+            ref={topMaterialRef}
+          />
+        )}
         <Edges color="#5f6771" scale={1} threshold={15} />
       </mesh>
+      {isTarget ? (
+        <group position={[0, chamberCenterY, 0]} ref={targetOrbGroupRef}>
+          <pointLight color={isLit ? "#86f6ff" : "#5adfff"} distance={2.8} intensity={0.72} ref={targetLightRef} />
+          <mesh renderOrder={2}>
+            <boxGeometry args={[0.62, 0.62, 0.62]} />
+            <meshBasicMaterial
+              color={isLit ? "#86f6ff" : "#5adfff"}
+              blending={AdditiveBlending}
+              depthTest={false}
+              depthWrite={false}
+              opacity={1}
+              ref={targetCoreMaterialRef}
+              toneMapped={false}
+              transparent
+            />
+          </mesh>
+          <mesh renderOrder={3}>
+            <boxGeometry args={[0.28, 0.28, 0.28]} />
+            <meshBasicMaterial
+              blending={AdditiveBlending}
+              color="#ffffff"
+              depthTest={false}
+              depthWrite={false}
+              opacity={0.95}
+              toneMapped={false}
+              transparent
+            />
+          </mesh>
+          <mesh renderOrder={4}>
+            <sphereGeometry args={[0.34, 24, 24]} />
+            <meshBasicMaterial
+              blending={AdditiveBlending}
+              color="#ffe57a"
+              depthTest={false}
+              depthWrite={false}
+              opacity={0}
+              ref={targetSuccessGlowRef}
+              toneMapped={false}
+              transparent
+            />
+          </mesh>
+        </group>
+      ) : null}
       {isActive ? null : null}
     </group>
   );
@@ -655,6 +849,7 @@ export function GameCanvas({
                 isLit={tile.kind === "TARGET" && litTargets.includes(tile.id as string)}
                 key={tile.kind === "TARGET" ? tile.id : tileKey}
                 tile={tile}
+                victoryGlow={showVictorySequence && tileKey === `${committedRobot.x},${committedRobot.y},${committedRobot.z}`}
               />
             );
           })}

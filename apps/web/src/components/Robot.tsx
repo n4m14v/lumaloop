@@ -15,8 +15,8 @@ const MODEL_FOOT_OFFSET = 0.08;
 const MODEL_URL = "/models/RobotExpressive.glb";
 const MODEL_SCALE = 0.42;
 const DEFAULT_SURPRISE_INFLUENCE = 0.2;
-const FORWARD_MOVE_DURATION = 0.98;
-const FORWARD_WALK_TIME_SCALE = 1.1;
+const FORWARD_MOVE_DURATION = 1.08;
+const FORWARD_WALK_TIME_SCALE = 1;
 const ROBOT_METAL_ENV_INTENSITY = 1.15;
 const ROBOT_RIM_LIGHT_INTENSITY = 0.46;
 export const ROBOT_VICTORY_EMOTE_DELAY_MS = 900;
@@ -467,6 +467,7 @@ export function Robot({
     }
 
     const root = rootRef.current;
+    const model = modelRef.current;
     const [targetX, targetY, targetZ] = toWorldPosition(activeFrame.robotAfter);
     const targetRotation = getShortestRotationTarget(
       root.rotation.y,
@@ -531,7 +532,40 @@ export function Robot({
     });
 
     if (activeFrame.command === "FORWARD") {
-      timeline.to(root.position, { duration: movementDuration, x: targetX, y: targetY, z: targetZ }, 0);
+      const shadowMaterial = shadowRef.current;
+      const travelStartY = root.position.y;
+
+      timeline.to(root.position, { duration: movementDuration, ease: "none", x: targetX, z: targetZ }, 0);
+      timeline.to(root.position, { duration: movementDuration * 0.34, ease: "power1.out", y: travelStartY + 0.12 }, 0);
+      timeline.to(root.position, { duration: movementDuration * 0.36, ease: "power1.in", y: targetY }, movementDuration * 0.34);
+      if (model) {
+        timeline.to(model.scale, {
+          duration: movementDuration * 0.24,
+          ease: "power2.out",
+          x: MODEL_SCALE * 1.03,
+          y: MODEL_SCALE * 0.97,
+          z: MODEL_SCALE * 1.03,
+        }, 0);
+        timeline.to(model.scale, {
+          duration: movementDuration * 0.28,
+          ease: "power2.inOut",
+          x: MODEL_SCALE * 0.98,
+          y: MODEL_SCALE * 1.03,
+          z: MODEL_SCALE * 0.98,
+        }, movementDuration * 0.24);
+        timeline.to(model.scale, {
+          duration: movementDuration * 0.2,
+          ease: "power2.out",
+          x: MODEL_SCALE,
+          y: MODEL_SCALE,
+          z: MODEL_SCALE,
+        }, movementDuration * 0.52);
+      }
+      if (shadowMaterial) {
+        timeline.to(shadowMaterial, { duration: movementDuration * 0.24, ease: "power2.out", opacity: 0.26 }, 0);
+        timeline.to(shadowMaterial, { duration: movementDuration * 0.28, ease: "power2.inOut", opacity: 0.14 }, movementDuration * 0.24);
+        timeline.to(shadowMaterial, { duration: movementDuration * 0.2, ease: "power2.out", opacity: 0.2 }, movementDuration * 0.52);
+      }
     } else if (activeFrame.command === "JUMP") {
       timeline.to(root.position, { duration: movementDuration, x: targetX, z: targetZ }, 0);
       timeline.to(root.position, { duration: movementDuration / 2, y: targetY + 0.92 }, 0);
