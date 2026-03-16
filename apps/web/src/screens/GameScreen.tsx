@@ -4,6 +4,7 @@ import { Play, Sparkles } from "lucide-react";
 
 import { GameCanvas } from "../components/GameCanvas";
 import { GameMenu } from "../components/GameMenu";
+import { LanguageSelect } from "../components/LanguageSelect";
 import { ProgramWorkspace } from "../components/ProgramWorkspace";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { campaignLevels, createSlotsForLevel, useGameStore } from "../features/game/store";
@@ -213,32 +214,33 @@ export function GameScreen() {
 
               <div className="pointer-events-none relative z-10 flex min-h-[calc(100vh-3rem)] flex-col">
                 <div className="pointer-events-none relative xl:pr-[364px]">
-                  <div className="ui-gloss-panel pointer-events-auto grid gap-3 px-4 py-2.5 md:grid-cols-[auto_1fr_auto] md:items-center xl:pr-20">
+                  <div className="ui-gloss-panel pointer-events-auto grid gap-3 px-4 py-2.5 md:grid-cols-[auto_1fr_auto] md:items-center xl:pr-20" dir="ltr">
                     <div className="flex items-center gap-2">
-                      <ThemeToggle
-                        onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
-                        theme={theme}
-                      />
                       <GameMenu
-                      cameraRotationLocked={isRotationLocked}
-                      level={level}
-                      levels={localizedLevels}
-                      levelIndex={levelIndex}
+                        cameraRotationLocked={isRotationLocked}
+                        level={level}
+                        levels={localizedLevels}
+                        levelIndex={levelIndex}
                         onLevelChange={setLevelIndex}
                         onReset={stopRun}
                         onRotateLeft={() => rotateCamera(-1)}
                         onRotateRight={() => rotateCamera(1)}
                         onSetRobotColorId={setRobotColorId}
-                      onSetShowAllActions={setShowAllActions}
-                      onSetSpeed={setSpeed}
-                      onStep={stepRun}
-                      scoreStars={displayedScore.starsEarned}
-                      result={result}
-                      robotColorId={robotColorId}
-                      showAllActions={showAllActions}
+                        onSetShowAllActions={setShowAllActions}
+                        onSetSpeed={setSpeed}
+                        onStep={stepRun}
+                        scoreStars={displayedScore.starsEarned}
+                        result={result}
+                        robotColorId={robotColorId}
+                        showAllActions={showAllActions}
                         speed={speed}
                         stepsTaken={committedFrames}
                         targetsSummary={`[${litTargets.length}/${totalTargets}]`}
+                      />
+                      <LanguageSelect />
+                      <ThemeToggle
+                        onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
+                        theme={theme}
                       />
                     </div>
 
@@ -272,46 +274,43 @@ export function GameScreen() {
                 </div>
 
                 <div className="flex-1" />
-
-                <div className="pointer-events-none pb-2 pt-6 xl:pr-[364px]">
-                  {showSuccessPopup ? (
-                    <div className="mb-5 flex justify-center">
-                      <div className="ui-panel pointer-events-auto w-[min(92%,380px)] rounded-[24px] p-6 text-center">
-                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--panel-border)] bg-[var(--panel-bg-soft)] text-[var(--accent)] shadow-[0_0_24px_var(--accent-shadow)]">
-                          <Sparkles className="h-7 w-7" />
-                        </div>
-                        <h2 className="font-display text-3xl font-semibold">{t.puzzleSolved}</h2>
-                        <p className="mt-4 flex justify-center gap-3 text-4xl">{renderScoreStars(result?.score.starsEarned ?? 0)}</p>
-                        <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">{t.successBody}</p>
-                        <p className="mt-3 text-xs uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                          {t.programSize(result?.score.programLength ?? currentProgramLength)}
-                          {level.metadata?.idealSolutionLength ? ` - ${t.idealSize(level.metadata.idealSolutionLength)}` : ""}
-                        </p>
-                        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                          <button className="ui-button h-12 justify-center text-sm uppercase tracking-[0.08em]" onClick={stopRun} type="button">
-                            {t.replay}
-                          </button>
-                          <button
-                            className="ui-button-accent h-12 rounded-[14px] px-4 text-sm uppercase tracking-[0.08em] disabled:cursor-not-allowed disabled:opacity-50"
-                            disabled={!hasNextLevel}
-                            onClick={() => {
-                              if (!hasNextLevel) {
-                                return;
-                              }
-                              stopRun();
-                              setLevelIndex(levelIndex + 1);
-                            }}
-                            type="button"
-                          >
-                            {t.next}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
-                </div>
               </div>
+
+              {showSuccessPopup ? (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md">
+                  <div className="ui-panel pointer-events-auto w-[min(92%,400px)] rounded-[24px] p-8 text-center shadow-2xl">
+                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--panel-border)] bg-[var(--panel-bg-soft)] text-[var(--accent)] shadow-[0_0_32px_var(--accent-shadow)]">
+                      <Sparkles className="h-8 w-8" />
+                    </div>
+                    <h2 className="font-display text-4xl font-semibold tracking-tight">{t.puzzleSolved}</h2>
+                    <p className="mt-5 flex justify-center gap-4 text-5xl">{renderScoreStars(result?.score.starsEarned ?? 0)}</p>
+                    <p className="mt-6 text-base leading-relaxed text-[var(--text-secondary)]">{t.successBody}</p>
+                    <p className="mt-4 text-[11px] uppercase tracking-[0.15em] text-[var(--text-muted)]">
+                      {t.programSize(result?.score.programLength ?? currentProgramLength)}
+                      {level.metadata?.idealSolutionLength ? ` • ${t.idealSize(level.metadata.idealSolutionLength)}` : ""}
+                    </p>
+                    <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                      <button className="ui-button h-12 justify-center text-sm font-semibold uppercase tracking-[0.1em]" onClick={stopRun} type="button">
+                        {t.replay}
+                      </button>
+                      <button
+                        className="ui-button-accent h-12 rounded-[14px] px-4 text-sm font-semibold uppercase tracking-[0.1em] disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={!hasNextLevel}
+                        onClick={() => {
+                          if (!hasNextLevel) {
+                            return;
+                          }
+                          stopRun();
+                          setLevelIndex(levelIndex + 1);
+                        }}
+                        type="button"
+                      >
+                        {t.next}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </>
           }
         />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
-import { Check, ChevronRight, Menu, X } from "lucide-react";
+import { Check, ChevronRight, Settings, X } from "lucide-react";
 
 import type { LevelDefinition, RunResult } from "@lumaloop/engine";
 
@@ -9,7 +9,7 @@ import type { PlaybackSpeed } from "../features/game/store";
 import { useI18n } from "../i18n/I18nProvider";
 import { LOCALE_OPTIONS, getRunStatusMessage } from "../i18n/translations";
 
-type SubmenuId = "language" | "level" | "actions" | "robot" | "status" | "hint";
+type SubmenuId = "level" | "actions" | "robot" | "status" | "hint";
 
 function SegmentButton({
   active,
@@ -117,10 +117,7 @@ function SubmenuRow({
 
       {active ? (
         <div
-          className={[
-            "ui-panel absolute top-[calc(100%+8px)] z-30 w-[280px] rounded-[16px] p-3.5 sm:top-0",
-            isRtl ? "right-0 sm:right-[calc(100%+10px)]" : "left-0 sm:left-[calc(100%+10px)]",
-          ].join(" ")}
+          className="ui-panel absolute top-[calc(100%+8px)] left-0 z-30 w-[280px] rounded-[16px] p-3.5 sm:left-[calc(100%+10px)] sm:top-0"
           onMouseEnter={onCancelClose}
           onMouseLeave={onScheduleClose}
         >
@@ -173,10 +170,7 @@ export function GameMenu({
   const statusMessage = getRunStatusMessage(locale, result, "menu");
   const hintText = level.metadata?.designerNotes ?? t.defaultHint;
 
-  const currentLocaleLabel = useMemo(
-    () => LOCALE_OPTIONS.find((option) => option.value === locale)?.label ?? locale,
-    [locale],
-  );
+
 
   function openSubmenu(id: SubmenuId) {
     setActiveSubmenu(id);
@@ -220,7 +214,7 @@ export function GameMenu({
     <div className="relative" ref={containerRef}>
       <button
         aria-label={t.menu}
-        className="ui-button h-9 w-9 justify-center px-0"
+        className="ui-button h-8 w-8 justify-center px-0"
         onClick={() => {
           setOpen((value) => !value);
           setActiveSubmenu(null);
@@ -228,15 +222,12 @@ export function GameMenu({
         title={t.menu}
         type="button"
       >
-        <Menu className="h-4 w-4" />
+        <Settings className="h-4 w-4" />
       </button>
 
       {open ? (
         <div
-          className={[
-            "ui-panel absolute top-[calc(100%+10px)] z-20 w-[264px] max-h-[calc(100vh-96px)] overflow-visible rounded-[16px] p-3.5 text-[var(--text-primary)]",
-            isRtl ? "right-0" : "left-0",
-          ].join(" ")}
+          className="ui-panel absolute left-0 top-[calc(100%+10px)] z-20 max-h-[calc(100vh-96px)] w-[264px] overflow-visible rounded-[16px] p-3.5 text-[var(--text-primary)]"
         >
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
@@ -263,24 +254,7 @@ export function GameMenu({
           </div>
 
           <div className="space-y-2">
-            <SubmenuRow
-              active={activeSubmenu === "language"}
-              id="language"
-              isRtl={isRtl}
-              label={t.language}
-              onCancelClose={cancelScheduledClose}
-              onScheduleClose={scheduleClose}
-              onOpen={openSubmenu}
-              value={currentLocaleLabel}
-            >
-              <OptionList
-                options={LOCALE_OPTIONS.map((option) => ({
-                  active: option.value === locale,
-                  label: option.label,
-                  onClick: () => setLocale(option.value as typeof locale),
-                }))}
-              />
-            </SubmenuRow>
+
 
             <SubmenuRow
               active={activeSubmenu === "level"}

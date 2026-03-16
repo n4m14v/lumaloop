@@ -595,10 +595,10 @@ export function localizeLevel(level: LevelDefinition, locale: Locale): LevelDefi
     name: copy.name,
     metadata: level.metadata
       ? {
-          ...level.metadata,
-          concept: copy.concept ?? level.metadata.concept,
-          designerNotes: copy.designerNotes ?? level.metadata.designerNotes,
-        }
+        ...level.metadata,
+        concept: copy.concept ?? level.metadata.concept,
+        designerNotes: copy.designerNotes ?? level.metadata.designerNotes,
+      }
       : undefined,
   };
 }

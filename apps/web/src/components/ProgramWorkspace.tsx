@@ -99,7 +99,9 @@ function Slot({
           onClick={onRemove}
           type="button"
         >
-          <CommandTile command={command} isActive={isCurrent} />
+          <div className="ui-action-pop h-full w-full" key={command}>
+            <CommandTile command={command} isActive={isCurrent} />
+          </div>
         </button>
       ) : (
         <button
@@ -166,7 +168,7 @@ function RoutineSection({
           </p>
         </div>
         <button
-          className="ui-button h-8 rounded-[8px] px-2.5 py-1.5 text-[10px] uppercase tracking-[0.04em]"
+          className="ui-button h-7 rounded-[7px] px-2 py-1 !text-[9px] uppercase tracking-[0.05em]"
           disabled={isLocked}
           onClick={(event) => {
             event.stopPropagation();
