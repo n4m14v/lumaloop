@@ -6,6 +6,7 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import gsap from "gsap";
 import type { Group, MeshBasicMaterial, MeshStandardMaterial, PointLight } from "three";
 import { AdditiveBlending, DoubleSide } from "three";
+import { Color } from "three";
 
 import type { LevelDefinition, RobotState, TraceFrame } from "@lumaloop/engine";
 
@@ -26,7 +27,10 @@ const CAMERA_BASE_AZIMUTH = Math.PI / 4;
 const CAMERA_BASE_ELEVATION = 0.68;
 const CAMERA_MIN_ELEVATION = 0.34;
 const CAMERA_MAX_ELEVATION = 1.12;
-const FAILURE_BLINK_STEP_DURATION = 0.16;
+const FAILURE_BLINK_RISE_DURATION = 0.24;
+const FAILURE_BLINK_HOLD_DURATION = 0.18;
+const FAILURE_BLINK_FALL_DURATION = 0.26;
+const FAILURE_BLINK_COUNT = 2;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -109,24 +113,101 @@ function TileBlock({
       return;
     }
 
-    const peakEmissiveIntensity = Math.max(baseEmissiveIntensity + 0.72, 0.92);
+    const peakEmissiveIntensity = Math.max(baseEmissiveIntensity + 1.18, 1.28);
     const timeline = gsap.timeline();
+    const baseColor = topMaterial.color.clone();
+    const baseEmissive = topMaterial.emissive.clone();
+    const failureColor = new Color("#d58c8c");
+    const failureEmissive = new Color("#c85f5f");
 
-    for (let blinkIndex = 0; blinkIndex < 3; blinkIndex += 1) {
+    for (let blinkIndex = 0; blinkIndex < FAILURE_BLINK_COUNT; blinkIndex += 1) {
       timeline.to(topMaterial, {
-        duration: FAILURE_BLINK_STEP_DURATION,
-        ease: "power1.inOut",
+        duration: FAILURE_BLINK_RISE_DURATION,
+        ease: "power2.out",
         emissiveIntensity: peakEmissiveIntensity,
       });
+      timeline.to(
+        topMaterial.color,
+        {
+          duration: FAILURE_BLINK_RISE_DURATION,
+          ease: "power2.out",
+          r: failureColor.r,
+          g: failureColor.g,
+          b: failureColor.b,
+        },
+        "<",
+      );
+      timeline.to(
+        topMaterial.emissive,
+        {
+          duration: FAILURE_BLINK_RISE_DURATION,
+          ease: "power2.out",
+          r: failureEmissive.r,
+          g: failureEmissive.g,
+          b: failureEmissive.b,
+        },
+        "<",
+      );
       timeline.to(topMaterial, {
-        duration: FAILURE_BLINK_STEP_DURATION,
-        ease: "power1.inOut",
+        duration: FAILURE_BLINK_HOLD_DURATION,
+        ease: "none",
+        emissiveIntensity: peakEmissiveIntensity,
+      });
+      timeline.to(
+        topMaterial.color,
+        {
+          duration: FAILURE_BLINK_HOLD_DURATION,
+          ease: "none",
+          r: failureColor.r,
+          g: failureColor.g,
+          b: failureColor.b,
+        },
+        "<",
+      );
+      timeline.to(
+        topMaterial.emissive,
+        {
+          duration: FAILURE_BLINK_HOLD_DURATION,
+          ease: "none",
+          r: failureEmissive.r,
+          g: failureEmissive.g,
+          b: failureEmissive.b,
+        },
+        "<",
+      );
+      timeline.to(topMaterial, {
+        duration: FAILURE_BLINK_FALL_DURATION,
+        ease: "power2.inOut",
         emissiveIntensity: baseEmissiveIntensity,
       });
+      timeline.to(
+        topMaterial.color,
+        {
+          duration: FAILURE_BLINK_FALL_DURATION,
+          ease: "power2.inOut",
+          r: baseColor.r,
+          g: baseColor.g,
+          b: baseColor.b,
+        },
+        "<",
+      );
+      timeline.to(
+        topMaterial.emissive,
+        {
+          duration: FAILURE_BLINK_FALL_DURATION,
+          ease: "power2.inOut",
+          r: baseEmissive.r,
+          g: baseEmissive.g,
+          b: baseEmissive.b,
+        },
+        "<",
+      );
     }
 
     return () => {
       timeline.kill();
+      topMaterial.color.copy(baseColor);
+      topMaterial.emissive.copy(baseEmissive);
       topMaterial.emissiveIntensity = baseEmissiveIntensity;
     };
   }, [baseEmissiveIntensity, failureBlink, failurePulseToken]);

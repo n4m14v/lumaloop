@@ -15,6 +15,7 @@ html[data-theme="dark"] {
   --panel-bg-soft: rgba(48, 56, 71, 0.7);
   --panel-border: rgba(112, 128, 154, 0.55);
   --panel-border-strong: rgba(149, 166, 194, 0.3);
+  --action-bg: rgba(56, 68, 88, 0.9);
   --text-primary: #eef3fb;
   --text-secondary: rgba(231, 237, 247, 0.8);
   --text-muted: rgba(198, 207, 222, 0.68);
@@ -40,6 +41,7 @@ html[data-theme="light"] {
   --panel-bg-soft: rgba(247, 249, 252, 0.9);
   --panel-border: rgba(148, 163, 184, 0.55);
   --panel-border-strong: rgba(148, 163, 184, 0.3);
+  --action-bg: rgba(226, 232, 240, 0.85);
   --text-primary: #182230;
   --text-secondary: rgba(24, 34, 48, 0.82);
   --text-muted: rgba(71, 85, 105, 0.78);

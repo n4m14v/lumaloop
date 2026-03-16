@@ -49,7 +49,7 @@ function CommandTile({
         "relative flex h-full w-full items-center justify-center rounded-[10px] border transition",
         isActive
           ? "border-[var(--accent)] bg-[var(--panel-bg-soft)] text-[var(--text-primary)] shadow-[0_0_0_1px_var(--accent),0_0_20px_var(--accent-shadow)]"
-          : "border-[var(--panel-border)] bg-[var(--panel-bg)] text-[var(--text-secondary)]",
+          : "border-[var(--panel-border)] bg-[var(--action-bg)] text-[var(--text-secondary)]",
       ].join(" ")}
     >
       <Icon absoluteStrokeWidth aria-hidden="true" className="h-[52%] w-[52%]" strokeWidth={ICON_STROKE} />

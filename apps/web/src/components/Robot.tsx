@@ -15,6 +15,8 @@ const MODEL_FOOT_OFFSET = 0.08;
 const MODEL_URL = "https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb";
 const MODEL_SCALE = 0.42;
 const DEFAULT_SURPRISE_INFLUENCE = 0.2;
+const FORWARD_MOVE_DURATION = 0.98;
+const FORWARD_WALK_TIME_SCALE = 1.1;
 export const ROBOT_VICTORY_EMOTE_DELAY_MS = 900;
 export const ROBOT_VICTORY_BEAM_EXIT_START_SECONDS = 1.46;
 export const ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS = 1.2;
@@ -430,7 +432,7 @@ export function Robot({
       activeFrame.command === "JUMP"
         ? 0.46
         : activeFrame.command === "FORWARD"
-          ? 0.84
+          ? FORWARD_MOVE_DURATION
           : activeFrame.command === "LIGHT"
             ? 0.44
             : 0.22;
@@ -458,7 +460,7 @@ export function Robot({
       );
       nextAction.clampWhenFinished = activeFrame.command === "JUMP" || activeFrame.command === "LIGHT";
       nextAction.timeScale =
-        activeFrame.command === "FORWARD" ? 1.25 : activeFrame.command === "LIGHT" ? 2.1 : 1;
+        activeFrame.command === "FORWARD" ? FORWARD_WALK_TIME_SCALE : activeFrame.command === "LIGHT" ? 2.1 : 1;
       nextAction.fadeIn(0.12).play();
       activeActionRef.current = nextAction;
     }
