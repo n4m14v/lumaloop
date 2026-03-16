@@ -80,4 +80,27 @@ export const world01Basics: LevelDefinition[] = [
       idealSolutionLength: 6,
     },
   },
+  {
+    id: "world-01-level-05",
+    name: "Switchback",
+    world: "world-01-basics",
+    board: [
+      { x: 0, y: 0, z: 0, kind: "NORMAL" },
+      { x: 1, y: 0, z: 0, kind: "NORMAL" },
+      { x: 2, y: 0, z: 0, kind: "NORMAL" },
+      { x: 2, y: 1, z: 0, kind: "NORMAL" },
+      { x: 3, y: 1, z: 0, kind: "NORMAL" },
+      { x: 4, y: 1, z: 0, kind: "NORMAL" },
+      { id: "goal-1", x: 4, y: 0, z: 0, kind: "TARGET" },
+    ],
+    start: { x: 0, y: 0, z: 0, facing: "E" },
+    allowedCommands: ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "LIGHT"],
+    slotLimits: { main: 10 },
+    stars: { one: 12, two: 11, three: 10 },
+    metadata: {
+      concept: "Longer routes require planning both turn direction and timing",
+      designerNotes: "The path looks simple, but one early turn or one late turn sends the robot off the board.",
+      idealSolutionLength: 10,
+    },
+  },
 ];
