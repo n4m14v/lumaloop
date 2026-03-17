@@ -21,7 +21,7 @@ import type { RobotColorId } from "./robotColors";
 export type SlotCommand = Command | null;
 export type RoutineSlots = Record<RoutineName, SlotCommand[]>;
 export type PlaybackSpeed = 1 | 2 | 4;
-export const ALL_COMMANDS: Command[] = ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "JUMP", "LIGHT", "CALL_P1", "CALL_P2"];
+export const ALL_COMMANDS: Command[] = ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "JUMP", "ACTIVATE", "CALL_P1", "CALL_P2"];
 const DEFAULT_PROC_SLOTS = 4;
 
 const MAX_STEPS = 1000;

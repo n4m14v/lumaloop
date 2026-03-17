@@ -93,7 +93,7 @@ export function executeCommand(input: {
         activatedTargetIds,
       };
     }
-    case "LIGHT": {
+    case "ACTIVATE": {
       const currentTile = boardIndex.get(boardKey(robot.x, robot.y));
       const targetId = getTargetId(currentTile);
 
@@ -101,7 +101,7 @@ export function executeCommand(input: {
         return {
           ok: false,
           status: "FAILED_WRONG_LIGHT",
-          reason: "LIGHT may only be used while standing on a TARGET tile.",
+          reason: "ACTIVATE may only be used while standing on a TARGET tile.",
         };
       }
 

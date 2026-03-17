@@ -7,7 +7,7 @@ export function createEmptyLevel(id: string, name: string, world: string): Level
     world,
     board: [{ x: 0, y: 0, z: 0, kind: "NORMAL" }],
     start: { x: 0, y: 0, z: 0, facing: "N" },
-    allowedCommands: ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "LIGHT"],
+    allowedCommands: ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "ACTIVATE"],
     slotLimits: { main: 6 },
     metadata: {
       concept: "Unspecified",

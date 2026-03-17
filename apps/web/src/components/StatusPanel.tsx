@@ -44,7 +44,7 @@ export function StatusPanel({
   totalTargets: number;
 }) {
   const { locale, t } = useI18n();
-  const statusMessage = getRunStatusMessage(locale, result, "panel");
+  const statusMessage = getRunStatusMessage(locale, result);
 
   return (
     <aside className="space-y-5">

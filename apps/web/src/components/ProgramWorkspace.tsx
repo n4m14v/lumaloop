@@ -1,9 +1,9 @@
 import {
-  ArrowBigUpDash,
-  ChevronUp,
-  Lightbulb,
-  RotateCcw,
-  RotateCw,
+  ArrowUp,
+  ChevronsUp,
+  CornerUpLeft,
+  CornerUpRight,
+  Power,
   SquareFunction,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -24,11 +24,11 @@ const commandMeta: Record<
     icon: LucideIcon;
   }
 > = {
-  FORWARD: { icon: ChevronUp },
-  TURN_LEFT: { icon: RotateCcw },
-  TURN_RIGHT: { icon: RotateCw },
-  JUMP: { icon: ArrowBigUpDash },
-  LIGHT: { icon: Lightbulb },
+  FORWARD: { icon: ArrowUp },
+  TURN_LEFT: { icon: CornerUpLeft },
+  TURN_RIGHT: { icon: CornerUpRight },
+  JUMP: { icon: ChevronsUp },
+  ACTIVATE: { icon: Power },
   CALL_P1: { icon: SquareFunction, badge: "1" },
   CALL_P2: { icon: SquareFunction, badge: "2" },
 };

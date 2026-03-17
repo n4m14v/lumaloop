@@ -63,11 +63,11 @@ Runtime state additionally tracks:
 - Jumping into `BLOCKED` or off the board is illegal.
 - Illegal jumps fail with `FAILED_INVALID_JUMP`.
 
-### LIGHT
+### ACTIVATE
 
 - The robot must be standing on a `TARGET` tile.
-- Executing `LIGHT` on a non-target tile fails with `FAILED_WRONG_LIGHT`.
-- Executing `LIGHT` on a target marks that target as activated.
+- Executing `ACTIVATE` on a non-target tile fails with `FAILED_WRONG_LIGHT`.
+- Executing `ACTIVATE` on a target marks that target as activated.
 - Re-lighting an already activated target is legal and leaves activation unchanged.
 
 ### CALL_P1 / CALL_P2

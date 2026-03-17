@@ -19,7 +19,7 @@ const baseLevel: LevelDefinition = {
     z: 0,
     facing: "E",
   },
-  allowedCommands: ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "JUMP", "LIGHT", "CALL_P1", "CALL_P2"],
+  allowedCommands: ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "JUMP", "ACTIVATE", "CALL_P1", "CALL_P2"],
   slotLimits: {
     main: 8,
     p1: 4,
@@ -52,7 +52,7 @@ describe("runProgram", () => {
     const result = runProgram({
       level: baseLevel,
       program: {
-        main: ["FORWARD", "FORWARD", "LIGHT"],
+        main: ["FORWARD", "FORWARD", "ACTIVATE"],
       },
     });
 
@@ -89,18 +89,18 @@ describe("runProgram", () => {
         ],
       },
       program: {
-        main: ["JUMP", "LIGHT"],
+        main: ["JUMP", "ACTIVATE"],
       },
     });
 
     expect(result.status).toBe("SUCCESS");
   });
 
-  it("fails when LIGHT is used on a non-target tile", () => {
+  it("fails when ACTIVATE is used on a non-target tile", () => {
     const result = runProgram({
       level: baseLevel,
       program: {
-        main: ["LIGHT"],
+        main: ["ACTIVATE"],
       },
     });
 
@@ -122,7 +122,7 @@ describe("runProgram", () => {
     const result = runProgram({
       level: baseLevel,
       program: {
-        main: ["CALL_P1", "LIGHT"],
+        main: ["CALL_P1", "ACTIVATE"],
         p1: ["FORWARD", "FORWARD"],
       },
     });
@@ -132,7 +132,7 @@ describe("runProgram", () => {
       "CALL_P1",
       "FORWARD",
       "FORWARD",
-      "LIGHT",
+      "ACTIVATE",
     ]);
   });
 
@@ -151,7 +151,7 @@ describe("runProgram", () => {
           z: 0,
           facing: "E",
         },
-        allowedCommands: ["FORWARD", "LIGHT", "CALL_P1"],
+        allowedCommands: ["FORWARD", "ACTIVATE", "CALL_P1"],
         slotLimits: {
           main: 1,
           p1: 3,
@@ -159,7 +159,7 @@ describe("runProgram", () => {
       },
       program: {
         main: ["CALL_P1"],
-        p1: ["LIGHT", "FORWARD", "CALL_P1"],
+        p1: ["ACTIVATE", "FORWARD", "CALL_P1"],
       },
     });
 
@@ -212,7 +212,7 @@ describe("runProgram", () => {
     const result = runProgram({
       level: {
         ...baseLevel,
-        allowedCommands: ["FORWARD", "LIGHT"],
+        allowedCommands: ["FORWARD", "ACTIVATE"],
         slotLimits: {
           main: 3,
         },
@@ -237,13 +237,13 @@ describe("runProgram", () => {
           { x: 2, y: -1, z: 0, kind: "NORMAL" },
           { id: "goal-1", x: 3, y: -1, z: 0, kind: "TARGET" },
         ],
-        allowedCommands: ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "LIGHT"],
+        allowedCommands: ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "ACTIVATE"],
         slotLimits: {
           main: 7,
         },
       },
       program: {
-        main: ["FORWARD", "FORWARD", "TURN_LEFT", "FORWARD", "TURN_RIGHT", "FORWARD", "LIGHT"],
+        main: ["FORWARD", "FORWARD", "TURN_LEFT", "FORWARD", "TURN_RIGHT", "FORWARD", "ACTIVATE"],
       },
     });
 

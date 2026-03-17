@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Play, Sparkles } from "lucide-react";
+import { ChevronDown, Play, Sparkles } from "lucide-react";
 
 import { GameCanvas } from "../components/GameCanvas";
 import { GameMenu } from "../components/GameMenu";
@@ -75,6 +75,8 @@ export function GameScreen() {
   const { locale, t } = useI18n();
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
+  const [isHeaderLevelMenuOpen, setIsHeaderLevelMenuOpen] = useState(false);
+  const headerLevelMenuRef = useRef<HTMLDivElement | null>(null);
   const lastResolvedSuccessRef = useRef<object | null>(null);
   const activeRoutine = useGameStore((state) => state.activeRoutine);
   const activeFrameIndex = useGameStore((state) => state.activeFrameIndex);
@@ -144,6 +146,24 @@ export function GameScreen() {
       setIsVictorySequenceComplete(false);
     }
   }, [committedFrames, result]);
+
+  useEffect(() => {
+    if (!isHeaderLevelMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!headerLevelMenuRef.current?.contains(event.target as Node)) {
+        setIsHeaderLevelMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isHeaderLevelMenuOpen]);
 
   if (!level) {
     return null;
@@ -220,9 +240,6 @@ export function GameScreen() {
                       <GameMenu
                         cameraRotationLocked={isRotationLocked}
                         level={level}
-                        levels={localizedLevels}
-                        levelIndex={levelIndex}
-                        onLevelChange={setLevelIndex}
                         onReset={stopRun}
                         onRotateLeft={() => rotateCamera(-1)}
                         onRotateRight={() => rotateCamera(1)}
@@ -230,13 +247,10 @@ export function GameScreen() {
                         onSetShowAllActions={setShowAllActions}
                         onSetSpeed={setSpeed}
                         onStep={stepRun}
-                        scoreStars={displayedScore.starsEarned}
                         result={result}
                         robotColorId={robotColorId}
                         showAllActions={showAllActions}
                         speed={speed}
-                        stepsTaken={committedFrames}
-                        targetsSummary={`[${litTargets.length}/${totalTargets}]`}
                       />
                       <LanguageSelect />
                       <ThemeToggle
@@ -245,10 +259,56 @@ export function GameScreen() {
                       />
                     </div>
 
-                    <div className="text-center">
-                      <h1 className="font-display text-[clamp(1.6rem,2.2vw,2.4rem)] font-semibold tracking-tight text-[var(--text-primary)]">
+                    <div className="flex items-center justify-center gap-3 text-center">
+                      <h1 className="font-display text-[clamp(1.15rem,1.35vw,1.5rem)] font-semibold tracking-[0.08em] text-[var(--text-primary)]">
                         LUMALOOP
                       </h1>
+                      <div className="relative pointer-events-auto" ref={headerLevelMenuRef}>
+                        <button
+                          aria-expanded={isHeaderLevelMenuOpen}
+                          className="ui-button flex h-9 items-center gap-2 rounded-[12px] px-3 text-left"
+                          onClick={() => setIsHeaderLevelMenuOpen((value) => !value)}
+                          type="button"
+                        >
+                          <span className="max-w-[min(42vw,19rem)] truncate text-[0.72rem] font-medium text-[var(--text-primary)] md:text-[0.78rem]">
+                            {t.level} {levelIndex + 1}: {level.name}
+                          </span>
+                          <ChevronDown
+                            className={[
+                              "h-3.5 w-3.5 shrink-0 text-[var(--text-muted)] transition",
+                              isHeaderLevelMenuOpen ? "rotate-180" : "",
+                            ].join(" ")}
+                          />
+                        </button>
+
+                        {isHeaderLevelMenuOpen ? (
+                          <div className="ui-panel absolute left-0 top-[calc(100%+10px)] z-30 max-h-[min(26rem,calc(100vh-10rem))] w-[min(26rem,78vw)] overflow-y-auto rounded-[16px] p-2.5 text-[var(--text-primary)]">
+                            <div className="space-y-1">
+                              {localizedLevels.map((levelOption, index) => (
+                                <button
+                                  className={[
+                                    "flex w-full items-center justify-between rounded-[10px] px-3 py-2 text-left text-[12px] transition",
+                                    index === levelIndex
+                                      ? "bg-[var(--accent-soft)] text-[var(--text-primary)]"
+                                      : "text-[var(--text-secondary)] hover:bg-white/5",
+                                  ].join(" ")}
+                                  key={levelOption.id}
+                                  onClick={() => {
+                                    setLevelIndex(index);
+                                    setIsHeaderLevelMenuOpen(false);
+                                  }}
+                                  type="button"
+                                >
+                                  <span className="truncate">{t.levelOptionLabel(index + 1, levelOption.name)}</span>
+                                  <span className="ml-3 text-[10px] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                                    {index === levelIndex ? "•" : ""}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-start gap-2 md:justify-end">

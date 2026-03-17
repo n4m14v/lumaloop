@@ -478,7 +478,7 @@ export function Robot({
         ? 0.46
         : activeFrame.command === "FORWARD"
           ? FORWARD_MOVE_DURATION
-          : activeFrame.command === "LIGHT"
+          : activeFrame.command === "ACTIVATE"
             ? 0.44
             : 0.22;
     const nextClip =
@@ -486,7 +486,7 @@ export function Robot({
         ? animationSet.walk
         : activeFrame.command === "JUMP"
           ? animationSet.jump
-          : activeFrame.command === "LIGHT"
+          : activeFrame.command === "ACTIVATE"
             ? animationSet.sit ?? animationSet.idle
           : animationSet.idle;
     const nextAction = getAction(nextClip);
@@ -500,12 +500,12 @@ export function Robot({
       nextAction.enabled = true;
       nextAction.reset();
       nextAction.setLoop(
-        activeFrame.command === "JUMP" || activeFrame.command === "LIGHT" ? LoopOnce : LoopRepeat,
-        activeFrame.command === "JUMP" || activeFrame.command === "LIGHT" ? 1 : Infinity,
+        activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE" ? LoopOnce : LoopRepeat,
+        activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE" ? 1 : Infinity,
       );
-      nextAction.clampWhenFinished = activeFrame.command === "JUMP" || activeFrame.command === "LIGHT";
+      nextAction.clampWhenFinished = activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE";
       nextAction.timeScale =
-        activeFrame.command === "FORWARD" ? FORWARD_WALK_TIME_SCALE : activeFrame.command === "LIGHT" ? 2.1 : 1;
+        activeFrame.command === "FORWARD" ? FORWARD_WALK_TIME_SCALE : activeFrame.command === "ACTIVATE" ? 2.1 : 1;
       nextAction.fadeIn(0.12).play();
       activeActionRef.current = nextAction;
     }
@@ -572,7 +572,7 @@ export function Robot({
       timeline.to(root.position, { duration: movementDuration / 2, y: targetY }, movementDuration / 2);
     } else if (activeFrame.command === "TURN_LEFT" || activeFrame.command === "TURN_RIGHT") {
       timeline.to(root.rotation, { duration: movementDuration, y: targetRotation }, 0);
-    } else if (activeFrame.command === "LIGHT") {
+    } else if (activeFrame.command === "ACTIVATE") {
       timeline.to({}, { duration: movementDuration }, 0);
     } else {
       timeline.to(root.position, { duration: 0.18, x: targetX, y: targetY, z: targetZ }, 0);

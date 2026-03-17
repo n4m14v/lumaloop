@@ -11,7 +11,7 @@ import { basicLevelExample } from "@lumaloop/level-schema/src/examples/basicLeve
 const result = runProgram({
   level: basicLevelExample,
   program: {
-    main: ["FORWARD", "FORWARD", "LIGHT"],
+    main: ["FORWARD", "FORWARD", "ACTIVATE"],
   },
 });
 ```

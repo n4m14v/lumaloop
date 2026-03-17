@@ -7,7 +7,7 @@ export const commandSchema = z.enum([
   "TURN_LEFT",
   "TURN_RIGHT",
   "JUMP",
-  "LIGHT",
+  "ACTIVATE",
   "CALL_P1",
   "CALL_P2",
 ]);

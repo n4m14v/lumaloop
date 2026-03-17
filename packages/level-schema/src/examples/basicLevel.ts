@@ -15,7 +15,7 @@ export const basicLevelExample: LevelDefinition = {
     z: 0,
     facing: "E",
   },
-  allowedCommands: ["FORWARD", "LIGHT"],
+  allowedCommands: ["FORWARD", "ACTIVATE"],
   slotLimits: {
     main: 3,
   },
