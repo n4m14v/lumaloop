@@ -3,33 +3,23 @@ import { createPortal } from "react-dom";
 
 import { Info, Settings, X } from "lucide-react";
 
-import type { LevelDefinition, RunResult } from "@lumaloop/engine";
+import type { LevelDefinition } from "@lumaloop/engine";
 
 import { ROBOT_COLOR_IDS, ROBOT_PALETTES, type RobotColorId } from "../features/game/robotColors";
-import type { PlaybackSpeed } from "../features/game/store";
 import { useI18n } from "../i18n/I18nProvider";
 
 export function GameMenu({
   level,
   onSetRobotColorId,
   onSetShowAllActions,
-  result,
   robotColorId,
   showAllActions,
 }: {
-  cameraRotationLocked: boolean;
   level: LevelDefinition;
-  onReset: () => void;
-  onRotateLeft: () => void;
-  onRotateRight: () => void;
   onSetRobotColorId: (value: RobotColorId) => void;
   onSetShowAllActions: (value: boolean) => void;
-  onSetSpeed: (speed: PlaybackSpeed) => void;
-  onStep: () => void;
-  result: RunResult | null;
   robotColorId: RobotColorId;
   showAllActions: boolean;
-  speed: PlaybackSpeed;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);

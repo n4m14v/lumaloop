@@ -1,4 +1,4 @@
-import type { Command, LevelDefinition, RunResult, RunStatus, RoutineName } from "@lumaloop/engine";
+import type { Command, LevelDefinition, RoutineName } from "@lumaloop/engine";
 
 export const SUPPORTED_LOCALES = ["en", "ru", "he"] as const;
 
@@ -14,22 +14,12 @@ const RTL_LOCALES: Locale[] = ["he"];
 
 type Messages = {
   actions: string;
-  actionView: string;
   addCommandToSlot: (routineLabel: string, index: number) => string;
   allActions: string;
-  camera: string;
-  cameraLeft: string;
-  cameraRight: string;
-  campaign: string;
   clear: string;
   commandLabels: Record<Command, string>;
-  concept: string;
-  debugger: string;
   defaultHint: string;
   darkMode: string;
-  execution: string;
-  executionFailed: string;
-  failureReasons: Record<RunStatus, string>;
   hint: string;
   idealSize: (value: number) => string;
   language: string;
@@ -43,51 +33,30 @@ type Messages = {
   menu: string;
   next: string;
   noSlots: string;
-  panelIdleStatus: string;
-  panelSuccessStatus: string;
   pause: string;
   play: string;
   proc1Routine: string;
   proc2Routine: string;
   proceduralHierarchy: string;
-  programmingPuzzle: string;
   programSize: (value: number) => string;
   puzzleMenu: string;
   puzzleSolved: string;
   removeCommandFromSlot: (routineLabel: string, index: number) => string;
   replay: string;
-  reset: string;
   robotColor: string;
   right: string;
   routineSlots: (filled: number, total: number) => string;
-  score: string;
-  selectLevel: string;
   showingFullCommandSet: string;
   showingLevelCommands: string;
-  sizeSummary: (value: number) => string;
-  solvePuzzle: string;
-  speed: string;
-  status: string;
-  statusLabels: Record<RunStatus | "READY", string>;
-  step: string;
-  steps: string;
   successBody: string;
-  targets: string;
   theme: string;
-  tools: string;
-  workspaceCanvas: string;
 };
 
 const messages: Record<Locale, Messages> = {
   en: {
     actions: "Actions",
-    actionView: "Action View",
     addCommandToSlot: (routineLabel, index) => `Add command to ${routineLabel} slot ${index}`,
     allActions: "All Actions",
-    camera: "Camera",
-    cameraLeft: "Camera Left",
-    cameraRight: "Camera Right",
-    campaign: "Campaign",
     clear: "Clear",
     commandLabels: {
       FORWARD: "Move Forward",
@@ -98,23 +67,8 @@ const messages: Record<Locale, Messages> = {
       CALL_P1: "Function 1",
       CALL_P2: "Function 2",
     },
-    concept: "Concept",
-    debugger: "Debugger",
     defaultHint: "Activate every goal tile.",
     darkMode: "Dark",
-    execution: "Execution",
-    executionFailed: "Execution failed.",
-    failureReasons: {
-      FAILED_EMPTY_PROCEDURE: "A procedure was called before it had commands.",
-      FAILED_INCOMPLETE: "Not every target was lit.",
-      FAILED_INVALID_JUMP: "That jump was not legal.",
-      FAILED_INVALID_MOVE: "The robot tried to walk into empty space.",
-      FAILED_INVALID_PROGRAM: "The current setup is invalid.",
-      FAILED_MAX_STEPS: "The safety step limit stopped the run.",
-      FAILED_RECURSION: "The call stack limit stopped recursion.",
-      FAILED_WRONG_LIGHT: "Activate only works on a goal tile.",
-      SUCCESS: "Puzzle solved.",
-    },
     hint: "Hint",
     idealSize: (value) => `Ideal Size ${value}`,
     language: "Language",
@@ -128,60 +82,28 @@ const messages: Record<Locale, Messages> = {
     menu: "Menu",
     next: "Next",
     noSlots: "No slots",
-    panelIdleStatus: "Build a program, then run it or step through it like a debugger.",
-    panelSuccessStatus: "All goal tiles are activated.",
     pause: "Pause",
     play: "Play",
     proc1Routine: "Proc 1",
     proc2Routine: "Proc 2",
     proceduralHierarchy: "Procedural Hierarchy",
-    programmingPuzzle: "Programming puzzle",
     programSize: (value) => `Program Size ${value}`,
     puzzleMenu: "Puzzle Menu",
     puzzleSolved: "Puzzle Solved!",
     removeCommandFromSlot: (routineLabel, index) => `Remove command from ${routineLabel} slot ${index}`,
     replay: "Replay",
-    reset: "Reset",
     robotColor: "Robot Color",
     right: "Right",
     routineSlots: (filled, total) => `${filled} / ${total}`,
-    score: "Score",
-    selectLevel: "Select Level",
     showingFullCommandSet: "Showing the full command set.",
     showingLevelCommands: "Showing level-allowed commands only.",
-    sizeSummary: (value) => `Size ${value}`,
-    solvePuzzle: "Solve the Puzzle!",
-    speed: "Speed",
-    status: "Status",
-    statusLabels: {
-      READY: "Ready",
-      SUCCESS: "Solved",
-      FAILED_EMPTY_PROCEDURE: "Empty procedure",
-      FAILED_INCOMPLETE: "Incomplete",
-      FAILED_INVALID_JUMP: "Invalid jump",
-      FAILED_INVALID_MOVE: "Invalid move",
-      FAILED_INVALID_PROGRAM: "Invalid program",
-      FAILED_MAX_STEPS: "Step limit",
-      FAILED_RECURSION: "Recursion limit",
-      FAILED_WRONG_LIGHT: "Wrong activation",
-    },
-    step: "Step",
-    steps: "Steps",
     successBody: "All targets are lit. You can replay this level or move on to the next puzzle.",
-    targets: "Targets",
     theme: "Theme",
-    tools: "Tools",
-    workspaceCanvas: "Workspace Canvas",
   },
   ru: {
     actions: "Команды",
-    actionView: "Показ команд",
     addCommandToSlot: (routineLabel, index) => `Добавить команду в ${routineLabel}, ячейка ${index}`,
     allActions: "Все команды",
-    camera: "Камера",
-    cameraLeft: "Камера влево",
-    cameraRight: "Камера вправо",
-    campaign: "Кампания",
     clear: "Очистить",
     commandLabels: {
       FORWARD: "Вперед",
@@ -192,23 +114,8 @@ const messages: Record<Locale, Messages> = {
       CALL_P1: "Функция 1",
       CALL_P2: "Функция 2",
     },
-    concept: "Идея",
-    debugger: "Отладка",
     defaultHint: "Активируйте каждую целевую плитку.",
     darkMode: "Темная",
-    execution: "Выполнение",
-    executionFailed: "Выполнение завершилось ошибкой.",
-    failureReasons: {
-      FAILED_EMPTY_PROCEDURE: "Процедура была вызвана до того, как в ней появились команды.",
-      FAILED_INCOMPLETE: "Зажжены не все цели.",
-      FAILED_INVALID_JUMP: "Этот прыжок недопустим.",
-      FAILED_INVALID_MOVE: "Робот попытался шагнуть в пустоту.",
-      FAILED_INVALID_PROGRAM: "Текущая программа некорректна.",
-      FAILED_MAX_STEPS: "Сработал защитный лимит шагов.",
-      FAILED_RECURSION: "Лимит стека остановил рекурсию.",
-      FAILED_WRONG_LIGHT: "Команда активации работает только на целевой плитке.",
-      SUCCESS: "Уровень пройден.",
-    },
     hint: "Подсказка",
     idealSize: (value) => `Идеальный размер ${value}`,
     language: "Язык",
@@ -222,60 +129,28 @@ const messages: Record<Locale, Messages> = {
     menu: "Меню",
     next: "Дальше",
     noSlots: "Нет ячеек",
-    panelIdleStatus: "Соберите программу и запустите ее или проходите по шагам как в отладчике.",
-    panelSuccessStatus: "Все целевые плитки активированы.",
     pause: "Пауза",
     play: "Старт",
     proc1Routine: "Проц. 1",
     proc2Routine: "Проц. 2",
     proceduralHierarchy: "Иерархия процедур",
-    programmingPuzzle: "Головоломка по программированию",
     programSize: (value) => `Размер программы ${value}`,
     puzzleMenu: "Меню уровня",
     puzzleSolved: "Головоломка решена!",
     removeCommandFromSlot: (routineLabel, index) => `Убрать команду из ${routineLabel}, ячейка ${index}`,
     replay: "Повтор",
-    reset: "Сброс",
     robotColor: "Цвет робота",
     right: "Вправо",
     routineSlots: (filled, total) => `${filled} / ${total}`,
-    score: "Счет",
-    selectLevel: "Выбрать уровень",
     showingFullCommandSet: "Показан полный набор команд.",
     showingLevelCommands: "Показаны только команды, разрешенные уровнем.",
-    sizeSummary: (value) => `Размер ${value}`,
-    solvePuzzle: "Решите головоломку!",
-    speed: "Скорость",
-    status: "Статус",
-    statusLabels: {
-      READY: "Готово",
-      SUCCESS: "Решено",
-      FAILED_EMPTY_PROCEDURE: "Пустая процедура",
-      FAILED_INCOMPLETE: "Не все цели",
-      FAILED_INVALID_JUMP: "Неверный прыжок",
-      FAILED_INVALID_MOVE: "Неверный ход",
-      FAILED_INVALID_PROGRAM: "Неверная программа",
-      FAILED_MAX_STEPS: "Лимит шагов",
-      FAILED_RECURSION: "Лимит рекурсии",
-      FAILED_WRONG_LIGHT: "Неверная активация",
-    },
-    step: "Шаг",
-    steps: "Шаги",
     successBody: "Все цели зажжены. Можно переиграть уровень или перейти к следующей головоломке.",
-    targets: "Цели",
     theme: "Тема",
-    tools: "Инструменты",
-    workspaceCanvas: "Рабочее полотно",
   },
   he: {
     actions: "פקודות",
-    actionView: "תצוגת פקודות",
     addCommandToSlot: (routineLabel, index) => `הוסף פקודה ל${routineLabel}, משבצת ${index}`,
     allActions: "כל הפקודות",
-    camera: "מצלמה",
-    cameraLeft: "מצלמה שמאלה",
-    cameraRight: "מצלמה ימינה",
-    campaign: "קמפיין",
     clear: "נקה",
     commandLabels: {
       FORWARD: "קדימה",
@@ -286,23 +161,8 @@ const messages: Record<Locale, Messages> = {
       CALL_P1: "פונקציה 1",
       CALL_P2: "פונקציה 2",
     },
-    concept: "רעיון",
-    debugger: "דיבאגר",
     defaultHint: "הפעילו כל אריח יעד.",
     darkMode: "כהה",
-    execution: "הרצה",
-    executionFailed: "ההרצה נכשלה.",
-    failureReasons: {
-      FAILED_EMPTY_PROCEDURE: "נקראה פרוצדורה לפני שהיו בה פקודות.",
-      FAILED_INCOMPLETE: "לא כל היעדים הודלקו.",
-      FAILED_INVALID_JUMP: "הקפיצה הזו אינה חוקית.",
-      FAILED_INVALID_MOVE: "הרובוט ניסה לצעוד אל חלל ריק.",
-      FAILED_INVALID_PROGRAM: "התוכנית הנוכחית אינה תקינה.",
-      FAILED_MAX_STEPS: "מגבלת הצעדים עצרה את ההרצה.",
-      FAILED_RECURSION: "מגבלת מחסנית הקריאות עצרה את הרקורסיה.",
-      FAILED_WRONG_LIGHT: "אפשר להפעיל רק על אריח יעד.",
-      SUCCESS: "השלב נפתר.",
-    },
     hint: "רמז",
     idealSize: (value) => `גודל אידיאלי ${value}`,
     language: "שפה",
@@ -316,50 +176,23 @@ const messages: Record<Locale, Messages> = {
     menu: "תפריט",
     next: "הבא",
     noSlots: "אין משבצות",
-    panelIdleStatus: "בנו תוכנית ואז הפעילו אותה או עברו צעד צעד כמו בדיבאגר.",
-    panelSuccessStatus: "כל אריחי היעד הופעלו.",
     pause: "השהה",
     play: "הפעל",
     proc1Routine: "פרוצדורה 1",
     proc2Routine: "פרוצדורה 2",
     proceduralHierarchy: "היררכיית פרוצדורות",
-    programmingPuzzle: "חידת תכנות",
     programSize: (value) => `גודל תוכנית ${value}`,
     puzzleMenu: "תפריט שלב",
     puzzleSolved: "החידה נפתרה!",
     removeCommandFromSlot: (routineLabel, index) => `הסר פקודה מ${routineLabel}, משבצת ${index}`,
     replay: "הפעל שוב",
-    reset: "איפוס",
     robotColor: "צבע הרובוט",
     right: "ימינה",
     routineSlots: (filled, total) => `${filled} / ${total}`,
-    score: "ציון",
-    selectLevel: "בחרו שלב",
     showingFullCommandSet: "מוצג סט הפקודות המלא.",
     showingLevelCommands: "מוצגות רק הפקודות המותרות לשלב.",
-    sizeSummary: (value) => `גודל ${value}`,
-    solvePuzzle: "פתרו את החידה!",
-    speed: "מהירות",
-    status: "מצב",
-    statusLabels: {
-      READY: "מוכן",
-      SUCCESS: "נפתר",
-      FAILED_EMPTY_PROCEDURE: "פרוצדורה ריקה",
-      FAILED_INCOMPLETE: "לא כל היעדים",
-      FAILED_INVALID_JUMP: "קפיצה שגויה",
-      FAILED_INVALID_MOVE: "תנועה שגויה",
-      FAILED_INVALID_PROGRAM: "תוכנית שגויה",
-      FAILED_MAX_STEPS: "מגבלת צעדים",
-      FAILED_RECURSION: "מגבלת רקורסיה",
-      FAILED_WRONG_LIGHT: "הפעלה שגויה",
-    },
-    step: "צעד",
-    steps: "צעדים",
     successBody: "כל היעדים מוארים. אפשר להפעיל שוב את השלב או לעבור לחידה הבאה.",
-    targets: "יעדים",
     theme: "ערכת נושא",
-    tools: "כלים",
-    workspaceCanvas: "משטח עבודה",
   },
 };
 
@@ -695,30 +528,6 @@ export function getRoutineLabel(locale: Locale, routine: RoutineName) {
     case "p2":
       return copy.proc2Routine;
   }
-}
-
-export function getRunStatusMessage(locale: Locale, result: RunResult | null) {
-  const copy = getMessages(locale);
-
-  if (result === null) {
-    return copy.panelIdleStatus;
-  }
-
-  if (result.status === "SUCCESS") {
-    return copy.panelSuccessStatus;
-  }
-
-  return copy.failureReasons[result.status] ?? result.failureReason ?? copy.executionFailed;
-}
-
-export function getRunStatusLabel(locale: Locale, result: RunResult | null) {
-  const copy = getMessages(locale);
-
-  if (result === null) {
-    return copy.statusLabels.READY;
-  }
-
-  return copy.statusLabels[result.status];
 }
 
 export function localizeLevel(level: LevelDefinition, locale: Locale): LevelDefinition {

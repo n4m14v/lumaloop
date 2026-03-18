@@ -1,281 +1,12 @@
-import {
-  ArrowUp,
-  ChevronsUp,
-  CornerUpLeft,
-  CornerUpRight,
-  Power,
-  SquareFunction,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { Command, RoutineName } from "@lumaloop/engine";
 
-import { ALL_COMMANDS, type RoutineSlots } from "../features/game/store";
+import type { RoutineSlots } from "../features/game/store";
 import { useI18n } from "../i18n/I18nProvider";
 import { getRoutineLabel } from "../i18n/translations";
-
-const ICON_STROKE = 1.7;
-
-const commandMeta: Record<
-  Command,
-  {
-    badge?: string;
-    icon: LucideIcon;
-  }
-> = {
-  FORWARD: { icon: ArrowUp },
-  TURN_LEFT: { icon: CornerUpLeft },
-  TURN_RIGHT: { icon: CornerUpRight },
-  JUMP: { icon: ChevronsUp },
-  ACTIVATE: { icon: Power },
-  CALL_P1: { icon: SquareFunction, badge: "1" },
-  CALL_P2: { icon: SquareFunction, badge: "2" },
-};
-
-function DebossedIcon({
-  icon: Icon,
-  className,
-}: {
-  icon: LucideIcon;
-  className: string;
-}) {
-  return (
-    <span aria-hidden="true" className={`relative inline-flex ${className}`}>
-      <Icon
-        absoluteStrokeWidth
-        className="absolute inset-0 h-full w-full -translate-x-[1.2px] -translate-y-[1.2px] text-[color:var(--icon-deboss-shadow)]"
-        strokeWidth={ICON_STROKE + 0.45}
-      />
-      <Icon
-        absoluteStrokeWidth
-        className="absolute inset-0 h-full w-full translate-x-[1.2px] translate-y-[1.2px] text-[color:var(--icon-deboss-highlight)]"
-        strokeWidth={ICON_STROKE + 0.2}
-      />
-      <Icon
-        absoluteStrokeWidth
-        className="absolute inset-0 h-full w-full text-[color:var(--icon-deboss-base)]"
-        strokeWidth={ICON_STROKE + 0.2}
-      />
-      <Icon
-        absoluteStrokeWidth
-        className="relative h-full w-full text-[color:var(--icon-deboss-base)] opacity-90"
-        strokeWidth={ICON_STROKE + 0.55}
-      />
-    </span>
-  );
-}
-
-function CommandTile({
-  command,
-  isActive = false,
-}: {
-  command: Command;
-  isActive?: boolean;
-}) {
-  const meta = commandMeta[command];
-  const Icon = meta.icon;
-
-  return (
-    <div
-      className={[
-        "ui-deboss-surface relative flex h-full w-full items-center justify-center rounded-[10px] border transition",
-        isActive
-          ? "ui-deboss-surface-active border-[var(--accent)] text-[var(--text-primary)] shadow-[0_0_0_1px_var(--accent),0_0_20px_var(--accent-shadow)]"
-          : "border-[var(--panel-border)] text-[var(--text-secondary)]",
-      ].join(" ")}
-    >
-      <DebossedIcon className="h-[52%] w-[52%]" icon={Icon} />
-      {meta.badge ? (
-        <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-[4px] border border-[var(--panel-border)] bg-[var(--panel-bg-strong)] text-[8px] font-bold text-[var(--text-secondary)]">
-          {meta.badge}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-function Slot({
-  command,
-  currentPointer,
-  disabled,
-  index,
-  onRemove,
-  routine,
-  routineLabel,
-}: {
-  command: Command | null;
-  currentPointer: { index: number; routine: RoutineName } | undefined;
-  disabled: boolean;
-  index: number;
-  onRemove: () => void;
-  routine: RoutineName;
-  routineLabel: string;
-}) {
-  const { t } = useI18n();
-  const isCurrent = currentPointer?.routine === routine && currentPointer.index === index;
-
-  return (
-    <div
-      className={[
-        "relative aspect-square rounded-[12px] border p-1.5 transition",
-        isCurrent
-          ? "border-[var(--accent)] bg-[var(--panel-bg-soft)] shadow-[0_0_0_1px_var(--accent),0_0_18px_var(--accent-shadow)]"
-          : "border-[var(--panel-border)] bg-[rgba(255,255,255,0.03)] dark:bg-[rgba(0,0,0,0.1)]",
-      ].join(" ")}
-    >
-      {command ? (
-        <button
-          aria-label={t.removeCommandFromSlot(routineLabel, index + 1)}
-          className="h-full w-full"
-          disabled={disabled}
-          onClick={onRemove}
-          type="button"
-        >
-          <div className="ui-action-pop h-full w-full" key={command}>
-            <CommandTile command={command} isActive={isCurrent} />
-          </div>
-        </button>
-      ) : (
-        <button
-          aria-label={t.addCommandToSlot(routineLabel, index + 1)}
-          className={[
-            "flex h-full w-full items-center justify-center rounded-[8px] border border-dashed text-[10px] uppercase tracking-[0.12em]",
-            disabled
-              ? "border-[var(--panel-border)] text-[var(--text-muted)]"
-              : "border-[var(--panel-border)] text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--text-secondary)]",
-          ].join(" ")}
-          disabled={disabled}
-          type="button"
-        >
-          {index + 1}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function RoutineSection({
-  currentPointer,
-  isActive,
-  isLocked,
-  label,
-  onClear,
-  onRemove,
-  onSelect,
-  routine,
-  slots,
-}: {
-  currentPointer: { index: number; routine: RoutineName } | undefined;
-  isActive: boolean;
-  isLocked: boolean;
-  label: string;
-  onClear: () => void;
-  onRemove: (index: number) => void;
-  onSelect: () => void;
-  routine: RoutineName;
-  slots: (Command | null)[];
-}) {
-  const { t } = useI18n();
-
-  return (
-    <section
-      className={[
-        "ui-panel relative rounded-[16px] p-3 transition",
-        isActive ? "ui-panel-active" : "",
-        isLocked ? "opacity-60" : "",
-      ].join(" ")}
-      onClick={() => {
-        if (!isLocked) {
-          onSelect();
-        }
-      }}
-    >
-      {/* Removed vertical selection line */}
-
-      <div className="mb-3.5 flex items-center justify-between gap-2.5">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-primary)]">{label.toUpperCase()}</p>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">
-            {isLocked ? t.lockedForLevel : `[${t.routineSlots(slots.filter(Boolean).length, slots.length)}]`}
-          </p>
-        </div>
-        <button
-          className="ui-button h-7 rounded-[7px] px-2 py-1 !text-[9px] uppercase tracking-[0.05em]"
-          disabled={isLocked}
-          onClick={(event) => {
-            event.stopPropagation();
-            onClear();
-          }}
-          type="button"
-        >
-          {t.clear}
-        </button>
-      </div>
-
-      {slots.length > 0 ? (
-        <div className="grid grid-cols-4 gap-2.5">
-          {slots.map((command, index) => (
-            <Slot
-              command={command}
-              currentPointer={currentPointer}
-              disabled={isLocked}
-              index={index}
-              key={`${routine}-${index}`}
-              onRemove={() => onRemove(index)}
-              routine={routine}
-              routineLabel={label}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex h-[72px] items-center justify-center rounded-[12px] border border-dashed border-[var(--panel-border)] text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
-          {t.noSlots}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function ActionButton({
-  command,
-  disabled,
-  onClick,
-}: {
-  command: Command;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  const { t } = useI18n();
-  const meta = commandMeta[command];
-  const Icon = meta.icon;
-  const label = t.commandLabels[command];
-
-  return (
-    <button
-      aria-label={label}
-      className={[
-        "ui-deboss-surface relative aspect-square rounded-[12px] border transition",
-        disabled
-          ? "border-[var(--panel-border)] text-[var(--text-muted)] opacity-70"
-          : "border-[var(--panel-border)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:shadow-[0_0_18px_var(--accent-shadow)]",
-      ].join(" ")}
-      disabled={disabled}
-      onClick={onClick}
-      title={label}
-      type="button"
-    >
-      <div className="relative flex h-full w-full items-center justify-center">
-        <DebossedIcon className="h-[40%] w-[40%]" icon={Icon} />
-        {meta.badge ? (
-          <span className="absolute bottom-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-md border border-[var(--panel-border)] bg-[var(--panel-bg-strong)] text-[10px] font-bold text-[var(--text-secondary)]">
-            {meta.badge}
-          </span>
-        ) : null}
-      </div>
-    </button>
-  );
-}
+import { ActionPalette } from "./program-workspace/ActionPalette";
+import { RoutineSection } from "./program-workspace/RoutineSection";
 
 export function ProgramWorkspace({
   activeRoutine,
@@ -301,10 +32,8 @@ export function ProgramWorkspace({
   showAllActions: boolean;
 }) {
   const { locale, t } = useI18n();
-  const visibleCommands = showAllActions ? ALL_COMMANDS : allowedCommands;
   const p1Enabled = showAllActions || allowedCommands.includes("CALL_P1");
   const p2Enabled = showAllActions || allowedCommands.includes("CALL_P2");
-  const visibleCount = showAllActions ? ALL_COMMANDS.length : allowedCommands.length;
 
   return (
     <section className="relative min-h-[calc(100vh-3rem)]">
@@ -312,24 +41,11 @@ export function ProgramWorkspace({
 
       <aside className="pointer-events-auto relative z-20 ml-auto mt-6 w-full max-w-[340px] xl:absolute xl:top-0 xl:right-0 xl:bottom-0 xl:mt-0 xl:max-w-none xl:w-[340px] xl:overflow-y-auto xl:pb-4">
         <div className="space-y-3 xl:min-h-full">
-          <section className="ui-panel rounded-[16px] p-3.5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[12px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.actions}</p>
-              </div>
-              <span className="text-sm text-[var(--text-muted)]">[{visibleCount}/{ALL_COMMANDS.length}]</span>
-            </div>
-            <div className="grid grid-cols-4 gap-3">
-              {visibleCommands.map((command) => (
-                <ActionButton
-                  command={command}
-                  disabled={!showAllActions && !allowedCommands.includes(command)}
-                  key={command}
-                  onClick={() => onAppendCommand(command)}
-                />
-              ))}
-            </div>
-          </section>
+          <ActionPalette
+            allowedCommands={allowedCommands}
+            onAppendCommand={onAppendCommand}
+            showAllActions={showAllActions}
+          />
 
           <div className="px-1">
             <p className="text-[12px] uppercase tracking-[0.06em] text-[var(--text-primary)]">{t.proceduralHierarchy}</p>
