@@ -33,6 +33,39 @@ const commandMeta: Record<
   CALL_P2: { icon: SquareFunction, badge: "2" },
 };
 
+function DebossedIcon({
+  icon: Icon,
+  className,
+}: {
+  icon: LucideIcon;
+  className: string;
+}) {
+  return (
+    <span aria-hidden="true" className={`relative inline-flex ${className}`}>
+      <Icon
+        absoluteStrokeWidth
+        className="absolute inset-0 h-full w-full -translate-x-[1.2px] -translate-y-[1.2px] text-[color:var(--icon-deboss-shadow)]"
+        strokeWidth={ICON_STROKE + 0.45}
+      />
+      <Icon
+        absoluteStrokeWidth
+        className="absolute inset-0 h-full w-full translate-x-[1.2px] translate-y-[1.2px] text-[color:var(--icon-deboss-highlight)]"
+        strokeWidth={ICON_STROKE + 0.2}
+      />
+      <Icon
+        absoluteStrokeWidth
+        className="absolute inset-0 h-full w-full text-[color:var(--icon-deboss-base)]"
+        strokeWidth={ICON_STROKE + 0.2}
+      />
+      <Icon
+        absoluteStrokeWidth
+        className="relative h-full w-full text-[color:var(--icon-deboss-base)] opacity-90"
+        strokeWidth={ICON_STROKE + 0.55}
+      />
+    </span>
+  );
+}
+
 function CommandTile({
   command,
   isActive = false,
@@ -46,13 +79,13 @@ function CommandTile({
   return (
     <div
       className={[
-        "relative flex h-full w-full items-center justify-center rounded-[10px] border transition",
+        "ui-deboss-surface relative flex h-full w-full items-center justify-center rounded-[10px] border transition",
         isActive
-          ? "border-[var(--accent)] bg-[var(--panel-bg-soft)] text-[var(--text-primary)] shadow-[0_0_0_1px_var(--accent),0_0_20px_var(--accent-shadow)]"
-          : "border-[var(--panel-border)] bg-[var(--action-bg)] text-[var(--text-secondary)]",
+          ? "ui-deboss-surface-active border-[var(--accent)] text-[var(--text-primary)] shadow-[0_0_0_1px_var(--accent),0_0_20px_var(--accent-shadow)]"
+          : "border-[var(--panel-border)] text-[var(--text-secondary)]",
       ].join(" ")}
     >
-      <Icon absoluteStrokeWidth aria-hidden="true" className="h-[52%] w-[52%]" strokeWidth={ICON_STROKE} />
+      <DebossedIcon className="h-[52%] w-[52%]" icon={Icon} />
       {meta.badge ? (
         <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-[4px] border border-[var(--panel-border)] bg-[var(--panel-bg-strong)] text-[8px] font-bold text-[var(--text-secondary)]">
           {meta.badge}
@@ -222,10 +255,10 @@ function ActionButton({
     <button
       aria-label={label}
       className={[
-        "relative aspect-square rounded-[12px] border transition",
+        "ui-deboss-surface relative aspect-square rounded-[12px] border transition",
         disabled
-          ? "border-[var(--panel-border)] bg-[rgba(27,32,42,0.34)] text-[var(--text-muted)]"
-          : "border-[var(--panel-border)] bg-[var(--panel-bg)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:shadow-[0_0_18px_var(--accent-shadow)]",
+          ? "border-[var(--panel-border)] text-[var(--text-muted)] opacity-70"
+          : "border-[var(--panel-border)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:shadow-[0_0_18px_var(--accent-shadow)]",
       ].join(" ")}
       disabled={disabled}
       onClick={onClick}
@@ -233,7 +266,7 @@ function ActionButton({
       type="button"
     >
       <div className="relative flex h-full w-full items-center justify-center">
-        <Icon absoluteStrokeWidth aria-hidden="true" className="h-[40%] w-[40%]" strokeWidth={ICON_STROKE} />
+        <DebossedIcon className="h-[40%] w-[40%]" icon={Icon} />
         {meta.badge ? (
           <span className="absolute bottom-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-md border border-[var(--panel-border)] bg-[var(--panel-bg-strong)] text-[10px] font-bold text-[var(--text-secondary)]">
             {meta.badge}
