@@ -342,67 +342,78 @@ function TileBlock({
   return (
     <group position={[tile.x * TILE_SIZE, 0, tile.y * TILE_SIZE]}>
       {Array.from({ length: stackCount }, (_, layer) => (
-        <mesh castShadow key={layer} position={[0, BLOCK_HEIGHT * (layer + 0.5), 0]} receiveShadow>
+        <mesh key={layer} position={[0, BLOCK_HEIGHT * (layer + 0.5), 0]}>
           <boxGeometry args={[1.92, BLOCK_HEIGHT, 1.92]} />
           {isGlassChamber ? (
-            <>
-              <meshPhysicalMaterial
-                color={isTarget ? "#9ee8ff" : "#b7e5ff"}
-                envMapIntensity={0}
-                ior={1.02}
-                metalness={0}
-                opacity={isTarget ? 0.42 : 0.22}
-                roughness={0.92}
-                thickness={1.4}
-                transmission={0.66}
-                transparent
-              />
-              <meshPhysicalMaterial
-                color={isTarget ? "#9ee8ff" : "#b7e5ff"}
-                envMapIntensity={0}
-                ior={1.02}
-                metalness={0}
-                opacity={isTarget ? 0.42 : 0.22}
-                roughness={0.92}
-                thickness={1.4}
-                transmission={0.66}
-                transparent
-              />
-              <meshPhysicalMaterial
-                color={isTarget ? "#c7f4ff" : "#d8f4ff"}
-                envMapIntensity={0}
-                ior={1.02}
-                metalness={0}
-                opacity={isTarget ? 0.34 : 0.2}
-                roughness={0.94}
-                thickness={1.1}
-                transmission={0.72}
-                transparent
-              />
-              <meshStandardMaterial color={isTarget ? "#90a1b2" : "#8f9dab"} />
-              <meshPhysicalMaterial
-                color={isTarget ? "#9ee8ff" : "#b7e5ff"}
-                envMapIntensity={0}
-                ior={1.02}
-                metalness={0}
-                opacity={isTarget ? 0.42 : 0.22}
-                roughness={0.92}
-                thickness={1.4}
-                transmission={0.66}
-                transparent
-              />
-              <meshPhysicalMaterial
-                color={isTarget ? "#9ee8ff" : "#b7e5ff"}
-                envMapIntensity={0}
-                ior={1.02}
-                metalness={0}
-                opacity={isTarget ? 0.42 : 0.22}
-                roughness={0.92}
-                thickness={1.4}
-                transmission={0.66}
-                transparent
-              />
-            </>
+            isTarget ? (
+              <>
+                <meshPhysicalMaterial
+                  color="#9ee8ff"
+                  envMapIntensity={0}
+                  ior={1.02}
+                  metalness={0}
+                  opacity={0.42}
+                  roughness={0.92}
+                  thickness={1.4}
+                  transmission={0.66}
+                  transparent
+                />
+                <meshPhysicalMaterial
+                  color="#9ee8ff"
+                  envMapIntensity={0}
+                  ior={1.02}
+                  metalness={0}
+                  opacity={0.42}
+                  roughness={0.92}
+                  thickness={1.4}
+                  transmission={0.66}
+                  transparent
+                />
+                <meshPhysicalMaterial
+                  color="#c7f4ff"
+                  envMapIntensity={0}
+                  ior={1.02}
+                  metalness={0}
+                  opacity={0.34}
+                  roughness={0.94}
+                  thickness={1.1}
+                  transmission={0.72}
+                  transparent
+                />
+                <meshStandardMaterial color="#90a1b2" />
+                <meshPhysicalMaterial
+                  color="#9ee8ff"
+                  envMapIntensity={0}
+                  ior={1.02}
+                  metalness={0}
+                  opacity={0.42}
+                  roughness={0.92}
+                  thickness={1.4}
+                  transmission={0.66}
+                  transparent
+                />
+                <meshPhysicalMaterial
+                  color="#9ee8ff"
+                  envMapIntensity={0}
+                  ior={1.02}
+                  metalness={0}
+                  opacity={0.42}
+                  roughness={0.92}
+                  thickness={1.4}
+                  transmission={0.66}
+                  transparent
+                />
+              </>
+            ) : (
+              <>
+                <meshStandardMaterial color="#bcc5cf" roughness={0.98} />
+                <meshStandardMaterial color="#bcc5cf" roughness={0.98} />
+                <meshStandardMaterial color="#d8dde4" roughness={1} />
+                <meshStandardMaterial color="#8f9dab" roughness={1} />
+                <meshStandardMaterial color="#bcc5cf" roughness={0.98} />
+                <meshStandardMaterial color="#bcc5cf" roughness={0.98} />
+              </>
+            )
           ) : (
             <>
               <meshStandardMaterial color={sideColor} />
@@ -416,7 +427,7 @@ function TileBlock({
           <Edges color="#69717b" scale={1} threshold={15} />
         </mesh>
       ))}
-      <mesh castShadow receiveShadow position={[0, stackCount * BLOCK_HEIGHT + 0.06, 0]}>
+      <mesh position={[0, stackCount * BLOCK_HEIGHT + 0.06, 0]}>
         <boxGeometry args={[2, 0.14, 2]} />
         {isGlassChamber ? (
           isTarget ? (
@@ -436,8 +447,9 @@ function TileBlock({
             />
           ) : (
             <meshStandardMaterial
-              color="#edf1f5"
+              color="#d7dde4"
               ref={topMaterialRef}
+              roughness={1}
             />
           )
         ) : (
@@ -658,7 +670,7 @@ function FloatingFloorTile({
 
   return (
     <group position={[x * TILE_SIZE, 0.05, y * TILE_SIZE]} ref={groupRef}>
-      <mesh castShadow receiveShadow>
+      <mesh>
         <boxGeometry args={[2, 0.1, 2]} />
         <meshStandardMaterial color="#d0d6de" />
         <meshStandardMaterial color="#d0d6de" />
@@ -881,20 +893,14 @@ export function GameCanvas({
       onWheel={handleWheel}
       style={{ touchAction: "none" }}
     >
-      <Canvas gl={{ alpha: true }} shadows dpr={[1, 2]}>
+      <Canvas gl={{ alpha: true }} dpr={[1, 1.5]}>
         <PerspectiveCamera makeDefault far={100} fov={28} near={0.1} position={[14, 12, 14]} />
         <CameraRig elevation={orbitElevation} level={level} orbitAngle={orbitAzimuth} zoom={zoom} />
         <ambientLight intensity={1.15} />
-        <directionalLight
-          castShadow
-          intensity={1.05}
-          position={[5, 9, 6]}
-          shadow-mapSize-height={2048}
-          shadow-mapSize-width={2048}
-        />
+        <directionalLight intensity={1.05} position={[5, 9, 6]} />
         <directionalLight intensity={0.7} position={[-4, 6, -3]} />
         <hemisphereLight args={["#fff6d8", "#8d99aa", 0.82]} />
-        <pointLight color="#7dff5c" intensity={litTargets.length > 0 ? 2.8 : 0.25} position={[2, 3, 2]} distance={7} />
+        <pointLight color="#7dff5c" intensity={litTargets.length > 0 ? 1.9 : 0.14} position={[2, 3, 2]} distance={6} />
         <group position={[-centerX, 0, -centerZ]}>
           <GridFloor level={level} />
           {level.board.map((tile) => {
@@ -926,7 +932,7 @@ export function GameCanvas({
           />
         </group>
         <EffectComposer>
-          <Bloom intensity={0.18} luminanceThreshold={0.9} mipmapBlur />
+          <Bloom intensity={0.08} luminanceThreshold={0.96} />
         </EffectComposer>
       </Canvas>
     </div>
