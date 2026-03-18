@@ -9,6 +9,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
 import { ThemeToggle } from "../ThemeToggle";
+import { GameWalkthroughDialog } from "./GameWalkthroughDialog";
 
 interface GameHeaderBarProps {
   canStartRun: boolean;
@@ -43,6 +44,7 @@ export function GameHeaderBar({
 }: GameHeaderBarProps) {
   const { t } = useI18n();
   const [isLevelMenuOpen, setIsLevelMenuOpen] = useState(false);
+  const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
   const levelMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -80,6 +82,15 @@ export function GameHeaderBar({
             />
             <LanguageSelect />
             <ThemeToggle onToggle={onToggleTheme} theme={theme} />
+            <button
+              aria-label={t.walkthroughOpen}
+              className="ui-button h-8 w-8 justify-center rounded-full px-0 font-display text-sm font-semibold text-[var(--text-primary)]"
+              onClick={() => setIsWalkthroughOpen(true)}
+              title={t.walkthroughOpen}
+              type="button"
+            >
+              ?
+            </button>
           </div>
 
           <div className="flex items-center justify-center gap-3 text-center">
@@ -147,6 +158,8 @@ export function GameHeaderBar({
           </div>
         </div>
       </div>
+
+      <GameWalkthroughDialog onClose={() => setIsWalkthroughOpen(false)} open={isWalkthroughOpen} />
 
       <div className="flex-1" />
     </div>

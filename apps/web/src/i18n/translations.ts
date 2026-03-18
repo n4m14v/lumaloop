@@ -50,6 +50,19 @@ type Messages = {
   showingLevelCommands: string;
   successBody: string;
   theme: string;
+  walkthroughClose: string;
+  walkthroughDone: string;
+  walkthroughNext: string;
+  walkthroughOpen: string;
+  walkthroughPrevious: string;
+  walkthroughSubtitle: string;
+  walkthroughTitle: string;
+  walkthroughSlides: {
+    body: string;
+    bullets: string[];
+    eyebrow: string;
+    title: string;
+  }[];
 };
 
 const messages: Record<Locale, Messages> = {
@@ -99,6 +112,71 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "Showing level-allowed commands only.",
     successBody: "All targets are lit. You can replay this level or move on to the next puzzle.",
     theme: "Theme",
+    walkthroughClose: "Close guide",
+    walkthroughDone: "Start Playing",
+    walkthroughNext: "Continue",
+    walkthroughOpen: "How to play",
+    walkthroughPrevious: "Back",
+    walkthroughSubtitle:
+      "A quick mission briefing on the controls, the puzzle loop, and the thinking skills Lumaloop strengthens as you play.",
+    walkthroughTitle: "How to Play Lumaloop",
+    walkthroughSlides: [
+      {
+        eyebrow: "Mission",
+        title: "Wake every light on the board",
+        body:
+          "Every puzzle is a small navigation mission. Your robot follows the program exactly as written, and the level is solved only when every target tile is glowing, so you are planning a complete route rather than racing to a single finish point.",
+        bullets: [
+          "Turn the robot before moving or jumping so each step starts from the right direction.",
+          "Lighting one beacon is not enough if another target is still dark somewhere else on the map.",
+          "A shorter solution usually means you discovered the real pattern hidden inside the puzzle.",
+        ],
+      },
+      {
+        eyebrow: "Controls",
+        title: "Build the route one command at a time",
+        body:
+          "Use the action tray to place commands into Main and sketch the robot's path. As the campaign opens up, Proc 1 and Proc 2 let you package repeating ideas into reusable mini-programs instead of rewriting the same sequence again and again.",
+        bullets: [
+          "Tap a command to add it to the currently selected routine.",
+          "Remove individual steps or clear a routine whenever you want to test a cleaner idea.",
+          "Some levels limit the available commands on purpose so you can focus on one new concept at a time.",
+        ],
+      },
+      {
+        eyebrow: "Debug",
+        title: "Run the plan and learn from every mistake",
+        body:
+          "Press Play and watch the robot execute your code literally. When something goes wrong, that failure is useful information: compare what you expected with what actually happened, then revise the program and test again.",
+        bullets: [
+          "Pause, replay, and iterate as often as you need without losing your progress.",
+          "Hints point toward the key idea of the current puzzle without giving away the full answer.",
+          "The moment the robot fails usually reveals whether the issue is order, direction, terrain, or a missing action.",
+        ],
+      },
+      {
+        eyebrow: "Themes",
+        title: "Each world teaches a new way of thinking",
+        body:
+          "The campaign is structured like a guided curriculum. Early levels build confidence with sequencing and turning, later ones introduce height changes and navigation in space, and advanced worlds teach procedures and recursive patterns.",
+        bullets: [
+          "Sequencing teaches you to choose the right action in the right order.",
+          "Orientation and height train spatial reasoning: where the robot is facing, standing, and heading next.",
+          "Procedures and recursion teach you to compress repeating patterns into powerful reusable logic.",
+        ],
+      },
+      {
+        eyebrow: "Benefits",
+        title: "You are practicing real computational thinking",
+        body:
+          "Lumaloop is more than a puzzle toy. It builds planning, decomposition, pattern recognition, debugging, and the confidence to improve an idea step by step until it works.",
+        bullets: [
+          "Break a long route into smaller chunks that are easier to understand and fix.",
+          "Notice repeating structures, compress them, and reuse them with intention.",
+          "Build persistence by testing, observing, refining, and trying again with a smarter plan.",
+        ],
+      },
+    ],
   },
   ru: {
     actions: "Команды",
@@ -146,6 +224,71 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "Показаны только команды, разрешенные уровнем.",
     successBody: "Все цели зажжены. Можно переиграть уровень или перейти к следующей головоломке.",
     theme: "Тема",
+    walkthroughClose: "Закрыть гид",
+    walkthroughDone: "Начать играть",
+    walkthroughNext: "Продолжить",
+    walkthroughOpen: "Как играть",
+    walkthroughPrevious: "Назад",
+    walkthroughSubtitle:
+      "Короткий брифинг об управлении, игровом цикле и мыслительных навыках, которые Lumaloop постепенно развивает.",
+    walkthroughTitle: "Как играть в Lumaloop",
+    walkthroughSlides: [
+      {
+        eyebrow: "Миссия",
+        title: "Зажгите все огни на поле",
+        body:
+          "Каждый уровень - это небольшая навигационная миссия. Робот выполняет программу буквально, а уровень считается пройденным только тогда, когда светятся все целевые плитки, поэтому важно продумать весь маршрут, а не только прийти в одну точку.",
+        bullets: [
+          "Сначала разверните робота в нужную сторону, а уже потом двигайтесь или прыгайте.",
+          "Одной зажженной лампы недостаточно, если на карте осталась еще хотя бы одна темная цель.",
+          "Короткое решение часто означает, что вы заметили настоящий скрытый шаблон уровня.",
+        ],
+      },
+      {
+        eyebrow: "Управление",
+        title: "Собирайте маршрут по одной команде",
+        body:
+          "Используйте панель действий, чтобы добавлять команды в основную программу и намечать путь робота. По мере прохождения откроются Проц. 1 и Проц. 2, чтобы повторяющиеся идеи можно было упаковывать в переиспользуемые мини-программы.",
+        bullets: [
+          "Нажмите на команду, чтобы добавить ее в выбранную сейчас процедуру.",
+          "Удаляйте отдельные шаги или очищайте процедуру, когда хотите проверить более чистую идею.",
+          "Некоторые уровни специально ограничивают набор команд, чтобы вы сосредоточились на одной новой концепции.",
+        ],
+      },
+      {
+        eyebrow: "Отладка",
+        title: "Запускайте план и учитесь на каждой ошибке",
+        body:
+          "Нажмите старт и наблюдайте, как робот буквально исполняет ваш код. Если что-то ломается, это полезный сигнал: сравните ожидаемый маршрут с тем, что произошло на самом деле, и затем исправьте программу.",
+        bullets: [
+          "Ставьте на паузу, переигрывайте и пробуйте заново столько раз, сколько нужно.",
+          "Подсказки направляют к ключевой идее уровня, но не выдают весь ответ целиком.",
+          "Момент сбоя обычно показывает, в чем проблема: в порядке, направлении, рельефе или пропущенном действии.",
+        ],
+      },
+      {
+        eyebrow: "Темы",
+        title: "Каждый мир учит новому способу мышления",
+        body:
+          "Кампания устроена как постепенная учебная программа. Сначала вы укрепляете понимание последовательностей и поворотов, затем осваиваете высоту и движение в пространстве, а дальше переходите к процедурам и рекурсивным шаблонам.",
+        bullets: [
+          "Последовательности учат выбирать нужное действие в нужный момент.",
+          "Ориентация и высота развивают пространственное мышление: куда робот смотрит, где стоит и что ждет впереди.",
+          "Процедуры и рекурсия учат сжимать повторяющиеся фрагменты в мощную переиспользуемую логику.",
+        ],
+      },
+      {
+        eyebrow: "Польза",
+        title: "Вы тренируете настоящее вычислительное мышление",
+        body:
+          "Lumaloop - это не просто набор головоломок. Игра развивает планирование, декомпозицию, распознавание шаблонов, отладку и уверенность в том, что хорошую идею можно постепенно улучшать, пока она не заработает.",
+        bullets: [
+          "Разбивайте длинный маршрут на более понятные и управляемые части.",
+          "Замечайте повторяющиеся структуры, сжимайте их и переиспользуйте осознанно.",
+          "Развивайте настойчивость через цикл «проверил, увидел, исправил и попробовал снова».",
+        ],
+      },
+    ],
   },
   he: {
     actions: "פקודות",
@@ -193,6 +336,71 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "מוצגות רק הפקודות המותרות לשלב.",
     successBody: "כל היעדים מוארים. אפשר להפעיל שוב את השלב או לעבור לחידה הבאה.",
     theme: "ערכת נושא",
+    walkthroughClose: "סגירת המדריך",
+    walkthroughDone: "להתחיל לשחק",
+    walkthroughNext: "להמשיך",
+    walkthroughOpen: "איך משחקים",
+    walkthroughPrevious: "חזרה",
+    walkthroughSubtitle:
+      "תדריך קצר על השליטה, על לולאת הפתרון של המשחק, ועל מיומנויות החשיבה ש-Lumaloop מחזק בהדרגה.",
+    walkthroughTitle: "איך משחקים ב-Lumaloop",
+    walkthroughSlides: [
+      {
+        eyebrow: "משימה",
+        title: "להדליק את כל האורות שעל הלוח",
+        body:
+          "כל שלב הוא משימת ניווט קטנה. הרובוט מבצע את התוכנית בדיוק כפי שנכתבה, והשלב נפתר רק כשכל אריחי היעד מוארים, לכן צריך לתכנן מסלול שלם ולא רק להגיע לנקודה אחת.",
+        bullets: [
+          "קודם מסובבים את הרובוט לכיוון הנכון ורק אחר כך זזים או קופצים.",
+          "לא מספיק להדליק מנורה אחת אם נשאר יעד אחר כבוי במקום אחר על המפה.",
+          "פתרון קצר יותר בדרך כלל אומר שזיהיתם את הדפוס האמיתי שמסתתר בתוך החידה.",
+        ],
+      },
+      {
+        eyebrow: "שליטה",
+        title: "לבנות את המסלול פקודה אחרי פקודה",
+        body:
+          "משתמשים במגש הפעולות כדי להוסיף פקודות לראשית ולשרטט את הנתיב של הרובוט. בהמשך הקמפיין נפתחות גם פרוצדורה 1 ופרוצדורה 2, כדי שתוכלו לארוז רעיונות חוזרים למיני-תוכניות שניתנות לשימוש חוזר.",
+        bullets: [
+          "לוחצים על פקודה כדי להוסיף אותה לרוטינה הפעילה כרגע.",
+          "אפשר להסיר צעדים בודדים או לנקות רוטינה כשרוצים לבדוק רעיון מסודר יותר.",
+          "בחלק מהשלבים כמות הפקודות מוגבלת בכוונה, כדי למקד אתכם ברעיון חדש אחד בכל פעם.",
+        ],
+      },
+      {
+        eyebrow: "דיבוג",
+        title: "להריץ את התוכנית וללמוד מכל טעות",
+        body:
+          "לוחצים על הפעלה וצופים ברובוט מבצע את הקוד כפשוטו. כשמשהו משתבש, זו לא סתם טעות אלא מידע שימושי: משווים בין מה שציפיתם שיקרה לבין מה שקרה בפועל, ואז משפרים את התוכנית ומנסים שוב.",
+        bullets: [
+          "אפשר לעצור, להריץ מחדש, ולחזור על הניסיון כמה פעמים שצריך בלי לאבד התקדמות.",
+          "הרמזים מכוונים לרעיון המרכזי של השלב בלי לחשוף מיד את כל הפתרון.",
+          "רגע הכישלון עצמו בדרך כלל מגלה אם הבעיה היא סדר, כיוון, גובה, או פעולה שחסרה.",
+        ],
+      },
+      {
+        eyebrow: "נושאים",
+        title: "כל עולם מלמד דרך חדשה לחשוב",
+        body:
+          "הקמפיין בנוי כמו מסלול לימוד מודרך. בשלבים הראשונים מתחזקים ברצפים ובפניות, אחר כך לומדים לחשוב על גובה ותנועה במרחב, ובהמשך מתקדמים לפרוצדורות ולדפוסים רקורסיביים.",
+        bullets: [
+          "רצפים מלמדים לבחור את הפעולה הנכונה בזמן הנכון.",
+          "כיוון וגובה מחזקים חשיבה מרחבית: לאן הרובוט פונה, איפה הוא עומד, ומה מחכה בהמשך.",
+          "פרוצדורות ורקורסיה מלמדות לדחוס דפוסים חוזרים ללוגיקה חזקה שאפשר למחזר שוב ושוב.",
+        ],
+      },
+      {
+        eyebrow: "תועלת",
+        title: "אתם מתרגלים חשיבה חישובית אמיתית",
+        body:
+          "Lumaloop הוא הרבה יותר ממשחק חידות. הוא מפתח תכנון, פירוק בעיות, זיהוי דפוסים, דיבוג, ואת הביטחון לשפר רעיון בהדרגה עד שהוא באמת עובד.",
+        bullets: [
+          "מפרקים מסלול ארוך לחלקים קטנים שקל יותר להבין, לבדוק ולתקן.",
+          "מזהים מבנים חוזרים, דוחסים אותם, ומשתמשים בהם שוב בצורה מודעת.",
+          "בונים התמדה דרך מחזור של ניסיון, תצפית, שיפור, וניסיון חוזר עם תוכנית חכמה יותר.",
+        ],
+      },
+    ],
   },
 };
 
