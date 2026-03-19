@@ -6,7 +6,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { campaignLevels, createSlotsForLevel, useGameStore } from "../../features/game/store";
+import {
+  campaignLevels,
+  createSlotsForLevel,
+  getCompletedLevelsStorageKey,
+  useGameStore,
+} from "../../features/game/store";
 import { useI18n } from "../../i18n/I18nProvider";
 import { localizeLevel } from "../../i18n/translations";
 
@@ -16,6 +21,7 @@ const ROBOT_DEATH_STATUSES = new Set([
   "FAILED_WRONG_LIGHT",
 ]);
 const THEME_STORAGE_KEY = "lumaloop-theme";
+const COMPLETED_LEVELS_STORAGE_KEY = getCompletedLevelsStorageKey();
 
 type ThemeMode = "dark" | "light";
 
@@ -47,7 +53,9 @@ export function useGameScreenController() {
   const cameraQuarterTurns = useGameStore((state) => state.cameraQuarterTurns);
   const clearRoutine = useGameStore((state) => state.clearRoutine);
   const committedFrames = useGameStore((state) => state.committedFrames);
+  const completedLevelIds = useGameStore((state) => state.completedLevelIds);
   const ensureLevelProgram = useGameStore((state) => state.ensureLevelProgram);
+  const hydrateCompletedLevelIds = useGameStore((state) => state.hydrateCompletedLevelIds);
   const isAutoRunning = useGameStore((state) => state.isAutoRunning);
   const levelIndex = useGameStore((state) => state.levelIndex);
   const programs = useGameStore((state) => state.programs);
@@ -67,15 +75,44 @@ export function useGameScreenController() {
   const toggleAutoRunning = useGameStore((state) => state.toggleAutoRunning);
   const localizedLevels = campaignLevels.map((campaignLevel) => localizeLevel(campaignLevel, locale));
   const level = localizedLevels[levelIndex] ?? localizedLevels[0];
+  const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
+  const unlockedLevels = localizedLevels.map((_, index) => {
+    if (isAdmin || index === 0) {
+      return true;
+    }
+
+    const previousLevel = localizedLevels[index - 1];
+    return previousLevel ? completedLevelIds.includes(previousLevel.id) : false;
+  });
 
   useEffect(() => {
     ensureLevelProgram();
   }, [ensureLevelProgram, levelIndex]);
 
   useEffect(() => {
+    const savedCompletedLevelIds = window.localStorage.getItem(COMPLETED_LEVELS_STORAGE_KEY);
+
+    if (!savedCompletedLevelIds) {
+      hydrateCompletedLevelIds([]);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(savedCompletedLevelIds);
+      hydrateCompletedLevelIds(Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : []);
+    } catch {
+      hydrateCompletedLevelIds([]);
+    }
+  }, [hydrateCompletedLevelIds]);
+
+  useEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    window.localStorage.setItem(COMPLETED_LEVELS_STORAGE_KEY, JSON.stringify(completedLevelIds));
+  }, [completedLevelIds]);
 
   useEffect(() => {
     if (!isAutoRunning || activeFrameIndex !== null || !result || committedFrames >= result.trace.length) {
@@ -142,6 +179,14 @@ export function useGameScreenController() {
     setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
   }
 
+  function handleSetLevelIndex(nextLevelIndex: number) {
+    if (!unlockedLevels[nextLevelIndex]) {
+      return;
+    }
+
+    setLevelIndex(nextLevelIndex);
+  }
+
   function handleToggleRun() {
     if (isAutoRunning) {
       toggleAutoRunning(false);
@@ -161,7 +206,7 @@ export function useGameScreenController() {
     }
 
     stopRun();
-    setLevelIndex(levelIndex + 1);
+    handleSetLevelIndex(levelIndex + 1);
   }
 
   return {
@@ -231,7 +276,7 @@ export function useGameScreenController() {
       isAutoRunning,
       level,
       localizedLevels,
-      onSetLevelIndex: setLevelIndex,
+      onSetLevelIndex: handleSetLevelIndex,
       onSetRobotColorId: setRobotColorId,
       onSetShowAllActions: setShowAllActions,
       onToggleRun: handleToggleRun,
@@ -239,6 +284,7 @@ export function useGameScreenController() {
       robotColorId,
       showAllActions,
       theme,
+      unlockedLevels,
     },
     successDialog: showSuccessPopup
       ? {

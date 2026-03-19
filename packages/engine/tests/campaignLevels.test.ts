@@ -7,6 +7,9 @@ import { world02Orientation } from "../../level-data/src/worlds/world-02-orienta
 import { world03Height } from "../../level-data/src/worlds/world-03-height/levels";
 import { world04Procedures } from "../../level-data/src/worlds/world-04-procedures/levels";
 import { world05Recursion } from "../../level-data/src/worlds/world-05-recursion/levels";
+import { world06Hard } from "../../level-data/src/worlds/world-06-hard/levels";
+import { world07VeryHard } from "../../level-data/src/worlds/world-07-very-hard/levels";
+import { world08Mastery } from "../../level-data/src/worlds/world-08-mastery/levels";
 
 const campaignLevels = [
   ...world01Basics,
@@ -14,6 +17,9 @@ const campaignLevels = [
   ...world03Height,
   ...world04Procedures,
   ...world05Recursion,
+  ...world06Hard,
+  ...world07VeryHard,
+  ...world08Mastery,
 ];
 
 const referencePrograms: Record<string, ProgramSlots> = {
@@ -110,6 +116,102 @@ const referencePrograms: Record<string, ProgramSlots> = {
     p1: ["ACTIVATE", "CALL_P2"],
     p2: ["TURN_LEFT", "JUMP", "FORWARD", "CALL_P1"],
   },
+  "world-06-level-01": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "FORWARD", "FORWARD", "TURN_RIGHT", "FORWARD", "CALL_P1"],
+  },
+  "world-06-level-02": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "JUMP", "FORWARD", "TURN_LEFT", "CALL_P1"],
+  },
+  "world-06-level-03": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["FORWARD", "FORWARD", "TURN_LEFT", "FORWARD", "CALL_P1"],
+  },
+  "world-06-level-04": {
+    main: ["CALL_P2", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["JUMP", "FORWARD"],
+    p2: ["CALL_P1", "ACTIVATE", "TURN_RIGHT"],
+  },
+  "world-06-level-05": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["JUMP", "FORWARD", "TURN_RIGHT", "CALL_P1"],
+  },
+  "world-07-level-01": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "FORWARD", "TURN_RIGHT", "JUMP", "FORWARD", "CALL_P1"],
+  },
+  "world-07-level-02": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["FORWARD", "JUMP", "TURN_LEFT", "FORWARD", "CALL_P1"],
+  },
+  "world-07-level-03": {
+    main: ["CALL_P2"],
+    p1: ["TURN_LEFT", "JUMP"],
+    p2: ["ACTIVATE", "FORWARD", "CALL_P1", "FORWARD", "CALL_P2"],
+  },
+  "world-07-level-04": {
+    main: ["CALL_P2", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["CALL_P1", "ACTIVATE", "TURN_RIGHT", "JUMP"],
+  },
+  "world-07-level-05": {
+    main: ["CALL_P1", "ACTIVATE", "CALL_P2", "ACTIVATE", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "TURN_LEFT", "JUMP"],
+    p2: ["FORWARD", "TURN_RIGHT", "JUMP"],
+  },
+  "world-08-level-01": {
+    main: ["CALL_P2", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["CALL_P1", "ACTIVATE", "TURN_RIGHT"],
+  },
+  "world-08-level-02": {
+    main: ["CALL_P2", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["JUMP", "FORWARD"],
+    p2: ["CALL_P1", "ACTIVATE", "TURN_LEFT"],
+  },
+  "world-08-level-03": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["FORWARD", "TURN_RIGHT", "FORWARD", "CALL_P1"],
+  },
+  "world-08-level-04": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["JUMP", "TURN_RIGHT", "FORWARD", "CALL_P1"],
+  },
+  "world-08-level-05": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["FORWARD", "FORWARD", "TURN_LEFT", "FORWARD", "CALL_P1"],
+  },
+  "world-08-level-06": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["JUMP", "FORWARD", "TURN_LEFT", "FORWARD", "CALL_P1"],
+  },
+  "world-08-level-07": {
+    main: ["CALL_P2", "CALL_P2", "ACTIVATE", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["ACTIVATE", "CALL_P1", "TURN_RIGHT", "CALL_P1"],
+  },
+  "world-08-level-08": {
+    main: ["CALL_P2", "CALL_P2", "ACTIVATE", "CALL_P1", "ACTIVATE"],
+    p1: ["JUMP", "FORWARD"],
+    p2: ["ACTIVATE", "CALL_P1", "TURN_LEFT", "CALL_P1"],
+  },
+  "world-08-level-09": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "JUMP", "TURN_LEFT", "FORWARD", "JUMP", "CALL_P1"],
+  },
+  "world-08-level-10": {
+    main: ["CALL_P2"],
+    p1: ["TURN_RIGHT", "JUMP"],
+    p2: ["ACTIVATE", "FORWARD", "CALL_P1", "FORWARD", "CALL_P2"],
+  },
 };
 
 function getProgramLength(program: ProgramSlots) {
@@ -117,8 +219,8 @@ function getProgramLength(program: ProgramSlots) {
 }
 
 describe("campaign levels", () => {
-  it("contains 30 handcrafted levels with unique ids", () => {
-    expect(campaignLevels).toHaveLength(30);
+  it("contains 50 handcrafted levels with unique ids", () => {
+    expect(campaignLevels).toHaveLength(50);
     expect(new Set(campaignLevels.map((level) => level.id)).size).toBe(campaignLevels.length);
   });
 

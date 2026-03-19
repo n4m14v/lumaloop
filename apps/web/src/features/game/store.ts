@@ -14,6 +14,9 @@ import {
   world03Height,
   world04Procedures,
   world05Recursion,
+  world06Hard,
+  world07VeryHard,
+  world08Mastery,
 } from "@lumaloop/level-data";
 
 import type { RobotColorId } from "./robotColors";
@@ -23,6 +26,7 @@ export type RoutineSlots = Record<RoutineName, SlotCommand[]>;
 export type PlaybackSpeed = 1 | 2 | 4;
 export const ALL_COMMANDS: Command[] = ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "JUMP", "ACTIVATE", "CALL_P1", "CALL_P2"];
 const DEFAULT_PROC_SLOTS = 4;
+const COMPLETED_LEVELS_STORAGE_KEY = "lumaloop-completed-level-ids";
 
 const MAX_STEPS = 1000;
 const MAX_CALL_DEPTH = 100;
@@ -33,7 +37,20 @@ export const campaignLevels = [
   ...world03Height,
   ...world04Procedures,
   ...world05Recursion,
+  ...world06Hard,
+  ...world07VeryHard,
+  ...world08Mastery,
 ];
+
+const campaignLevelIds = new Set(campaignLevels.map((level) => level.id));
+
+function sanitizeCompletedLevelIds(levelIds: string[]) {
+  return [...new Set(levelIds.filter((levelId) => campaignLevelIds.has(levelId)))];
+}
+
+export function getCompletedLevelsStorageKey() {
+  return COMPLETED_LEVELS_STORAGE_KEY;
+}
 
 function createRoutineSlots(level: LevelDefinition): RoutineSlots {
   return {
@@ -113,6 +130,7 @@ interface GameStoreState {
   queueNextFrame: () => void;
   removeCommand: (routine: RoutineName, index: number) => void;
   rotateCamera: (delta: number) => void;
+  hydrateCompletedLevelIds: (levelIds: string[]) => void;
   setActiveRoutine: (routine: RoutineName) => void;
   setRobotColorId: (value: RobotColorId) => void;
   setShowAllActions: (value: boolean) => void;
@@ -263,6 +281,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     set((state) => ({
       cameraQuarterTurns: ((state.cameraQuarterTurns + delta) % 4 + 4) % 4,
     }));
+  },
+  hydrateCompletedLevelIds: (levelIds) => {
+    set({
+      completedLevelIds: sanitizeCompletedLevelIds(levelIds),
+    });
   },
   setActiveRoutine: (routine) => {
     set({ activeRoutine: routine });

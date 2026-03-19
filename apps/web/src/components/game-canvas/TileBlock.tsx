@@ -4,7 +4,7 @@
  * - This keeps the main scene assembly declarative while preserving existing effects.
  */
 
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 
 import { Edges } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -24,21 +24,23 @@ import {
   TILE_SIZE,
 } from "./constants";
 
-export function TileBlock({
-  failureBlink,
-  failurePulseToken,
-  isActive,
-  isLit,
-  tile,
-  victoryGlow,
-}: {
+interface TileBlockProps {
   failureBlink: boolean;
   failurePulseToken: object | null;
   isActive: boolean;
   isLit: boolean;
   tile: LevelDefinition["board"][number];
   victoryGlow: boolean;
-}) {
+}
+
+function TileBlockInner({
+  failureBlink,
+  failurePulseToken,
+  isActive,
+  isLit,
+  tile,
+  victoryGlow,
+}: TileBlockProps) {
   const topMaterialRef = useRef<MeshStandardMaterial>(null);
   const targetCoreMaterialRef = useRef<MeshStandardMaterial>(null);
   const targetHaloMaterialRef = useRef<MeshBasicMaterial>(null);
@@ -454,3 +456,14 @@ export function TileBlock({
     </group>
   );
 }
+
+export const TileBlock = memo(TileBlockInner, (previousProps, nextProps) => {
+  return (
+    previousProps.failureBlink === nextProps.failureBlink &&
+    previousProps.failurePulseToken === nextProps.failurePulseToken &&
+    previousProps.isActive === nextProps.isActive &&
+    previousProps.isLit === nextProps.isLit &&
+    previousProps.tile === nextProps.tile &&
+    previousProps.victoryGlow === nextProps.victoryGlow
+  );
+});

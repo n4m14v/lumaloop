@@ -130,12 +130,12 @@ export function GameMenu({
             </button>
 
             <div className="ui-button w-full rounded-[14px] px-4 py-3">
-              <div className="flex items-center justify-between gap-3 w-full">
+              <div className="flex w-full items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.robotColor}</p>
                   <p className="mt-1 text-[11px] text-[var(--text-muted)]">{robotColorId}</p>
                 </div>
-                <div className="ml-auto flex items-center gap-1.5">
+                <div className="ml-auto flex max-w-[136px] flex-wrap justify-end gap-1.5">
                   {ROBOT_COLOR_IDS.map((colorId) => (
                     <button
                       aria-label={colorId}

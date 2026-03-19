@@ -17,8 +17,8 @@ const MODEL_SCALE = 0.42;
 const DEFAULT_SURPRISE_INFLUENCE = 0.2;
 const FORWARD_MOVE_DURATION = 1.08;
 const FORWARD_WALK_TIME_SCALE = 1;
-const ROBOT_METAL_ENV_INTENSITY = 1.15;
-const ROBOT_RIM_LIGHT_INTENSITY = 0.46;
+const ROBOT_METAL_ENV_INTENSITY = 0.24;
+const ROBOT_RIM_LIGHT_INTENSITY = 0.18;
 export const ROBOT_VICTORY_EMOTE_DELAY_MS = 900;
 export const ROBOT_VICTORY_BEAM_EXIT_START_SECONDS = 1.46;
 export const ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS = 1.2;
@@ -154,6 +154,24 @@ type MorphBinding = {
   influences: number[];
 };
 
+type SurfaceRole = "neutral" | "primaryDark" | "primaryLight" | "primaryMid";
+
+type StandardSurfaceBinding = {
+  material: Material & {
+    color: Color;
+    emissiveIntensity: number;
+    envMapIntensity: number;
+    metalness: number;
+    roughness: number;
+  };
+  originalColor: Color;
+  originalEmissiveIntensity: number;
+  originalEnvMapIntensity: number;
+  originalMetalness: number;
+  originalRoughness: number;
+  role: SurfaceRole;
+};
+
 function isMorphCapableObject(object: Object3D): object is MorphCapableObject {
   return "morphTargetDictionary" in object && "morphTargetInfluences" in object;
 }
@@ -186,7 +204,7 @@ export function Robot({
   const actionCacheRef = useRef<Map<string, AnimationAction>>(new Map());
   const emissiveMaterialsRef = useRef<Material[]>([]);
   const fadeMaterialsRef = useRef<Array<Material & { opacity: number; transparent: boolean }>>([]);
-  const tintMaterialsRef = useRef<Array<{ material: Material & { color: Color }; originalColor: Color }>>([]);
+  const standardSurfaceBindingsRef = useRef<StandardSurfaceBinding[]>([]);
   const surpriseMorphsRef = useRef<MorphBinding[]>([]);
   const onFrameCompleteRef = useRef(onFrameComplete);
   const onVictorySequenceCompleteRef = useRef(onVictorySequenceComplete);
@@ -194,6 +212,7 @@ export function Robot({
   const clonedScene = useMemo(() => clone(scene), [scene]);
   const mixer = useMemo(() => new AnimationMixer(clonedScene), [clonedScene]);
   const palette = ROBOT_PALETTES[colorId];
+  const isMetallicPalette = palette.finish === "metallic";
 
   const animationSet = useMemo(
     () => ({
@@ -250,7 +269,7 @@ export function Robot({
   useEffect(() => {
     const emissiveMaterials: Material[] = [];
     const fadeMaterials: Array<Material & { opacity: number; transparent: boolean }> = [];
-    const tintMaterials: Array<{ material: Material & { color: Color }; originalColor: Color }> = [];
+    const standardSurfaceBindings: StandardSurfaceBinding[] = [];
     const surpriseMorphs: MorphBinding[] = [];
 
     clonedScene.traverse((child: Object3D) => {
@@ -287,67 +306,109 @@ export function Robot({
         if (supportsStandardSurface(material)) {
           const hsl = { h: 0, s: 0, l: 0 };
           material.color.getHSL(hsl);
-          const isBodySurface = hsl.l > 0.18 && hsl.s > 0.08;
-          const isTrimSurface = hsl.l <= 0.18 || hsl.s <= 0.08;
+          let role: SurfaceRole = "neutral";
 
-          material.envMapIntensity = ROBOT_METAL_ENV_INTENSITY;
-          material.metalness = isBodySurface ? 0.72 : isTrimSurface ? 0.58 : 0.65;
-          material.roughness = isBodySurface ? 0.42 : isTrimSurface ? 0.5 : 0.46;
-          material.emissiveIntensity = Math.max(material.emissiveIntensity, isBodySurface ? 0.22 : 0.12);
+          if (hsl.h > 0.04 && hsl.h < 0.16 && hsl.s > 0.18) {
+            if (hsl.l > 0.66) {
+              role = "primaryLight";
+            } else if (hsl.l > 0.42) {
+              role = "primaryMid";
+            } else {
+              role = "primaryDark";
+            }
+          }
+
+          standardSurfaceBindings.push({
+            material,
+            originalColor: material.color.clone(),
+            originalEmissiveIntensity: material.emissiveIntensity,
+            originalEnvMapIntensity: material.envMapIntensity,
+            originalMetalness: material.metalness,
+            originalRoughness: material.roughness,
+            role,
+          });
         }
         if (supportsOpacity(material)) {
           material.transparent = true;
           fadeMaterials.push(material);
-        }
-        if (supportsColor(material)) {
-          tintMaterials.push({ material, originalColor: material.color.clone() });
         }
       }
     });
 
     emissiveMaterialsRef.current = emissiveMaterials;
     fadeMaterialsRef.current = fadeMaterials;
-    tintMaterialsRef.current = tintMaterials;
+    standardSurfaceBindingsRef.current = standardSurfaceBindings;
     surpriseMorphsRef.current = surpriseMorphs;
   }, [clonedScene]);
 
   useEffect(() => {
-    const primary = new Color(palette.gltfPrimary);
+    const shellDark = new Color(palette.shellDark);
+    const shellMid = new Color(palette.gltfPrimary);
+    const shellLight = new Color(palette.shellLight);
     const accent = new Color(palette.gltfAccent);
     const lightLift = new Color("#f7f9fc");
     const isLightTheme = theme === "light";
-    const baseBodyLift = isLightTheme ? 0.22 : 0.14;
-    const baseAccentLift = isLightTheme ? 0.28 : 0.18;
-    const baseTrimLift = isLightTheme ? 0.14 : 0.06;
+    const primaryBodyLift = isMetallicPalette ? (isLightTheme ? 0.1 : 0.04) : (isLightTheme ? 0.06 : 0.02);
+    const primaryAccentLift = isMetallicPalette ? (isLightTheme ? 0.12 : 0.06) : (isLightTheme ? 0.08 : 0.03);
+    const neutralLift = isLightTheme ? 0.02 : 0;
 
-    for (const { material, originalColor } of tintMaterialsRef.current) {
-      const hsl = { h: 0, s: 0, l: 0 };
-      originalColor.getHSL(hsl);
+    for (const binding of standardSurfaceBindingsRef.current) {
+      const {
+        material,
+        originalColor,
+        originalEmissiveIntensity,
+        originalEnvMapIntensity,
+        originalMetalness,
+        originalRoughness,
+        role,
+      } = binding;
 
-      if (hsl.l < 0.14 || hsl.s < 0.08) {
+      if (role === "neutral") {
         material.color.copy(originalColor);
-        if (isLightTheme && hsl.l > 0.06) {
-          material.color.lerp(lightLift, baseTrimLift);
+        if (neutralLift > 0) {
+          material.color.lerp(lightLift, neutralLift);
         }
+        material.envMapIntensity = originalEnvMapIntensity;
+        material.metalness = originalMetalness;
+        material.roughness = originalRoughness;
+        material.emissiveIntensity = originalEmissiveIntensity;
         continue;
       }
 
-      if (hsl.h > 0.04 && hsl.h < 0.16 && hsl.s > 0.18) {
-        material.color.lerpColors(originalColor, primary, 0.92);
-        material.color.lerp(lightLift, baseBodyLift);
-        continue;
+      if (role === "primaryLight") {
+        material.color.copy(accent);
+        material.color.lerp(shellLight, 0.5);
+        material.color.lerp(lightLift, primaryAccentLift);
+        material.emissiveIntensity = Math.max(originalEmissiveIntensity, isMetallicPalette ? 0.06 : 0.02);
+      } else if (role === "primaryMid") {
+        material.color.copy(shellMid);
+        material.color.lerp(lightLift, primaryBodyLift);
+        material.emissiveIntensity = Math.max(originalEmissiveIntensity, isMetallicPalette ? 0.07 : 0.02);
+      } else {
+        material.color.copy(shellDark);
+        material.color.lerp(lightLift, primaryBodyLift * 0.35);
+        material.emissiveIntensity = Math.max(originalEmissiveIntensity, isMetallicPalette ? 0.05 : 0.015);
       }
 
-      if (hsl.h > 0.08 && hsl.h < 0.18 && hsl.l > 0.55) {
-        material.color.lerpColors(originalColor, accent, 0.45);
-        material.color.lerp(lightLift, baseAccentLift);
-        continue;
-      }
-
-      material.color.copy(originalColor);
-      material.color.lerp(lightLift, baseTrimLift);
+      material.envMapIntensity = isMetallicPalette ? ROBOT_METAL_ENV_INTENSITY : 0.04;
+      material.metalness =
+        role === "primaryLight"
+          ? isMetallicPalette
+            ? 0.24
+            : 0.02
+          : isMetallicPalette
+            ? 0.2
+            : 0.02;
+      material.roughness =
+        role === "primaryLight"
+          ? isMetallicPalette
+            ? 0.82
+            : 0.94
+          : isMetallicPalette
+            ? 0.86
+            : 0.95;
     }
-  }, [palette, theme]);
+  }, [isMetallicPalette, palette, theme]);
 
   useEffect(() => {
     setMorphInfluence(surpriseMorphsRef.current, DEFAULT_SURPRISE_INFLUENCE);
@@ -389,7 +450,7 @@ export function Robot({
     });
     gsap.to(statusLight, {
       duration: 0.2,
-      intensity: hasLitTargets ? 1.4 : 0.7,
+      intensity: hasLitTargets ? 0.9 : 0.35,
     });
   }, [litTargets]);
 

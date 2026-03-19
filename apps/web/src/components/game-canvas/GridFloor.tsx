@@ -4,7 +4,7 @@
  * - This module owns only decorative ground geometry and its lightweight animation.
  */
 
-import { useRef } from "react";
+import { memo, useMemo, useRef } from "react";
 
 import { Edges } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -20,7 +20,7 @@ import {
 } from "./constants";
 import { getBoardMetrics } from "./sceneMath";
 
-function FloatingFloorTile({
+const FloatingFloorTile = memo(function FloatingFloorTile({
   animated,
   x,
   y,
@@ -59,21 +59,27 @@ function FloatingFloorTile({
       </mesh>
     </group>
   );
-}
+});
 
-export function GridFloor({ level }: { level: LevelDefinition }) {
+function GridFloorInner({ level }: { level: LevelDefinition }) {
   const { minX, maxX, minY, maxY } = getBoardMetrics(level);
   const padding = 2;
-  const tiles = [];
-  const occupiedTiles = new Set(level.board.map((tile) => `${tile.x},${tile.y}`));
+  const tiles = useMemo(() => {
+    const floorTiles = [];
+    const occupiedTiles = new Set(level.board.map((tile) => `${tile.x},${tile.y}`));
 
-  for (let x = minX - padding; x <= maxX + padding; x += 1) {
-    for (let y = minY - padding; y <= maxY + padding; y += 1) {
-      tiles.push(
-        <FloatingFloorTile animated={!occupiedTiles.has(`${x},${y}`)} key={`${x},${y}`} x={x} y={y} />,
-      );
+    for (let x = minX - padding; x <= maxX + padding; x += 1) {
+      for (let y = minY - padding; y <= maxY + padding; y += 1) {
+        floorTiles.push(
+          <FloatingFloorTile animated={!occupiedTiles.has(`${x},${y}`)} key={`${x},${y}`} x={x} y={y} />,
+        );
+      }
     }
-  }
+
+    return floorTiles;
+  }, [level.board, maxX, maxY, minX, minY]);
 
   return <group>{tiles}</group>;
 }
+
+export const GridFloor = memo(GridFloorInner, (previousProps, nextProps) => previousProps.level === nextProps.level);

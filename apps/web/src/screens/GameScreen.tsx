@@ -1,4 +1,6 @@
+import { DarkThemeNebula } from "../components/DarkThemeNebula";
 import { GameCanvas } from "../components/GameCanvas";
+import { LightThemeClouds } from "../components/LightThemeClouds";
 import { ProgramWorkspace } from "../components/ProgramWorkspace";
 import { GameHeaderBar } from "../components/game-screen/GameHeaderBar";
 import { GameSuccessDialog } from "../components/game-screen/GameSuccessDialog";
@@ -12,8 +14,10 @@ export function GameScreen() {
   }
 
   return (
-    <main className="relative min-h-screen px-4 py-3 text-[var(--text-primary)] md:px-6 md:py-4">
-      <div className="mx-auto max-w-[1920px]">
+    <main className="relative isolate min-h-screen px-4 py-3 text-[var(--text-primary)] md:px-6 md:py-4">
+      {controller.theme === "dark" ? <DarkThemeNebula /> : null}
+      {controller.theme === "light" ? <LightThemeClouds /> : null}
+      <div className="relative z-10 mx-auto max-w-[1920px]">
         <ProgramWorkspace
           activeRoutine={controller.workspace.activeRoutine}
           allowedCommands={controller.workspace.allowedCommands}

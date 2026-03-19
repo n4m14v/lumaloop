@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 
 import gsap from "gsap";
 
@@ -33,6 +33,7 @@ export function useOrbitCameraControls({
   levelId,
   quarterTurns,
 }: OrbitCameraControlsOptions) {
+  const canvasContainerRef = useRef<HTMLDivElement | null>(null);
   const [orbitAzimuth, setOrbitAzimuth] = useState(CAMERA_BASE_AZIMUTH - quarterTurns * (Math.PI / 2));
   const [orbitElevation, setOrbitElevation] = useState(CAMERA_BASE_ELEVATION);
   const [zoom, setZoom] = useState(1);
@@ -80,11 +81,6 @@ export function useOrbitCameraControls({
     animateAzimuth(CAMERA_BASE_AZIMUTH, duration);
   }
 
-  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
-    event.preventDefault();
-    setZoom((currentZoom) => clamp(currentZoom + event.deltaY * CAMERA_ZOOM_STEP, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX));
-  }
-
   useEffect(() => {
     const deltaTurns = quarterTurns - previousQuarterTurnsRef.current;
     previousQuarterTurnsRef.current = quarterTurns;
@@ -121,6 +117,27 @@ export function useOrbitCameraControls({
 
     dragStateRef.current = null;
   }, [isRotationLocked]);
+
+  useEffect(() => {
+    const canvasContainer = canvasContainerRef.current;
+
+    if (!canvasContainer) {
+      return;
+    }
+
+    function handleWheel(event: WheelEvent) {
+      event.preventDefault();
+      setZoom((currentZoom) =>
+        clamp(currentZoom + event.deltaY * CAMERA_ZOOM_STEP, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX),
+      );
+    }
+
+    canvasContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      canvasContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (event.button !== 0 || isRotationLocked) {
@@ -164,12 +181,12 @@ export function useOrbitCameraControls({
   }
 
   return {
+    canvasContainerRef,
     canvasInteractionProps: {
       onPointerCancel: handlePointerEnd,
       onPointerDown: handlePointerDown,
       onPointerMove: handlePointerMove,
       onPointerUp: handlePointerEnd,
-      onWheel: handleWheel,
     },
     cursorClassName: isRotationLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing",
     orbitAzimuth,

@@ -25,6 +25,7 @@ interface GameHeaderBarProps {
   robotColorId: RobotColorId;
   showAllActions: boolean;
   theme: "dark" | "light";
+  unlockedLevels: boolean[];
 }
 
 export function GameHeaderBar({
@@ -41,6 +42,7 @@ export function GameHeaderBar({
   robotColorId,
   showAllActions,
   theme,
+  unlockedLevels,
 }: GameHeaderBarProps) {
   const { t } = useI18n();
   const [isLevelMenuOpen, setIsLevelMenuOpen] = useState(false);
@@ -124,8 +126,11 @@ export function GameHeaderBar({
                           "flex w-full items-center justify-between rounded-[10px] px-3 py-2 text-left text-[12px] transition",
                           index === currentLevelIndex
                             ? "bg-[var(--accent-soft)] text-[var(--text-primary)]"
-                            : "text-[var(--text-secondary)] hover:bg-white/5",
+                            : unlockedLevels[index]
+                              ? "text-[var(--text-secondary)] hover:bg-white/5"
+                              : "cursor-not-allowed text-[var(--text-muted)] opacity-45",
                         ].join(" ")}
+                        disabled={!unlockedLevels[index]}
                         key={levelOption.id}
                         onClick={() => {
                           onSetLevelIndex(index);

@@ -204,19 +204,46 @@ select option {
 html[data-theme="light"] .ui-deboss-surface {
   background: var(--action-surface);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.5),
-    inset 0 -2px 3px rgba(118, 133, 154, 0.28),
-    inset 1px 0 2px rgba(255, 255, 255, 0.28),
-    inset -1px 0 2px rgba(118, 133, 154, 0.2),
     0 2px 4px rgba(148, 163, 184, 0.16),
     0 1px 2px rgba(148, 163, 184, 0.08);
 }
 
 html[data-theme="light"] .ui-deboss-surface:active {
   box-shadow:
-    inset 0 2px 4px rgba(148, 163, 184, 0.4),
-    inset 0 1px 1px rgba(255, 255, 255, 0.5),
     0 1px 2px rgba(148, 163, 184, 0.15);
+}
+
+html[data-theme="light"] .ui-panel {
+  box-shadow: none;
+}
+
+html[data-theme="light"] .ui-panel-active {
+  box-shadow: 0 0 18px var(--accent-shadow) !important;
+}
+
+html[data-theme="light"] .ui-panel-soft {
+  box-shadow: none;
+}
+
+html[data-theme="light"] .ui-gloss-panel {
+  box-shadow: 0 18px 34px rgba(148, 163, 184, 0.14);
+}
+
+html[data-theme="light"] .ui-button {
+  box-shadow: none;
+}
+
+html[data-theme="light"] .ui-button:hover,
+html[data-theme="light"] .ui-input:hover {
+  box-shadow: 0 0 0 1px var(--accent-soft);
+}
+
+html[data-theme="light"] .ui-button-accent {
+  box-shadow: 0 0 24px var(--accent-shadow);
+}
+
+html[data-theme="light"] .ui-input {
+  box-shadow: none;
 }
 
 .ui-deboss-surface-active {
@@ -379,39 +406,103 @@ body::after {
 }
 
 html[data-theme="light"] body::before {
-  background:
-    var(--space-base),
-    radial-gradient(ellipse at 12% 18%, rgba(255, 255, 255, 0.78) 0 7%, rgba(255, 255, 255, 0.42) 11%, transparent 16%),
-    radial-gradient(ellipse at 26% 30%, rgba(255, 255, 255, 0.86) 0 8%, rgba(255, 255, 255, 0.5) 12%, transparent 17%),
-    radial-gradient(ellipse at 46% 16%, rgba(255, 255, 255, 0.7) 0 6%, rgba(255, 255, 255, 0.36) 10%, transparent 15%),
-    radial-gradient(ellipse at 63% 34%, rgba(255, 255, 255, 0.82) 0 8%, rgba(255, 255, 255, 0.46) 12%, transparent 18%),
-    radial-gradient(ellipse at 84% 20%, rgba(255, 255, 255, 0.74) 0 7%, rgba(255, 255, 255, 0.4) 11%, transparent 16%),
-    radial-gradient(ellipse at 18% 56%, rgba(255, 255, 255, 0.72) 0 7%, rgba(255, 255, 255, 0.36) 11%, transparent 16%),
-    radial-gradient(ellipse at 40% 46%, rgba(255, 255, 255, 0.78) 0 8%, rgba(255, 255, 255, 0.42) 12%, transparent 17%),
-    radial-gradient(ellipse at 58% 60%, rgba(255, 255, 255, 0.72) 0 7%, rgba(255, 255, 255, 0.36) 11%, transparent 16%),
-    radial-gradient(ellipse at 78% 54%, rgba(255, 255, 255, 0.8) 0 8%, rgba(255, 255, 255, 0.42) 12%, transparent 17%),
-    radial-gradient(ellipse at 90% 72%, rgba(255, 255, 255, 0.66) 0 7%, rgba(255, 255, 255, 0.32) 10%, transparent 15%);
-  filter: blur(18px);
-  opacity: 0.98;
-  animation: space-drift-slow 34s ease-in-out infinite;
+  background: var(--space-base);
+  filter: none;
+  opacity: 1;
+  animation: none;
 }
 
 html[data-theme="light"] body::after {
-  inset: -6%;
+  content: none;
+}
+
+.dark-nebula {
+  position: absolute;
+  width: 64rem;
+  height: 42rem;
+  overflow: visible;
+  mix-blend-mode: normal;
+  border-radius: 999px;
   background:
-    radial-gradient(ellipse at 14% 19%, rgba(255, 255, 255, 0.96) 0 3.8%, rgba(255, 255, 255, 0.8) 6%, transparent 9.5%),
-    radial-gradient(ellipse at 24% 31%, rgba(255, 255, 255, 0.98) 0 4.8%, rgba(255, 255, 255, 0.82) 7.2%, transparent 11%),
-    radial-gradient(ellipse at 45% 17%, rgba(255, 255, 255, 0.92) 0 3.8%, rgba(255, 255, 255, 0.74) 6%, transparent 9.5%),
-    radial-gradient(ellipse at 64% 35%, rgba(255, 255, 255, 0.98) 0 4.8%, rgba(255, 255, 255, 0.82) 7.2%, transparent 11%),
-    radial-gradient(ellipse at 84% 22%, rgba(255, 255, 255, 0.94) 0 4.1%, rgba(255, 255, 255, 0.76) 6.4%, transparent 10%),
-    radial-gradient(ellipse at 18% 57%, rgba(255, 255, 255, 0.94) 0 4.1%, rgba(255, 255, 255, 0.76) 6.4%, transparent 10%),
-    radial-gradient(ellipse at 40% 47%, rgba(255, 255, 255, 0.98) 0 4.6%, rgba(255, 255, 255, 0.82) 7%, transparent 10.8%),
-    radial-gradient(ellipse at 58% 61%, rgba(255, 255, 255, 0.92) 0 4%, rgba(255, 255, 255, 0.74) 6.2%, transparent 9.8%),
-    radial-gradient(ellipse at 78% 55%, rgba(255, 255, 255, 0.98) 0 4.7%, rgba(255, 255, 255, 0.8) 7%, transparent 10.8%),
-    radial-gradient(ellipse at 90% 73%, rgba(255, 255, 255, 0.9) 0 3.8%, rgba(255, 255, 255, 0.72) 5.8%, transparent 9.2%);
-  background-repeat: no-repeat;
-  background-size: auto;
-  filter: blur(12px);
-  opacity: 0.9;
-  animation: space-drift-fast 22s ease-in-out infinite;
+    radial-gradient(ellipse at 46% 48%, var(--nebula-core) 0%, rgba(255, 242, 248, 0.08) 12%, transparent 25%),
+    radial-gradient(ellipse at 32% 34%, var(--nebula-highlight) 0%, transparent 28%),
+    radial-gradient(ellipse at 44% 54%, var(--nebula-accent) 0%, transparent 36%),
+    radial-gradient(ellipse at 54% 32%, var(--nebula-primary) 0%, transparent 38%),
+    radial-gradient(ellipse at 68% 50%, var(--nebula-secondary) 0%, transparent 40%);
+  filter: blur(16px) saturate(1.12);
+  transform: rotate(-11deg);
+}
+
+.dark-nebula-dust {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 41% 50%, rgba(6, 9, 18, 0.36) 0 7%, transparent 10%),
+    radial-gradient(ellipse at 51% 43%, rgba(7, 9, 18, 0.3) 0 6%, transparent 10%),
+    radial-gradient(ellipse at 57% 56%, rgba(7, 9, 18, 0.24) 0 5%, transparent 9%),
+    linear-gradient(160deg, transparent 36%, rgba(5, 8, 16, 0.24) 44%, transparent 53%),
+    linear-gradient(195deg, transparent 45%, rgba(7, 9, 18, 0.16) 50%, transparent 57%);
+  filter: blur(8px);
+  mix-blend-mode: multiply;
+}
+
+.light-cloud {
+  position: absolute;
+  width: 42rem;
+  height: 26rem;
+  overflow: visible;
+  transform: scale(var(--cloud-scale, 1));
+}
+
+.light-cloud-layer {
+  position: absolute;
+  inset: -20%;
+}
+
+.light-cloud-source {
+  position: absolute;
+  width: 15rem;
+  height: 8rem;
+  left: -18rem;
+  top: -10rem;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.001);
+}
+
+.light-cloud-layer-soft .light-cloud-source {
+  filter: url(#light-cloud-filter-soft);
+  box-shadow: 22rem 11rem 4.6rem 1rem rgba(255, 255, 255, 0.34);
+}
+
+.light-cloud-layer-main .light-cloud-source {
+  width: 16rem;
+  height: 8.8rem;
+  left: -19rem;
+  top: -10.4rem;
+  filter: url(#light-cloud-filter-main);
+  box-shadow: 23rem 11.4rem 4.2rem 1.1rem rgba(255, 255, 255, 0.9);
+}
+
+.light-cloud-layer-shade .light-cloud-source {
+  width: 13.6rem;
+  height: 5rem;
+  left: -16.8rem;
+  top: -8rem;
+  filter: url(#light-cloud-filter-shade);
+  box-shadow: 20.8rem 14.2rem 2.8rem 0.1rem rgba(136, 145, 158, 0.34);
+}
+
+@keyframes light-cloud-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(var(--cloud-scale, 1));
+  }
+
+  50% {
+    transform: translate3d(3.4rem, 0.6rem, 0) scale(var(--cloud-scale, 1));
+  }
+
+  100% {
+    transform: translate3d(6.8rem, 0, 0) scale(var(--cloud-scale, 1));
+  }
 }

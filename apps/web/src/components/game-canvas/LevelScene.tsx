@@ -4,6 +4,8 @@
  * - It keeps GameCanvas focused on the canvas container and global render configuration.
  */
 
+import { useMemo } from "react";
+
 import type { LevelDefinition, RobotState, TraceFrame } from "@lumaloop/engine";
 
 import type { RobotColorId } from "../../features/game/robotColors";
@@ -43,6 +45,7 @@ export function LevelScene({
   victoryBeamActive,
 }: LevelSceneProps) {
   const { centerX, centerZ } = getBoardMetrics(level);
+  const litTargetIds = useMemo(() => new Set(litTargets), [litTargets]);
   const activeTileKey =
     activeFrame === null ? null : getTileKey(activeFrame.robotAfter.x, activeFrame.robotAfter.y, activeFrame.robotAfter.z);
   const failureTileKey = failurePulse ? getTileKey(committedRobot.x, committedRobot.y, committedRobot.z) : null;
@@ -59,7 +62,7 @@ export function LevelScene({
             failureBlink={tileKey === failureTileKey}
             failurePulseToken={failurePulseToken}
             isActive={tileKey === activeTileKey}
-            isLit={tile.kind === "TARGET" && litTargets.includes(tile.id as string)}
+            isLit={tile.kind === "TARGET" && litTargetIds.has(tile.id as string)}
             key={tile.kind === "TARGET" ? tile.id : tileKey}
             tile={tile}
             victoryGlow={showVictorySequence && tileKey === victoryTileKey}

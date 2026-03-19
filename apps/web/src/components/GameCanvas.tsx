@@ -46,11 +46,12 @@ export function GameCanvas({
   theme,
 }: GameCanvasProps) {
   const [victoryBeamActive, setVictoryBeamActive] = useState(showVictorySequence);
-  const { canvasInteractionProps, cursorClassName, orbitAzimuth, orbitElevation, zoom } = useOrbitCameraControls({
-    isRotationLocked,
-    levelId: level.id,
-    quarterTurns,
-  });
+  const { canvasContainerRef, canvasInteractionProps, cursorClassName, orbitAzimuth, orbitElevation, zoom } =
+    useOrbitCameraControls({
+      isRotationLocked,
+      levelId: level.id,
+      quarterTurns,
+    });
 
   useEffect(() => {
     if (!showVictorySequence) {
@@ -70,10 +71,11 @@ export function GameCanvas({
   return (
     <div
       className={`${className ?? "relative h-[420px] w-full overflow-hidden md:h-[640px]"} ${cursorClassName}`}
+      ref={canvasContainerRef}
       style={{ touchAction: "none" }}
       {...canvasInteractionProps}
     >
-      <Canvas gl={{ alpha: true }} dpr={[1, 1.5]}>
+      <Canvas gl={{ alpha: true, powerPreference: "high-performance" }} dpr={[1, 1.25]}>
         <PerspectiveCamera makeDefault far={100} fov={28} near={0.1} position={[14, 12, 14]} />
         <CameraRig elevation={orbitElevation} level={level} orbitAngle={orbitAzimuth} zoom={zoom} />
         <ambientLight intensity={1.15} />
