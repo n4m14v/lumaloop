@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { AnimationMixer, Color, LoopOnce, LoopRepeat } from "three";
-import type { AnimationAction, AnimationClip, Group, Material, MeshBasicMaterial, Object3D, PointLight } from "three";
+import type { AnimationAction, AnimationClip, Group, Material, Object3D, PointLight } from "three";
 
 import type { RobotState, TraceFrame } from "@lumaloop/engine";
 import { ROBOT_PALETTES, type RobotColorId } from "../features/game/robotColors";
@@ -196,7 +196,6 @@ export function Robot({
 }: RobotProps) {
   const rootRef = useRef<Group>(null);
   const modelRef = useRef<Group>(null);
-  const shadowRef = useRef<MeshBasicMaterial>(null);
   const statusLightRef = useRef<PointLight>(null);
   const failureLightRef = useRef<PointLight>(null);
   const activeActionRef = useRef<AnimationAction | null>(null);
@@ -290,8 +289,8 @@ export function Robot({
         return;
       }
 
-      child.castShadow = true;
-      child.receiveShadow = true;
+      child.castShadow = false;
+      child.receiveShadow = false;
       child.frustumCulled = false;
 
       const isMultiMaterial = Array.isArray(child.material);
@@ -593,7 +592,6 @@ export function Robot({
     });
 
     if (activeFrame.command === "FORWARD") {
-      const shadowMaterial = shadowRef.current;
       const travelStartY = root.position.y;
 
       timeline.to(root.position, { duration: movementDuration, ease: "none", x: targetX, z: targetZ }, 0);
@@ -622,11 +620,6 @@ export function Robot({
           z: MODEL_SCALE,
         }, movementDuration * 0.52);
       }
-      if (shadowMaterial) {
-        timeline.to(shadowMaterial, { duration: movementDuration * 0.24, ease: "power2.out", opacity: 0.26 }, 0);
-        timeline.to(shadowMaterial, { duration: movementDuration * 0.28, ease: "power2.inOut", opacity: 0.14 }, movementDuration * 0.24);
-        timeline.to(shadowMaterial, { duration: movementDuration * 0.2, ease: "power2.out", opacity: 0.2 }, movementDuration * 0.52);
-      }
     } else if (activeFrame.command === "JUMP") {
       timeline.to(root.position, { duration: movementDuration, x: targetX, z: targetZ }, 0);
       timeline.to(root.position, { duration: movementDuration / 2, y: targetY + 0.92 }, 0);
@@ -647,10 +640,9 @@ export function Robot({
   useEffect(() => {
     const root = rootRef.current;
     const model = modelRef.current;
-    const shadowMaterial = shadowRef.current;
     const surpriseMorphs = surpriseMorphsRef.current;
 
-    if (!root || !model || !shadowMaterial) {
+    if (!root || !model) {
       return;
     }
 
@@ -658,7 +650,6 @@ export function Robot({
       gsap.set(root.scale, { x: 1, y: 1, z: 1 });
       gsap.set(root.rotation, { x: 0, y: toFacingRotation(robot.facing), z: 0 });
       gsap.set(model.scale, { x: MODEL_SCALE, y: MODEL_SCALE, z: MODEL_SCALE });
-      gsap.set(shadowMaterial, { opacity: 0.2 });
       gsap.set(fadeMaterialsRef.current, { opacity: 1 });
       setMorphInfluence(surpriseMorphs, DEFAULT_SURPRISE_INFLUENCE);
       return;
@@ -767,15 +758,6 @@ export function Robot({
         ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.78,
     );
     timeline.to(
-      shadowMaterial,
-      {
-        duration: ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS,
-        ease: "power1.out",
-        opacity: 0.02,
-      },
-      ROBOT_VICTORY_EMOTE_DELAY_MS / 1000 + ROBOT_VICTORY_BOT_FLOAT_START_SECONDS,
-    );
-    timeline.to(
       {},
       { duration: ROBOT_VICTORY_POPUP_DELAY_MS / 1000 },
       popupStartSeconds,
@@ -789,10 +771,6 @@ export function Robot({
 
   return (
     <group ref={rootRef}>
-      <mesh position={[0, 0.02, 0]} rotation-x={-Math.PI / 2}>
-        <circleGeometry args={[0.62, 32]} />
-        <meshBasicMaterial color="#05131d" opacity={0.2} ref={shadowRef} transparent />
-      </mesh>
       <pointLight color="#d7f0ff" distance={7.5} intensity={ROBOT_RIM_LIGHT_INTENSITY} position={[-1.6, 2.2, -1.8]} />
       <pointLight color="#5bc8ff" distance={5.5} intensity={0.7} position={[0, 1.8, 0.6]} ref={statusLightRef} />
       <pointLight color="#ff5656" distance={4} intensity={0} position={[0, 1.4, 0]} ref={failureLightRef} />

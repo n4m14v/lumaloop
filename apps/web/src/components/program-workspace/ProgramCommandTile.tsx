@@ -4,7 +4,7 @@ import {
   CornerUpLeft,
   CornerUpRight,
   Power,
-  SquareFunction,
+  Workflow,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -24,8 +24,8 @@ const commandMeta: Record<
   TURN_RIGHT: { icon: CornerUpRight },
   JUMP: { icon: ChevronsUp },
   ACTIVATE: { icon: Power },
-  CALL_P1: { icon: SquareFunction, badge: "1" },
-  CALL_P2: { icon: SquareFunction, badge: "2" },
+  CALL_P1: { icon: Workflow, badge: "1" },
+  CALL_P2: { icon: Workflow, badge: "2" },
 };
 
 function DebossedIcon({

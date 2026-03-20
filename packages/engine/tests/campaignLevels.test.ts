@@ -10,6 +10,8 @@ import { world05Recursion } from "../../level-data/src/worlds/world-05-recursion
 import { world06Hard } from "../../level-data/src/worlds/world-06-hard/levels";
 import { world07VeryHard } from "../../level-data/src/worlds/world-07-very-hard/levels";
 import { world08Mastery } from "../../level-data/src/worlds/world-08-mastery/levels";
+import { world09Trickery } from "../../level-data/src/worlds/world-09-trickery/levels";
+import { world10Phantoms } from "../../level-data/src/worlds/world-10-phantoms/levels";
 
 const campaignLevels = [
   ...world01Basics,
@@ -20,6 +22,8 @@ const campaignLevels = [
   ...world06Hard,
   ...world07VeryHard,
   ...world08Mastery,
+  ...world09Trickery,
+  ...world10Phantoms,
 ];
 
 const referencePrograms: Record<string, ProgramSlots> = {
@@ -212,6 +216,55 @@ const referencePrograms: Record<string, ProgramSlots> = {
     p1: ["TURN_RIGHT", "JUMP"],
     p2: ["ACTIVATE", "FORWARD", "CALL_P1", "FORWARD", "CALL_P2"],
   },
+  "world-09-level-01": {
+    main: ["CALL_P2", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["CALL_P1", "ACTIVATE", "TURN_RIGHT"],
+  },
+  "world-09-level-02": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["FORWARD", "FORWARD", "TURN_LEFT", "FORWARD", "CALL_P1"],
+  },
+  "world-09-level-03": {
+    main: ["CALL_P2", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["JUMP", "FORWARD"],
+    p2: ["CALL_P1", "ACTIVATE", "TURN_LEFT"],
+  },
+  "world-09-level-04": {
+    main: ["CALL_P2", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["CALL_P1", "ACTIVATE", "TURN_RIGHT", "JUMP"],
+  },
+  "world-09-level-05": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["JUMP", "TURN_RIGHT", "FORWARD", "CALL_P1"],
+  },
+  "world-10-level-01": {
+    main: ["CALL_P2", "CALL_P2", "ACTIVATE", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["ACTIVATE", "CALL_P1", "TURN_RIGHT", "CALL_P1"],
+  },
+  "world-10-level-02": {
+    main: ["CALL_P2", "CALL_P2", "ACTIVATE", "CALL_P1", "ACTIVATE"],
+    p1: ["JUMP", "FORWARD"],
+    p2: ["ACTIVATE", "CALL_P1", "TURN_LEFT", "CALL_P1"],
+  },
+  "world-10-level-03": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["FORWARD", "TURN_RIGHT", "FORWARD", "CALL_P1"],
+  },
+  "world-10-level-04": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "FORWARD", "TURN_RIGHT", "JUMP", "FORWARD", "CALL_P1"],
+  },
+  "world-10-level-05": {
+    main: ["CALL_P2"],
+    p1: ["TURN_RIGHT", "JUMP"],
+    p2: ["ACTIVATE", "FORWARD", "CALL_P1", "FORWARD", "CALL_P2"],
+  },
 };
 
 function getProgramLength(program: ProgramSlots) {
@@ -219,8 +272,8 @@ function getProgramLength(program: ProgramSlots) {
 }
 
 describe("campaign levels", () => {
-  it("contains 50 handcrafted levels with unique ids", () => {
-    expect(campaignLevels).toHaveLength(50);
+  it("contains 60 handcrafted levels with unique ids", () => {
+    expect(campaignLevels).toHaveLength(60);
     expect(new Set(campaignLevels.map((level) => level.id)).size).toBe(campaignLevels.length);
   });
 

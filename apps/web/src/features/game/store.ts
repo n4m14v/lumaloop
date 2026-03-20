@@ -17,6 +17,8 @@ import {
   world06Hard,
   world07VeryHard,
   world08Mastery,
+  world09Trickery,
+  world10Phantoms,
 } from "@lumaloop/level-data";
 
 import type { RobotColorId } from "./robotColors";
@@ -40,6 +42,8 @@ export const campaignLevels = [
   ...world06Hard,
   ...world07VeryHard,
   ...world08Mastery,
+  ...world09Trickery,
+  ...world10Phantoms,
 ];
 
 const campaignLevelIds = new Set(campaignLevels.map((level) => level.id));
