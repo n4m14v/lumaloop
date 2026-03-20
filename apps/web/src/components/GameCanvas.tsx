@@ -23,6 +23,7 @@ interface GameCanvasProps {
   level: LevelDefinition;
   onFrameComplete: () => void;
   onVictorySequenceComplete: () => void;
+  playbackSpeed: number;
   quarterTurns: number;
   robotColorId: RobotColorId;
   showVictorySequence: boolean;
@@ -40,6 +41,7 @@ export function GameCanvas({
   level,
   onFrameComplete,
   onVictorySequenceComplete,
+  playbackSpeed,
   quarterTurns,
   robotColorId,
   showVictorySequence,
@@ -92,6 +94,7 @@ export function GameCanvas({
           level={level}
           onFrameComplete={onFrameComplete}
           onVictorySequenceComplete={onVictorySequenceComplete}
+          playbackSpeed={playbackSpeed}
           robotColorId={robotColorId}
           showVictorySequence={showVictorySequence}
           theme={theme}

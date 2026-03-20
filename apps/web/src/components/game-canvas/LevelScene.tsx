@@ -24,6 +24,7 @@ interface LevelSceneProps {
   level: LevelDefinition;
   onFrameComplete: () => void;
   onVictorySequenceComplete: () => void;
+  playbackSpeed: number;
   robotColorId: RobotColorId;
   showVictorySequence: boolean;
   theme: "dark" | "light";
@@ -39,6 +40,7 @@ export function LevelScene({
   level,
   onFrameComplete,
   onVictorySequenceComplete,
+  playbackSpeed,
   robotColorId,
   showVictorySequence,
   theme,
@@ -53,7 +55,7 @@ export function LevelScene({
 
   return (
     <group position={[-centerX, 0, -centerZ]}>
-      <GridFloor level={level} />
+      <GridFloor level={level} theme={theme} />
       {level.board.map((tile) => {
         const tileKey = getTileKey(tile.x, tile.y, tile.z);
 
@@ -78,6 +80,7 @@ export function LevelScene({
         litTargets={litTargets}
         onFrameComplete={onFrameComplete}
         onVictorySequenceComplete={onVictorySequenceComplete}
+        playbackSpeed={playbackSpeed}
         robot={committedRobot}
         theme={theme}
         victorySequenceActive={showVictorySequence}

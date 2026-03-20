@@ -17,6 +17,7 @@ const MODEL_SCALE = 0.42;
 const DEFAULT_SURPRISE_INFLUENCE = 0.2;
 const FORWARD_MOVE_DURATION = 1.08;
 const FORWARD_WALK_TIME_SCALE = 1;
+const FORWARD_RUN_TIME_SCALE = 1.45;
 const ROBOT_METAL_ENV_INTENSITY = 0.24;
 const ROBOT_RIM_LIGHT_INTENSITY = 0.18;
 export const ROBOT_VICTORY_EMOTE_DELAY_MS = 900;
@@ -35,10 +36,15 @@ type RobotProps = {
   litTargets: string[];
   onFrameComplete: () => void;
   onVictorySequenceComplete: () => void;
+  playbackSpeed: number;
   robot: RobotState;
   theme: "dark" | "light";
   victorySequenceActive: boolean;
 };
+
+function getScaledDuration(baseDuration: number, playbackSpeed: number, minimumDuration: number) {
+  return Math.max(minimumDuration, baseDuration / Math.max(playbackSpeed, 1));
+}
 
 function toWorldPosition(robot: RobotState) {
   return [
@@ -190,6 +196,7 @@ export function Robot({
   litTargets,
   onFrameComplete,
   onVictorySequenceComplete,
+  playbackSpeed,
   robot,
   theme,
   victorySequenceActive,
@@ -219,8 +226,9 @@ export function Robot({
       idle: findClip(animations, ["idle", "standing", "stand"]),
       jump: findClip(animations, ["jump"]),
       no: findClip(animations, ["no"]),
+      run: findClip(animations, ["running", "run"]),
       sit: findClip(animations, ["sitting", "sit"]),
-      walk: findClip(animations, ["walking", "walk", "running", "run"]),
+      walk: findClip(animations, ["walking", "walk"]),
     }),
     [animations],
   );
@@ -535,15 +543,17 @@ export function Robot({
     );
     const movementDuration =
       activeFrame.command === "JUMP"
-        ? 0.46
+        ? getScaledDuration(0.46, playbackSpeed, 0.18)
         : activeFrame.command === "FORWARD"
-          ? FORWARD_MOVE_DURATION
+          ? getScaledDuration(FORWARD_MOVE_DURATION, playbackSpeed, 0.28)
           : activeFrame.command === "ACTIVATE"
-            ? 0.44
-            : 0.22;
+            ? getScaledDuration(0.44, playbackSpeed, 0.16)
+            : getScaledDuration(0.22, playbackSpeed, 0.1);
     const nextClip =
       activeFrame.command === "FORWARD"
-        ? animationSet.walk
+        ? playbackSpeed > 1
+          ? animationSet.run ?? animationSet.walk
+          : animationSet.walk ?? animationSet.run
         : activeFrame.command === "JUMP"
           ? animationSet.jump
           : activeFrame.command === "ACTIVATE"
@@ -565,7 +575,13 @@ export function Robot({
       );
       nextAction.clampWhenFinished = activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE";
       nextAction.timeScale =
-        activeFrame.command === "FORWARD" ? FORWARD_WALK_TIME_SCALE : activeFrame.command === "ACTIVATE" ? 2.1 : 1;
+        activeFrame.command === "FORWARD"
+          ? playbackSpeed > 1
+            ? FORWARD_RUN_TIME_SCALE * playbackSpeed
+            : FORWARD_WALK_TIME_SCALE
+          : activeFrame.command === "ACTIVATE"
+            ? 2.1 * playbackSpeed
+            : playbackSpeed;
       nextAction.fadeIn(0.12).play();
       activeActionRef.current = nextAction;
     }
@@ -635,7 +651,16 @@ export function Robot({
     return () => {
       timeline.kill();
     };
-  }, [activeFrame, animationSet.idle, animationSet.jump, animationSet.sit, animationSet.walk, victorySequenceActive]);
+  }, [
+    activeFrame,
+    animationSet.idle,
+    animationSet.jump,
+    animationSet.run,
+    animationSet.sit,
+    animationSet.walk,
+    playbackSpeed,
+    victorySequenceActive,
+  ]);
 
   useEffect(() => {
     const root = rootRef.current;

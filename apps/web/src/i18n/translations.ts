@@ -20,6 +20,7 @@ type Messages = {
   commandLabels: Record<Command, string>;
   defaultHint: string;
   darkMode: string;
+  fastPlay: string;
   hint: string;
   idealSize: (value: number) => string;
   language: string;
@@ -46,8 +47,10 @@ type Messages = {
   robotColor: string;
   right: string;
   routineSlots: (filled: number, total: number) => string;
+  runOptions: string;
   showingFullCommandSet: string;
   showingLevelCommands: string;
+  skipToEnd: string;
   successBody: string;
   theme: string;
   walkthroughClose: string;
@@ -82,6 +85,7 @@ const messages: Record<Locale, Messages> = {
     },
     defaultHint: "Activate every goal tile.",
     darkMode: "Dark",
+    fastPlay: "Fast Play",
     hint: "Hint",
     idealSize: (value) => `Ideal Size ${value}`,
     language: "Language",
@@ -108,8 +112,10 @@ const messages: Record<Locale, Messages> = {
     robotColor: "Robot Color",
     right: "Right",
     routineSlots: (filled, total) => `${filled} / ${total}`,
+    runOptions: "Run options",
     showingFullCommandSet: "Showing the full command set.",
     showingLevelCommands: "Showing level-allowed commands only.",
+    skipToEnd: "Skip to End",
     successBody: "All targets are lit. You can replay this level or move on to the next puzzle.",
     theme: "Theme",
     walkthroughClose: "Close guide",
@@ -194,6 +200,7 @@ const messages: Record<Locale, Messages> = {
     },
     defaultHint: "Активируйте каждую целевую плитку.",
     darkMode: "Темная",
+    fastPlay: "Быстро",
     hint: "Подсказка",
     idealSize: (value) => `Идеальный размер ${value}`,
     language: "Язык",
@@ -220,8 +227,10 @@ const messages: Record<Locale, Messages> = {
     robotColor: "Цвет робота",
     right: "Вправо",
     routineSlots: (filled, total) => `${filled} / ${total}`,
+    runOptions: "Варианты запуска",
     showingFullCommandSet: "Показан полный набор команд.",
     showingLevelCommands: "Показаны только команды, разрешенные уровнем.",
+    skipToEnd: "До конца",
     successBody: "Все цели зажжены. Можно переиграть уровень или перейти к следующей головоломке.",
     theme: "Тема",
     walkthroughClose: "Закрыть гид",
@@ -306,6 +315,7 @@ const messages: Record<Locale, Messages> = {
     },
     defaultHint: "הפעילו כל אריח יעד.",
     darkMode: "כהה",
+    fastPlay: "הרצה מהירה",
     hint: "רמז",
     idealSize: (value) => `גודל אידיאלי ${value}`,
     language: "שפה",
@@ -332,8 +342,10 @@ const messages: Record<Locale, Messages> = {
     robotColor: "צבע הרובוט",
     right: "ימינה",
     routineSlots: (filled, total) => `${filled} / ${total}`,
+    runOptions: "אפשרויות הרצה",
     showingFullCommandSet: "מוצג סט הפקודות המלא.",
     showingLevelCommands: "מוצגות רק הפקודות המותרות לשלב.",
+    skipToEnd: "דלג לסוף",
     successBody: "כל היעדים מוארים. אפשר להפעיל שוב את השלב או לעבור לחידה הבאה.",
     theme: "ערכת נושא",
     walkthroughClose: "סגירת המדריך",

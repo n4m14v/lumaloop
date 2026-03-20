@@ -131,6 +131,7 @@ interface GameStoreState {
   appendCommand: (command: Command) => void;
   ensureLevelProgram: (levelIndex?: number) => void;
   clearRoutine: (routine: RoutineName) => void;
+  completeRunImmediately: () => void;
   queueNextFrame: () => void;
   removeCommand: (routine: RoutineName, index: number) => void;
   rotateCamera: (delta: number) => void;
@@ -240,6 +241,32 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         [level.id]: nextSlots,
       },
       result: null,
+    });
+  },
+  completeRunImmediately: () => {
+    const state = get();
+    const level = getLevel(state.levelIndex);
+
+    if (!level) {
+      return;
+    }
+
+    const slots = state.programs[level.id] ?? createRoutineSlots(level);
+    const result =
+      state.result && state.committedFrames < state.result.trace.length
+        ? state.result
+        : getRunResult(level, slots, state.showAllActions);
+    const completedLevelIds =
+      result.status === "SUCCESS" && !state.completedLevelIds.includes(level.id)
+        ? [...state.completedLevelIds, level.id]
+        : state.completedLevelIds;
+
+    set({
+      activeFrameIndex: null,
+      committedFrames: result.trace.length,
+      completedLevelIds,
+      isAutoRunning: false,
+      result,
     });
   },
   queueNextFrame: () => {

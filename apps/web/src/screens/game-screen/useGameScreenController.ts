@@ -24,6 +24,7 @@ const THEME_STORAGE_KEY = "lumaloop-theme";
 const COMPLETED_LEVELS_STORAGE_KEY = getCompletedLevelsStorageKey();
 
 type ThemeMode = "dark" | "light";
+type RunMode = "normal" | "fast" | "instant";
 
 function countFilledSlots(slots: ReturnType<typeof createSlotsForLevel>) {
   return [...slots.main, ...slots.p1, ...slots.p2].filter(Boolean).length;
@@ -45,6 +46,7 @@ function getInitialTheme(): ThemeMode {
 export function useGameScreenController() {
   const { locale } = useI18n();
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
+  const [selectedRunMode, setSelectedRunMode] = useState<RunMode>("normal");
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const lastResolvedSuccessRef = useRef<object | null>(null);
   const activeRoutine = useGameStore((state) => state.activeRoutine);
@@ -52,6 +54,7 @@ export function useGameScreenController() {
   const appendCommand = useGameStore((state) => state.appendCommand);
   const cameraQuarterTurns = useGameStore((state) => state.cameraQuarterTurns);
   const clearRoutine = useGameStore((state) => state.clearRoutine);
+  const completeRunImmediately = useGameStore((state) => state.completeRunImmediately);
   const committedFrames = useGameStore((state) => state.committedFrames);
   const completedLevelIds = useGameStore((state) => state.completedLevelIds);
   const ensureLevelProgram = useGameStore((state) => state.ensureLevelProgram);
@@ -67,6 +70,7 @@ export function useGameScreenController() {
   const setLevelIndex = useGameStore((state) => state.setLevelIndex);
   const setRobotColorId = useGameStore((state) => state.setRobotColorId);
   const setShowAllActions = useGameStore((state) => state.setShowAllActions);
+  const setSpeed = useGameStore((state) => state.setSpeed);
   const settleFrame = useGameStore((state) => state.settleFrame);
   const showAllActions = useGameStore((state) => state.showAllActions);
   const speed = useGameStore((state) => state.speed);
@@ -155,11 +159,13 @@ export function useGameScreenController() {
   const lastCommittedFrame = committedFrames > 0 ? result?.trace[committedFrames - 1] : undefined;
   const committedRobot =
     (committedFrames > 0 ? result?.trace[committedFrames - 1]?.robotAfter : level.start) ?? level.start;
-  const litTargets = lastCommittedFrame?.activatedTargetIds ?? [];
+  const isRunResolved = Boolean(result && committedFrames >= result.trace.length);
+  const didRunFail = Boolean(result && isRunResolved && result.status !== "SUCCESS");
+  const litTargets = didRunFail ? [] : lastCommittedFrame?.activatedTargetIds ?? [];
   const currentPointer = activeFrame?.pointer;
   const failurePulse = Boolean(
     result &&
-    committedFrames >= result.trace.length &&
+    isRunResolved &&
     ROBOT_DEATH_STATUSES.has(result.status),
   );
   const failurePulseToken = failurePulse ? result : null;
@@ -167,7 +173,7 @@ export function useGameScreenController() {
   const isSuccessResolved = Boolean(
     result &&
     result.status === "SUCCESS" &&
-    committedFrames >= result.trace.length,
+    isRunResolved,
   );
   const showVictorySequence = isSuccessResolved && !isVictorySequenceComplete;
   const showSuccessPopup = isSuccessResolved && isVictorySequenceComplete;
@@ -187,17 +193,31 @@ export function useGameScreenController() {
     setLevelIndex(nextLevelIndex);
   }
 
+  function executeRunMode(mode: RunMode) {
+    if (!canStartRun) {
+      return;
+    }
+
+    if (mode === "instant") {
+      completeRunImmediately();
+      return;
+    }
+
+    setSpeed(mode === "fast" ? 2 : 1);
+    startAutoRun();
+  }
+
   function handleToggleRun() {
     if (isAutoRunning) {
       toggleAutoRunning(false);
       return;
     }
 
-    if (!canStartRun) {
-      return;
-    }
+    executeRunMode(selectedRunMode);
+  }
 
-    startAutoRun();
+  function handleSelectRunMode(mode: RunMode) {
+    setSelectedRunMode(mode);
   }
 
   function handleAdvanceToNextLevel() {
@@ -265,6 +285,7 @@ export function useGameScreenController() {
       litTargets,
       onFrameComplete: settleFrame,
       onVictorySequenceComplete: () => setIsVictorySequenceComplete(true),
+      playbackSpeed: speed,
       quarterTurns: cameraQuarterTurns,
       robotColorId,
       showVictorySequence,
@@ -279,9 +300,11 @@ export function useGameScreenController() {
       onSetLevelIndex: handleSetLevelIndex,
       onSetRobotColorId: setRobotColorId,
       onSetShowAllActions: setShowAllActions,
+      onRunWithMode: handleSelectRunMode,
       onToggleRun: handleToggleRun,
       onToggleTheme: handleToggleTheme,
       robotColorId,
+      selectedRunMode,
       showAllActions,
       theme,
       unlockedLevels,
