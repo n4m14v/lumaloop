@@ -173,7 +173,7 @@ function TileBlockInner({
     const successGlowMaterial = targetSuccessGlowRef.current;
     const baseOpacity = 1;
     const baseScale = isLit ? 1.2 : 1;
-    const baseIntensity = isLit ? 0.22 : 0.08;
+    const baseIntensity = isLit ? 1.2 : 0.6;
     const baseColor = new Color(isLit ? "#86f6ff" : "#5adfff");
     const timeline = gsap.timeline();
 
@@ -274,7 +274,7 @@ function TileBlockInner({
     const pulse = (Math.sin(elapsed * 2.1 + tile.x * 0.35 + tile.y * 0.28) + 1) * 0.5;
     const baseScale = isLit ? 1.2 : 1;
     const baseHaloOpacity = isLit ? 0.26 : 0.18;
-    const baseLightIntensity = isLit ? 0.22 : 0.08;
+    const baseLightIntensity = isLit ? 1.2 : 0.6;
 
     targetOrbGroupRef.current.scale.setScalar(baseScale + pulse * 0.22);
     targetCoreMaterialRef.current.emissiveIntensity = (isLit ? 3.8 : 3.1) + pulse * 2.2;
@@ -367,7 +367,7 @@ function TileBlockInner({
               <meshStandardMaterial color={sideColor} />
             </>
           )}
-          <Edges color="#69717b" scale={1} threshold={15} />
+          <Edges color="#ffffff" scale={1} threshold={15} />
         </mesh>
       ))}
       <mesh position={[0, stackCount * BLOCK_HEIGHT + 0.06, 0]}>
@@ -403,11 +403,11 @@ function TileBlockInner({
             ref={topMaterialRef}
           />
         )}
-        <Edges color="#5f6771" scale={1} threshold={15} />
+        <Edges color={isGlassChamber && isTarget ? new Color().setRGB(0.6, 2.8, 3.5) : "#ffffff"} scale={1} threshold={15} />
       </mesh>
       {isTarget ? (
         <group position={[0, chamberCenterY, 0]} ref={targetOrbGroupRef}>
-          <pointLight color={isLit ? "#86f6ff" : "#5adfff"} distance={0.85} intensity={0.08} ref={targetLightRef} />
+          <pointLight color={isLit ? "#86f6ff" : "#5adfff"} distance={3.5} intensity={isLit ? 1.2 : 0.6} ref={targetLightRef} />
           <mesh renderOrder={2}>
             <boxGeometry args={[0.24, 0.24, 0.24]} />
             <meshStandardMaterial

@@ -55,7 +55,7 @@ const FloatingFloorTile = memo(function FloatingFloorTile({
         <meshStandardMaterial color="#b3bdc8" />
         <meshStandardMaterial color="#d0d6de" />
         <meshStandardMaterial color="#d0d6de" />
-        <Edges color="#707985" scale={1} threshold={15} />
+        <Edges color="#ffffff" scale={1} threshold={15} />
       </mesh>
     </group>
   );
