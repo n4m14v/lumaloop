@@ -55,7 +55,6 @@ export function ActionPalette({
         <div>
           <p className="text-[12px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.actions}</p>
         </div>
-        <span className="text-sm text-[var(--text-muted)]">[{visibleCommands.length}/{ALL_COMMANDS.length}]</span>
       </div>
       <div className="grid grid-cols-4 gap-3">
         {visibleCommands.map((command) => (

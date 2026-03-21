@@ -22,6 +22,7 @@ const ROBOT_DEATH_STATUSES = new Set([
 ]);
 const THEME_STORAGE_KEY = "lumaloop-theme";
 const COMPLETED_LEVELS_STORAGE_KEY = getCompletedLevelsStorageKey();
+const LEVEL_INDEX_STORAGE_KEY = "lumaloop-level-index";
 
 type ThemeMode = "dark" | "light";
 type RunMode = "normal" | "fast" | "instant";
@@ -45,6 +46,8 @@ function getInitialTheme(): ThemeMode {
 
 export function useGameScreenController() {
   const { locale } = useI18n();
+  const [unlockedLevelIndex, setUnlockedLevelIndex] = useState(0);
+  const [hasHydratedLevelIndex, setHasHydratedLevelIndex] = useState(false);
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
   const [selectedRunMode, setSelectedRunMode] = useState<RunMode>("normal");
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
@@ -81,7 +84,7 @@ export function useGameScreenController() {
   const level = localizedLevels[levelIndex] ?? localizedLevels[0];
   const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
   const unlockedLevels = localizedLevels.map((_, index) => {
-    if (isAdmin || index === 0) {
+    if (isAdmin || index === 0 || index <= unlockedLevelIndex) {
       return true;
     }
 
@@ -108,6 +111,27 @@ export function useGameScreenController() {
       hydrateCompletedLevelIds([]);
     }
   }, [hydrateCompletedLevelIds]);
+
+  useEffect(() => {
+    const savedLevelIndex = window.localStorage.getItem(LEVEL_INDEX_STORAGE_KEY);
+
+    if (!savedLevelIndex) {
+      setHasHydratedLevelIndex(true);
+      return;
+    }
+
+    const parsedLevelIndex = Number.parseInt(savedLevelIndex, 10);
+    if (Number.isNaN(parsedLevelIndex)) {
+      setUnlockedLevelIndex(0);
+      setHasHydratedLevelIndex(true);
+      return;
+    }
+
+    const nextLevelIndex = Math.min(Math.max(parsedLevelIndex, 0), campaignLevels.length - 1);
+    setUnlockedLevelIndex(nextLevelIndex);
+    setLevelIndex(nextLevelIndex);
+    setHasHydratedLevelIndex(true);
+  }, [setLevelIndex]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -175,6 +199,24 @@ export function useGameScreenController() {
     result.status === "SUCCESS" &&
     isRunResolved,
   );
+
+  useEffect(() => {
+    if (!hasHydratedLevelIndex || !isSuccessResolved) {
+      return;
+    }
+
+    const nextUnlockedLevelIndex = Math.min(
+      Math.max(unlockedLevelIndex, levelIndex + 1),
+      campaignLevels.length - 1,
+    );
+    if (nextUnlockedLevelIndex === unlockedLevelIndex) {
+      return;
+    }
+
+    setUnlockedLevelIndex(nextUnlockedLevelIndex);
+    window.localStorage.setItem(LEVEL_INDEX_STORAGE_KEY, String(nextUnlockedLevelIndex));
+  }, [hasHydratedLevelIndex, isSuccessResolved, levelIndex, unlockedLevelIndex]);
+
   const showVictorySequence = isSuccessResolved && !isVictorySequenceComplete;
   const showSuccessPopup = isSuccessResolved && isVictorySequenceComplete;
   const hasNextLevel = levelIndex < campaignLevels.length - 1;
@@ -288,6 +330,7 @@ export function useGameScreenController() {
       playbackSpeed: speed,
       quarterTurns: cameraQuarterTurns,
       robotColorId,
+      victoryExpressionActive: isSuccessResolved,
       showVictorySequence,
       theme,
     },

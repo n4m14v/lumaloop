@@ -19,6 +19,8 @@ import {
 } from "../Robot";
 import { BLOCK_HEIGHT, TILE_SIZE } from "./constants";
 
+const VICTORY_BEAM_BASE_OFFSET = 0.03;
+
 export function VictoryBeam({
   active,
   robot,
@@ -39,7 +41,7 @@ export function VictoryBeam({
 
     beamGroup.position.set(
       robot.x * TILE_SIZE,
-      (robot.z + 1) * BLOCK_HEIGHT + 0.1,
+      (robot.z + 1) * BLOCK_HEIGHT + VICTORY_BEAM_BASE_OFFSET,
       robot.y * TILE_SIZE,
     );
   }, [robot]);
@@ -49,7 +51,7 @@ export function VictoryBeam({
     const beamMaterial = beamMaterialRef.current;
     const flareMaterial = flareMaterialRef.current;
     const light = lightRef.current;
-    const baseY = (robot.z + 1) * BLOCK_HEIGHT + 0.1;
+    const baseY = (robot.z + 1) * BLOCK_HEIGHT + VICTORY_BEAM_BASE_OFFSET;
 
     if (!beamGroup || !beamMaterial || !flareMaterial || !light) {
       return undefined;
@@ -136,7 +138,7 @@ export function VictoryBeam({
         />
       </mesh>
       <mesh position={[0, 0.12, 0]} rotation-x={-Math.PI / 2}>
-        <ringGeometry args={[0.44, 1.02, 32]} />
+        <ringGeometry args={[0.3, 0.88, 32]} />
         <meshBasicMaterial
           blending={AdditiveBlending}
           color="#fff9d1"

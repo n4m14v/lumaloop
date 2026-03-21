@@ -170,30 +170,30 @@ export function GameWalkthroughDialog({
         </div>
 
         <div className="relative mt-4 flex items-center justify-end gap-2 border-t border-white/8 pt-4">
-            <button
-              className="ui-button h-10 min-w-[104px] rounded-[14px] px-4 text-sm"
-              disabled={!showPrevious}
-              onClick={() => handleLogicalStep(-1)}
-              type="button"
-            >
-              {isRtl ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-              {t.walkthroughPrevious}
-            </button>
-            <button
-              className="ui-button-accent inline-flex h-10 min-w-[132px] items-center justify-center rounded-[14px] px-4 text-sm font-semibold"
-              onClick={() => {
-                if (isLastSlide) {
-                  onClose();
-                  return;
-                }
+          <button
+            className="ui-button h-10 min-w-[104px] rounded-[14px] px-4 text-sm"
+            disabled={!showPrevious}
+            onClick={() => handleLogicalStep(-1)}
+            type="button"
+          >
+            {isRtl ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {t.walkthroughPrevious}
+          </button>
+          <button
+            className="ui-button-accent inline-flex h-10 min-w-[132px] items-center justify-center rounded-[14px] px-4 text-sm font-semibold"
+            onClick={() => {
+              if (isLastSlide) {
+                onClose();
+                return;
+              }
 
-                handleLogicalStep(1);
-              }}
-              type="button"
-            >
-              {isLastSlide ? t.walkthroughDone : t.walkthroughNext}
-              {isLastSlide ? null : isRtl ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            </button>
+              handleLogicalStep(1);
+            }}
+            type="button"
+          >
+            {isLastSlide ? t.walkthroughDone : t.walkthroughNext}
+            {isLastSlide ? null : isRtl ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </button>
         </div>
       </div>
     </div>,

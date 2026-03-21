@@ -26,6 +26,7 @@ interface LevelSceneProps {
   onVictorySequenceComplete: () => void;
   playbackSpeed: number;
   robotColorId: RobotColorId;
+  victoryExpressionActive: boolean;
   showVictorySequence: boolean;
   theme: "dark" | "light";
   victoryBeamActive: boolean;
@@ -42,6 +43,7 @@ export function LevelScene({
   onVictorySequenceComplete,
   playbackSpeed,
   robotColorId,
+  victoryExpressionActive,
   showVictorySequence,
   theme,
   victoryBeamActive,
@@ -67,6 +69,7 @@ export function LevelScene({
             isLit={tile.kind === "TARGET" && litTargetIds.has(tile.id as string)}
             key={tile.kind === "TARGET" ? tile.id : tileKey}
             tile={tile}
+            theme={theme}
             victoryGlow={showVictorySequence && tileKey === victoryTileKey}
           />
         );
@@ -83,6 +86,7 @@ export function LevelScene({
         playbackSpeed={playbackSpeed}
         robot={committedRobot}
         theme={theme}
+        victoryExpressionActive={victoryExpressionActive}
         victorySequenceActive={showVictorySequence}
       />
     </group>

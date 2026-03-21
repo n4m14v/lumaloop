@@ -6,10 +6,10 @@
 
 import { memo, useEffect, useRef } from "react";
 
-import { Edges } from "@react-three/drei";
+import { Edges, RoundedBox } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import gsap from "gsap";
-import type { Group, MeshBasicMaterial, MeshStandardMaterial, PointLight } from "three";
+import type { Group, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, PointLight } from "three";
 import { AdditiveBlending } from "three";
 import { Color } from "three";
 
@@ -24,24 +24,82 @@ import {
   TILE_SIZE,
 } from "./constants";
 
+const DARK_TILE_STYLE = {
+  edgeColor: "#ddebf5",
+  frostedInnerFillColor: "#c9d9e6",
+  frostedInnerFillOpacity: 0.22,
+  frostedShellColor: "#edf5fb",
+  frostedShellEmissive: "#a6d7ef",
+  frostedShellEmissiveIntensity: 0.02,
+  frostedShellOpacity: 1,
+  frostedShellTransmission: 0,
+  frostedSurfaceOpacity: 0.05,
+  targetCoreColor: "#47d7ff",
+  targetCoreColorLit: "#ffef40",
+  targetEdgeColor: "#a6f4ff",
+  targetEdgeColorLit: "#ffea75",
+  targetHaloColor: "#97efff",
+  targetHaloColorLit: "#fff58a",
+  targetHaloOpacity: 0.14,
+  targetHaloOpacityLit: 0.2,
+  targetInnerFillColor: "#74d5f4",
+  targetInnerFillColorLit: "#ffec74",
+  targetInnerFillOpacity: 0.22,
+  targetShellColor: "#79cce7",
+  targetShellColorLit: "#fff2a0",
+  targetShellEmissive: "#7fc8ff",
+  targetShellEmissiveLit: "#ffef90",
+  targetShellEmissiveIntensity: 0.38,
+  targetShellEmissiveIntensityLit: 1,
+  targetShellOpacity: 0.9,
+  targetShellTransmission: 0,
+  targetSurfaceOpacity: 0.14,
+} as const;
+
+const LIGHT_TILE_STYLE = {
+  edgeColor: "#a3bfd2",
+  frostedInnerFillColor: "#e6eef5",
+  frostedInnerFillOpacity: 0.3,
+  frostedShellColor: "#f7fbff",
+  frostedShellEmissive: "#ffffff",
+  frostedShellEmissiveIntensity: 0.1,
+  frostedShellOpacity: 1,
+  frostedShellTransmission: 0,
+  frostedSurfaceOpacity: 0.08,
+  targetCoreColor: "#39c5f5",
+  targetCoreColorLit: "#ffd700",
+  targetEdgeColor: "#2da8d9",
+  targetEdgeColorLit: "#ffc254",
+  targetHaloColor: "#6fd7fa",
+  targetHaloColorLit: "#fff099",
+  targetHaloOpacity: 0.15,
+  targetHaloOpacityLit: 0.2,
+  targetInnerFillColor: "#5ec6f2",
+  targetInnerFillColorLit: "#ffe680",
+  targetInnerFillOpacity: 0.3,
+  targetShellColor: "#72cdf2",
+  targetShellColorLit: "#fff3b0",
+  targetShellEmissive: "#8cdcf7",
+  targetShellEmissiveLit: "#fff8cc",
+  targetShellEmissiveIntensity: 0.3,
+  targetShellEmissiveIntensityLit: 0.5,
+  targetShellOpacity: 0.95,
+  targetShellTransmission: 0,
+  targetSurfaceOpacity: 0.16,
+} as const;
+
 interface TileBlockProps {
   failureBlink: boolean;
   failurePulseToken: object | null;
   isActive: boolean;
   isLit: boolean;
   tile: LevelDefinition["board"][number];
+  theme: "dark" | "light";
   victoryGlow: boolean;
 }
 
-function TileBlockInner({
-  failureBlink,
-  failurePulseToken,
-  isActive,
-  isLit,
-  tile,
-  victoryGlow,
-}: TileBlockProps) {
-  const topMaterialRef = useRef<MeshStandardMaterial>(null);
+function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile, theme, victoryGlow }: TileBlockProps) {
+  const topMaterialRef = useRef<MeshStandardMaterial | MeshPhysicalMaterial>(null);
   const targetCoreMaterialRef = useRef<MeshStandardMaterial>(null);
   const targetHaloMaterialRef = useRef<MeshBasicMaterial>(null);
   const targetSuccessGlowRef = useRef<MeshBasicMaterial>(null);
@@ -49,13 +107,39 @@ function TileBlockInner({
   const targetOrbGroupRef = useRef<Group>(null);
   const stackCount = tile.z + 1;
   const isTarget = tile.kind === "TARGET";
-  const isGlassChamber = tile.kind !== "BLOCKED";
+  const isFrostedVolume = !isTarget;
+  const tileStyle = theme === "light" ? LIGHT_TILE_STYLE : DARK_TILE_STYLE;
   const chamberCenterY = stackCount * BLOCK_HEIGHT * 0.5;
-  const topColor =
-    isLit ? "#87ff6c" : isTarget ? "#89d8ff" : tile.kind === "BLOCKED" ? "#98adbf" : "#dfe4ea";
-  const sideColor = tile.kind === "BLOCKED" ? "#8597a9" : "#bcc5ce";
-  const emissive = isLit ? "#66ff55" : isTarget ? "#7fc8ff" : "#5f7b95";
-  const baseEmissiveIntensity = isLit ? 1.3 : isTarget ? 0.38 : 0.14;
+  const shellColor = isTarget
+    ? isLit
+      ? tileStyle.targetShellColorLit
+      : tileStyle.targetShellColor
+    : tileStyle.frostedShellColor;
+  const shellOpacity = isTarget ? tileStyle.targetShellOpacity : tileStyle.frostedShellOpacity;
+  const shellTransmission = isTarget ? tileStyle.targetShellTransmission : tileStyle.frostedShellTransmission;
+  const shellEmissive = isTarget
+    ? isLit
+      ? tileStyle.targetShellEmissiveLit
+      : tileStyle.targetShellEmissive
+    : tileStyle.frostedShellEmissive;
+  const shellEmissiveIntensity = isTarget
+    ? isLit
+      ? tileStyle.targetShellEmissiveIntensityLit
+      : tileStyle.targetShellEmissiveIntensity
+    : tileStyle.frostedShellEmissiveIntensity;
+  const isTransparentShell = shellOpacity < 1 || shellTransmission > 0;
+  const surfaceOpacity = isTarget ? tileStyle.targetSurfaceOpacity : tileStyle.frostedSurfaceOpacity;
+  const innerFillColor = isTarget
+    ? isLit
+      ? tileStyle.targetInnerFillColorLit
+      : tileStyle.targetInnerFillColor
+    : tileStyle.frostedInnerFillColor;
+  const innerFillOpacity = isTarget ? tileStyle.targetInnerFillOpacity : tileStyle.frostedInnerFillOpacity;
+  const edgeColor = isTarget
+    ? isLit
+      ? tileStyle.targetEdgeColorLit
+      : tileStyle.targetEdgeColor
+    : tileStyle.edgeColor;
 
   useEffect(() => {
     const topMaterial = topMaterialRef.current;
@@ -63,7 +147,7 @@ function TileBlockInner({
       return;
     }
 
-    const peakEmissiveIntensity = Math.max(baseEmissiveIntensity + 1.18, 1.28);
+    const peakEmissiveIntensity = Math.max(shellEmissiveIntensity + 1.18, 1.28);
     const timeline = gsap.timeline();
     const baseColor = topMaterial.color.clone();
     const baseEmissive = topMaterial.emissive.clone();
@@ -128,7 +212,7 @@ function TileBlockInner({
       timeline.to(topMaterial, {
         duration: FAILURE_BLINK_FALL_DURATION,
         ease: "power2.inOut",
-        emissiveIntensity: baseEmissiveIntensity,
+        emissiveIntensity: shellEmissiveIntensity,
       });
       timeline.to(
         topMaterial.color,
@@ -158,9 +242,9 @@ function TileBlockInner({
       timeline.kill();
       topMaterial.color.copy(baseColor);
       topMaterial.emissive.copy(baseEmissive);
-      topMaterial.emissiveIntensity = baseEmissiveIntensity;
+      topMaterial.emissiveIntensity = shellEmissiveIntensity;
     };
-  }, [baseEmissiveIntensity, failureBlink, failurePulseToken]);
+  }, [failureBlink, failurePulseToken, shellEmissiveIntensity]);
 
   useEffect(() => {
     if (!isTarget || !targetCoreMaterialRef.current || !targetLightRef.current) {
@@ -173,15 +257,15 @@ function TileBlockInner({
     const successGlowMaterial = targetSuccessGlowRef.current;
     const baseOpacity = 1;
     const baseScale = isLit ? 1.2 : 1;
-    const baseIntensity = isLit ? 1.2 : 0.6;
-    const baseColor = new Color(isLit ? "#86f6ff" : "#5adfff");
+    const baseIntensity = isLit ? 4.6 : theme === "light" ? 0.38 : 0.6;
+    const baseColor = new Color(isLit ? tileStyle.targetCoreColorLit : tileStyle.targetCoreColor);
     const timeline = gsap.timeline();
 
     gsap.set(coreMaterial.color, { r: baseColor.r, g: baseColor.g, b: baseColor.b });
     gsap.set(coreMaterial, { opacity: baseOpacity });
     if (haloMaterial) {
       gsap.set(haloMaterial.color, { r: baseColor.r, g: baseColor.g, b: baseColor.b });
-      gsap.set(haloMaterial, { opacity: isLit ? 0.26 : 0.18 });
+      gsap.set(haloMaterial, { opacity: isLit ? tileStyle.targetHaloOpacityLit : tileStyle.targetHaloOpacity });
     }
     if (successGlowMaterial) {
       gsap.set(successGlowMaterial, { opacity: 0 });
@@ -219,7 +303,7 @@ function TileBlockInner({
           },
           0,
         );
-        timeline.to(haloMaterial, { duration: 0.28, ease: "power2.out", opacity: 0.1 }, 0);
+        timeline.to(haloMaterial, { duration: 0.28, ease: "power2.out", opacity: theme === "light" ? 0.08 : 0.1 }, 0);
       }
       if (successGlowMaterial) {
         timeline.to(successGlowMaterial, { duration: 0.32, ease: "power2.out", opacity: 0.95 }, 0.04);
@@ -242,7 +326,15 @@ function TileBlockInner({
     } else {
       timeline.to(coreMaterial, { duration: 0.24, ease: "power2.out", opacity: baseOpacity }, 0);
       if (haloMaterial) {
-        timeline.to(haloMaterial, { duration: 0.24, ease: "power2.out", opacity: isLit ? 0.26 : 0.18 }, 0);
+        timeline.to(
+          haloMaterial,
+          {
+            duration: 0.24,
+            ease: "power2.out",
+            opacity: isLit ? tileStyle.targetHaloOpacityLit : tileStyle.targetHaloOpacity,
+          },
+          0,
+        );
       }
       if (successGlowMaterial) {
         timeline.to(successGlowMaterial, { duration: 0.18, ease: "power2.out", opacity: 0 }, 0);
@@ -256,7 +348,7 @@ function TileBlockInner({
     return () => {
       timeline.kill();
     };
-  }, [isLit, isTarget, victoryGlow]);
+  }, [isLit, isTarget, theme, tileStyle.targetCoreColor, tileStyle.targetCoreColorLit, tileStyle.targetHaloOpacity, tileStyle.targetHaloOpacityLit, victoryGlow]);
 
   useFrame(({ clock }) => {
     if (
@@ -273,11 +365,11 @@ function TileBlockInner({
     const elapsed = clock.getElapsedTime();
     const pulse = (Math.sin(elapsed * 2.1 + tile.x * 0.35 + tile.y * 0.28) + 1) * 0.5;
     const baseScale = isLit ? 1.2 : 1;
-    const baseHaloOpacity = isLit ? 0.26 : 0.18;
-    const baseLightIntensity = isLit ? 1.2 : 0.6;
+    const baseHaloOpacity = isLit ? tileStyle.targetHaloOpacityLit : tileStyle.targetHaloOpacity;
+    const baseLightIntensity = isLit ? (theme === "light" ? 1.0 : 1.2) : theme === "light" ? 0.5 : 0.6;
 
     targetOrbGroupRef.current.scale.setScalar(baseScale + pulse * 0.22);
-    targetCoreMaterialRef.current.emissiveIntensity = (isLit ? 3.8 : 3.1) + pulse * 2.2;
+    targetCoreMaterialRef.current.emissiveIntensity = (isLit ? (theme === "light" ? 3.0 : 3.8) : theme === "light" ? 2.6 : 3.1) + pulse * (theme === "light" ? 1.8 : 2.2);
     targetHaloMaterialRef.current.opacity = baseHaloOpacity + pulse * 0.24;
     targetLightRef.current.intensity = baseLightIntensity + pulse * (isLit ? 0.24 : 0.14);
   });
@@ -285,135 +377,51 @@ function TileBlockInner({
   return (
     <group position={[tile.x * TILE_SIZE, 0, tile.y * TILE_SIZE]}>
       {Array.from({ length: stackCount }, (_, layer) => (
-        <mesh key={layer} position={[0, BLOCK_HEIGHT * (layer + 0.5), 0]}>
-          <boxGeometry args={[1.92, BLOCK_HEIGHT, 1.92]} />
-          {isGlassChamber ? (
-            isTarget ? (
-              <>
-                <meshPhysicalMaterial
-                  color="#9ee8ff"
-                  envMapIntensity={0}
-                  ior={1.02}
-                  metalness={0}
-                  opacity={0.42}
-                  roughness={0.92}
-                  thickness={1.4}
-                  transmission={0.66}
-                  transparent
-                />
-                <meshPhysicalMaterial
-                  color="#9ee8ff"
-                  envMapIntensity={0}
-                  ior={1.02}
-                  metalness={0}
-                  opacity={0.42}
-                  roughness={0.92}
-                  thickness={1.4}
-                  transmission={0.66}
-                  transparent
-                />
-                <meshPhysicalMaterial
-                  color="#c7f4ff"
-                  envMapIntensity={0}
-                  ior={1.02}
-                  metalness={0}
-                  opacity={0.34}
-                  roughness={0.94}
-                  thickness={1.1}
-                  transmission={0.72}
-                  transparent
-                />
-                <meshStandardMaterial color="#90a1b2" />
-                <meshPhysicalMaterial
-                  color="#9ee8ff"
-                  envMapIntensity={0}
-                  ior={1.02}
-                  metalness={0}
-                  opacity={0.42}
-                  roughness={0.92}
-                  thickness={1.4}
-                  transmission={0.66}
-                  transparent
-                />
-                <meshPhysicalMaterial
-                  color="#9ee8ff"
-                  envMapIntensity={0}
-                  ior={1.02}
-                  metalness={0}
-                  opacity={0.42}
-                  roughness={0.92}
-                  thickness={1.4}
-                  transmission={0.66}
-                  transparent
-                />
-              </>
-            ) : (
-              <>
-                <meshStandardMaterial color="#bcc5cf" roughness={0.98} />
-                <meshStandardMaterial color="#bcc5cf" roughness={0.98} />
-                <meshStandardMaterial color="#d8dde4" roughness={1} />
-                <meshStandardMaterial color="#8f9dab" roughness={1} />
-                <meshStandardMaterial color="#bcc5cf" roughness={0.98} />
-                <meshStandardMaterial color="#bcc5cf" roughness={0.98} />
-              </>
-            )
-          ) : (
-            <>
-              <meshStandardMaterial color={sideColor} />
-              <meshStandardMaterial color={sideColor} />
-              <meshStandardMaterial color={topColor} />
-              <meshStandardMaterial color="#9ea8b3" />
-              <meshStandardMaterial color={sideColor} />
-              <meshStandardMaterial color={sideColor} />
-            </>
-          )}
-          <Edges color="#ffffff" scale={1} threshold={15} />
-        </mesh>
+        <group key={layer} position={[0, BLOCK_HEIGHT * (layer + 0.5), 0]}>
+          <>
+            <RoundedBox args={[1.92, BLOCK_HEIGHT - 0.06, 1.92]} radius={0.22} smoothness={8}>
+              <meshPhysicalMaterial
+                color={shellColor}
+                clearcoat={0}
+                clearcoatRoughness={1}
+                depthWrite={!isTransparentShell}
+                emissive={shellEmissive}
+                emissiveIntensity={shellEmissiveIntensity}
+                envMapIntensity={0}
+                ior={1.02}
+                metalness={0}
+                opacity={shellOpacity}
+                ref={topMaterialRef}
+                roughness={1}
+                thickness={0.05}
+                transmission={shellTransmission}
+                transparent={isTransparentShell}
+              />
+            </RoundedBox>
+            <RoundedBox args={[1.28, BLOCK_HEIGHT * 0.5, 1.28]} position={[0, -0.02, 0]} radius={0.13} smoothness={6}>
+              <meshBasicMaterial color={innerFillColor} depthWrite={false} opacity={innerFillOpacity} toneMapped={false} transparent />
+            </RoundedBox>
+            <RoundedBox args={[1.94, BLOCK_HEIGHT - 0.04, 1.94]} radius={0.22} smoothness={8}>
+              <meshBasicMaterial color="#f9fcff" depthWrite={false} opacity={surfaceOpacity} toneMapped={false} transparent />
+              <Edges color={edgeColor} scale={1} threshold={30} />
+            </RoundedBox>
+          </>
+        </group>
       ))}
-      <mesh position={[0, stackCount * BLOCK_HEIGHT + 0.06, 0]}>
-        <boxGeometry args={[2, 0.14, 2]} />
-        {isGlassChamber ? (
-          isTarget ? (
-            <meshPhysicalMaterial
-              color="#cbf3ff"
-              emissive={emissive}
-              emissiveIntensity={Math.max(baseEmissiveIntensity + 0.02, 0.28)}
-              envMapIntensity={0}
-              ior={1.02}
-              metalness={0}
-              opacity={0.58}
-              ref={topMaterialRef}
-              roughness={0.94}
-              thickness={0.9}
-              transmission={0.68}
-              transparent
-            />
-          ) : (
-            <meshStandardMaterial
-              color="#d7dde4"
-              ref={topMaterialRef}
-              roughness={1}
-            />
-          )
-        ) : (
-          <meshStandardMaterial
-            color={topColor}
-            emissive={emissive}
-            emissiveIntensity={baseEmissiveIntensity}
-            ref={topMaterialRef}
-          />
-        )}
-        <Edges color={isGlassChamber && isTarget ? new Color().setRGB(0.6, 2.8, 3.5) : "#ffffff"} scale={1} threshold={15} />
-      </mesh>
       {isTarget ? (
         <group position={[0, chamberCenterY, 0]} ref={targetOrbGroupRef}>
-          <pointLight color={isLit ? "#86f6ff" : "#5adfff"} distance={3.5} intensity={isLit ? 1.2 : 0.6} ref={targetLightRef} />
+          <pointLight
+            color={isLit ? tileStyle.targetCoreColorLit : tileStyle.targetCoreColor}
+            distance={isLit ? 6.5 : theme === "light" ? 3.2 : 3.5}
+            intensity={isLit ? 4.6 : theme === "light" ? 0.5 : 0.6}
+            ref={targetLightRef}
+          />
           <mesh renderOrder={2}>
             <boxGeometry args={[0.24, 0.24, 0.24]} />
             <meshStandardMaterial
-              color={isLit ? "#86f6ff" : "#5adfff"}
-              emissive={isLit ? "#86f6ff" : "#5adfff"}
-              emissiveIntensity={3.8}
+              color={isLit ? tileStyle.targetCoreColorLit : tileStyle.targetCoreColor}
+              emissive={isLit ? tileStyle.targetCoreColorLit : tileStyle.targetCoreColor}
+              emissiveIntensity={theme === "light" ? 3.0 : 3.8}
               depthTest
               opacity={1}
               roughness={0.14}
@@ -424,10 +432,10 @@ function TileBlockInner({
             <sphereGeometry args={[0.2, 20, 20]} />
             <meshBasicMaterial
               blending={AdditiveBlending}
-              color={isLit ? "#d4fdff" : "#aef5ff"}
+              color={isLit ? tileStyle.targetHaloColorLit : tileStyle.targetHaloColor}
               depthTest
               depthWrite={false}
-              opacity={0.18}
+              opacity={isLit ? tileStyle.targetHaloOpacityLit : tileStyle.targetHaloOpacity}
               ref={targetHaloMaterialRef}
               toneMapped={false}
               transparent
@@ -464,6 +472,7 @@ export const TileBlock = memo(TileBlockInner, (previousProps, nextProps) => {
     previousProps.isActive === nextProps.isActive &&
     previousProps.isLit === nextProps.isLit &&
     previousProps.tile === nextProps.tile &&
+    previousProps.theme === nextProps.theme &&
     previousProps.victoryGlow === nextProps.victoryGlow
   );
 });

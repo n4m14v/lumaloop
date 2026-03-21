@@ -41,14 +41,14 @@ const DARK_FLOOR_STYLE = {
 
 const LIGHT_FLOOR_STYLE = {
   circuitOpacity: 0.24,
-  edgeColor: "#425566",
-  sideColor: "#9aabba",
+  edgeColor: "#586977",
+  sideColor: "#a7b4be",
   sideOpacity: 0.26,
   sideRoughness: 0.24,
-  topColor: "#bac7d3",
+  topColor: "#c4d0d8",
   topOpacity: 0.18,
   topRoughness: 0.2,
-  undershadowColor: "#8394a5",
+  undershadowColor: "#91a0ac",
   undershadowOpacity: 0.34,
   undershadowRoughness: 0.28,
 } as const;

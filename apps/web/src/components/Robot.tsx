@@ -39,6 +39,7 @@ type RobotProps = {
   playbackSpeed: number;
   robot: RobotState;
   theme: "dark" | "light";
+  victoryExpressionActive: boolean;
   victorySequenceActive: boolean;
 };
 
@@ -199,6 +200,7 @@ export function Robot({
   playbackSpeed,
   robot,
   theme,
+  victoryExpressionActive,
   victorySequenceActive,
 }: RobotProps) {
   const rootRef = useRef<Group>(null);
@@ -256,6 +258,10 @@ export function Robot({
 
   useFrame((_, delta) => {
     mixer.update(delta);
+
+    if (victoryExpressionActive) {
+      setMorphInfluence(surpriseMorphsRef.current, 1);
+    }
   });
 
   function getAction(clip: AnimationClip | null) {
@@ -385,14 +391,17 @@ export function Robot({
       if (role === "primaryLight") {
         material.color.copy(accent);
         material.color.lerp(shellLight, 0.5);
+        if (isLightTheme) material.color.multiplyScalar(isMetallicPalette ? 1.5 : 1.3);
         material.color.lerp(lightLift, primaryAccentLift);
         material.emissiveIntensity = Math.max(originalEmissiveIntensity, isMetallicPalette ? 0.06 : 0.02);
       } else if (role === "primaryMid") {
         material.color.copy(shellMid);
+        if (isLightTheme) material.color.multiplyScalar(isMetallicPalette ? 1.5 : 1.3);
         material.color.lerp(lightLift, primaryBodyLift);
         material.emissiveIntensity = Math.max(originalEmissiveIntensity, isMetallicPalette ? 0.07 : 0.02);
       } else {
         material.color.copy(shellDark);
+        if (isLightTheme) material.color.multiplyScalar(isMetallicPalette ? 1.5 : 1.3);
         material.color.lerp(lightLift, primaryBodyLift * 0.35);
         material.emissiveIntensity = Math.max(originalEmissiveIntensity, isMetallicPalette ? 0.05 : 0.015);
       }
@@ -450,10 +459,10 @@ export function Robot({
     const hasLitTargets = litTargets.length > 0;
 
     gsap.to(statusLight.color, {
-      b: hasLitTargets ? 0.4 : 1,
+      b: hasLitTargets ? 0.25 : 1,
       duration: 0.2,
-      g: hasLitTargets ? 1 : 0.78,
-      r: hasLitTargets ? 0.54 : 0.36,
+      g: hasLitTargets ? 0.94 : 0.78,
+      r: hasLitTargets ? 1 : 0.36,
     });
     gsap.to(statusLight, {
       duration: 0.2,
@@ -671,12 +680,17 @@ export function Robot({
       return;
     }
 
-    if (!victorySequenceActive) {
+    if (!victoryExpressionActive) {
       gsap.set(root.scale, { x: 1, y: 1, z: 1 });
       gsap.set(root.rotation, { x: 0, y: toFacingRotation(robot.facing), z: 0 });
       gsap.set(model.scale, { x: MODEL_SCALE, y: MODEL_SCALE, z: MODEL_SCALE });
       gsap.set(fadeMaterialsRef.current, { opacity: 1 });
       setMorphInfluence(surpriseMorphs, DEFAULT_SURPRISE_INFLUENCE);
+      return;
+    }
+
+    if (!victorySequenceActive) {
+      setMorphInfluence(surpriseMorphs, 1);
       return;
     }
 
@@ -792,7 +806,7 @@ export function Robot({
       timeline.kill();
       setMorphInfluence(surpriseMorphs, DEFAULT_SURPRISE_INFLUENCE);
     };
-  }, [animationSet.idle, animations, robot.facing, victorySequenceActive]);
+  }, [animationSet.idle, animations, robot.facing, victoryExpressionActive, victorySequenceActive]);
 
   return (
     <group ref={rootRef}>

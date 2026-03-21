@@ -26,6 +26,7 @@ interface GameCanvasProps {
   playbackSpeed: number;
   quarterTurns: number;
   robotColorId: RobotColorId;
+  victoryExpressionActive: boolean;
   showVictorySequence: boolean;
   theme: "dark" | "light";
 }
@@ -44,10 +45,12 @@ export function GameCanvas({
   playbackSpeed,
   quarterTurns,
   robotColorId,
+  victoryExpressionActive,
   showVictorySequence,
   theme,
 }: GameCanvasProps) {
   const [victoryBeamActive, setVictoryBeamActive] = useState(showVictorySequence);
+  const isLightTheme = theme === "light";
   const { canvasContainerRef, canvasInteractionProps, cursorClassName, orbitAzimuth, orbitElevation, zoom } =
     useOrbitCameraControls({
       isRotationLocked,
@@ -80,11 +83,16 @@ export function GameCanvas({
       <Canvas gl={{ alpha: true, powerPreference: "high-performance" }} dpr={[1, 1.25]}>
         <PerspectiveCamera makeDefault far={100} fov={28} near={0.1} position={[14, 12, 14]} />
         <CameraRig elevation={orbitElevation} level={level} orbitAngle={orbitAzimuth} zoom={zoom} />
-        <ambientLight intensity={1.15} />
-        <directionalLight intensity={1.05} position={[5, 9, 6]} />
-        <directionalLight intensity={0.7} position={[-4, 6, -3]} />
-        <hemisphereLight args={["#fff6d8", "#8d99aa", 0.82]} />
-        <pointLight color="#7dff5c" intensity={litTargets.length > 0 ? 1.9 : 0.14} position={[2, 3, 2]} distance={6} />
+        <ambientLight color={isLightTheme ? "#f4f7fb" : "#ffffff"} intensity={isLightTheme ? 0.58 : 1.15} />
+        <directionalLight color={isLightTheme ? "#fff4e6" : "#ffffff"} intensity={isLightTheme ? 0.96 : 1.05} position={[5, 9, 6]} />
+        <directionalLight color={isLightTheme ? "#dbe8f5" : "#ffffff"} intensity={isLightTheme ? 0.28 : 0.7} position={[-4, 6, -3]} />
+        <hemisphereLight args={isLightTheme ? ["#edf3f9", "#b3bfca", 0.24] : ["#fff6d8", "#8d99aa", 0.82]} />
+        <pointLight
+          color={isLightTheme ? "#ffd700" : "#ffef40"}
+          intensity={litTargets.length > 0 ? (isLightTheme ? 0.44 : 1.9) : isLightTheme ? 0.03 : 0.14}
+          position={[2, 3, 2]}
+          distance={isLightTheme ? 4.2 : 6}
+        />
         <LevelScene
           activeFrame={activeFrame}
           committedRobot={committedRobot}
@@ -96,12 +104,13 @@ export function GameCanvas({
           onVictorySequenceComplete={onVictorySequenceComplete}
           playbackSpeed={playbackSpeed}
           robotColorId={robotColorId}
+          victoryExpressionActive={victoryExpressionActive}
           showVictorySequence={showVictorySequence}
           theme={theme}
           victoryBeamActive={victoryBeamActive}
         />
         <EffectComposer>
-          <Bloom intensity={0.08} luminanceThreshold={0.96} />
+          <Bloom intensity={isLightTheme ? 0.012 : 0.08} luminanceThreshold={isLightTheme ? 1 : 0.96} />
         </EffectComposer>
       </Canvas>
     </div>

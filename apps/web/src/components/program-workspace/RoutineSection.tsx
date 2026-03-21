@@ -104,9 +104,7 @@ export function RoutineSection({
       <div className="mb-3.5 flex items-center justify-between gap-2.5">
         <div>
           <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-primary)]">{label.toUpperCase()}</p>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">
-            {isLocked ? t.lockedForLevel : `[${t.routineSlots(slots.filter(Boolean).length, slots.length)}]`}
-          </p>
+          {isLocked ? <p className="mt-1 text-xs text-[var(--text-muted)]">{t.lockedForLevel}</p> : null}
         </div>
         <button
           className="ui-button h-7 rounded-[7px] px-2 py-1 !text-[9px] uppercase tracking-[0.05em]"

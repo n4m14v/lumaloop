@@ -70,6 +70,8 @@ export function GameHeaderBar({
   const [isRunMenuOpen, setIsRunMenuOpen] = useState(false);
   const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
   const levelMenuRef = useRef<HTMLDivElement | null>(null);
+  const levelMenuListRef = useRef<HTMLDivElement | null>(null);
+  const currentLevelButtonRef = useRef<HTMLButtonElement | null>(null);
   const runMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -107,6 +109,19 @@ export function GameHeaderBar({
       document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [isRunMenuOpen]);
+
+  useEffect(() => {
+    if (!isLevelMenuOpen || !levelMenuListRef.current || !currentLevelButtonRef.current) {
+      return;
+    }
+
+    const listElement = levelMenuListRef.current;
+    const currentButtonElement = currentLevelButtonRef.current;
+    const nextScrollTop =
+      currentButtonElement.offsetTop - listElement.clientHeight / 2 + currentButtonElement.clientHeight / 2;
+
+    listElement.scrollTop = Math.max(0, nextScrollTop);
+  }, [currentLevelIndex, isLevelMenuOpen]);
 
   const selectedRunLabel =
     selectedRunMode === "fast" ? t.fastPlay : selectedRunMode === "instant" ? t.skipToEnd : t.play;
@@ -162,7 +177,10 @@ export function GameHeaderBar({
               </button>
 
               {isLevelMenuOpen ? (
-                <div className="ui-panel absolute left-0 top-[calc(100%+10px)] z-30 max-h-[min(26rem,calc(100vh-10rem))] w-[min(26rem,78vw)] overflow-y-auto rounded-[16px] p-2.5 text-[var(--text-primary)]">
+                <div
+                  className="ui-panel absolute left-0 top-[calc(100%+10px)] z-30 max-h-[min(26rem,calc(100vh-10rem))] w-[min(26rem,78vw)] overflow-y-auto rounded-[16px] p-2.5 text-[var(--text-primary)]"
+                  ref={levelMenuListRef}
+                >
                   <div className="space-y-1">
                     {localizedLevels.map((levelOption, index) => (
                       <button
@@ -176,6 +194,7 @@ export function GameHeaderBar({
                         ].join(" ")}
                         disabled={!unlockedLevels[index]}
                         key={levelOption.id}
+                        ref={index === currentLevelIndex ? currentLevelButtonRef : null}
                         onClick={() => {
                           onSetLevelIndex(index);
                           setIsLevelMenuOpen(false);
