@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "pnpm --filter @lumaloop/web build",
+  "devCommand": "pnpm --filter @lumaloop/web dev",
+  "outputDirectory": "apps/web/dist"
+}
