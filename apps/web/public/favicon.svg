@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 1 26 26">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="0.8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <style>
+    /* Default: Light Mode */
+    .inactive { fill: #94a3b8; transition: fill 0.3s; } /* Slate 400 */
+    .active { fill: #0891b2; filter: url(#glow); }     /* Cyan 600 */
+
+    @media (prefers-color-scheme: dark) {
+      .inactive { fill: #334155; }                     /* Slate 700 */
+      .active { fill: #22d3ee; }                       /* Cyan 400 */
+    }
+  </style>
+
+  <path class="inactive" d="M16 6 L22 9.5 L16 13 L10 9.5 Z" />
+  
+  <path class="inactive" d="M9 10.5 L15 14 L9 17.5 L3 14 Z" />
+  
+  <path class="inactive" d="M16 15 L22 18.5 L16 22 L10 18.5 Z" />
+  
+  <path class="active" d="M23 10.5 L29 14 L23 17.5 L17 14 Z" />
+</svg>
