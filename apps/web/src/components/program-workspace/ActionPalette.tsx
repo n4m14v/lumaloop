@@ -27,7 +27,7 @@ function ActionButton({
     <button
       aria-label={label}
       className={[
-        "ui-deboss-surface relative aspect-square rounded-[12px] border transition",
+        "group ui-deboss-surface relative aspect-square rounded-[12px] border transition",
         disabled
           ? "border-[var(--panel-border)] text-[var(--text-muted)] opacity-70"
           : "border-[var(--panel-border)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:shadow-[0_0_18px_var(--accent-shadow)]",

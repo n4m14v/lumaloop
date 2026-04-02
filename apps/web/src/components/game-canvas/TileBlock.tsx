@@ -4,14 +4,13 @@
  * - This keeps the main scene assembly declarative while preserving existing effects.
  */
 
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useRef, useMemo } from "react";
 
 import { Edges, RoundedBox } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import gsap from "gsap";
-import type { Group, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, PointLight } from "three";
-import { AdditiveBlending } from "three";
-import { Color } from "three";
+import type { Group, MeshBasicMaterial, MeshPhysicalMaterial, PointLight } from "three";
+import { AdditiveBlending, MeshStandardMaterial, Color } from "three";
 
 import type { LevelDefinition } from "@lumaloop/engine";
 
@@ -57,6 +56,7 @@ const DARK_TILE_STYLE = {
 } as const;
 
 interface TileBlockProps {
+  activeCommand?: string | null;
   failureBlink: boolean;
   failurePulseToken: object | null;
   isActive: boolean;
@@ -65,17 +65,44 @@ interface TileBlockProps {
   victoryGlow: boolean;
 }
 
-function ToggleGlyph() {
+function ToggleGlyph({ isActive, activeCommand }: { isActive: boolean; activeCommand?: string | null }) {
   const glyphGroupRef = useRef<Group>(null);
-  // Ensure strict 6-character hex - 8-character hex with alpha can cause Three.js to fallback to pure white.
-  const color = "#1a1a1a";
-  const emissive = "#000";
+  const baseColor = "#1a1a1a";
+  const sharedMaterial = useMemo(
+    () => new MeshStandardMaterial({ color: baseColor, emissive: "#000", emissiveIntensity: 0, roughness: 0.7, metalness: 0.2 }),
+    []
+  );
+
+  useEffect(() => {
+    let targetEmissive = new Color("#000000");
+    let targetIntensity = 0;
+
+    if (activeCommand === "TOGGLE") {
+      targetEmissive = new Color("#00ffff");
+      targetIntensity = 2.0;
+
+      const tl = gsap.timeline();
+      tl.to(sharedMaterial, { emissiveIntensity: targetIntensity, duration: 0.1 });
+      tl.to(sharedMaterial.emissive, { r: targetEmissive.r, g: targetEmissive.g, b: targetEmissive.b, duration: 0.1 }, 0);
+
+      const activeEmissive = new Color("#00aaff");
+      tl.to(sharedMaterial, { emissiveIntensity: 0.8, duration: 0.3 }, 0.2);
+      tl.to(sharedMaterial.emissive, { r: activeEmissive.r, g: activeEmissive.g, b: activeEmissive.b, duration: 0.3 }, 0.2);
+    } else if (isActive) {
+      targetEmissive = new Color("#00aaff");
+      targetIntensity = 0.8;
+
+      gsap.to(sharedMaterial, { emissiveIntensity: targetIntensity, duration: 0.3 });
+      gsap.to(sharedMaterial.emissive, { r: targetEmissive.r, g: targetEmissive.g, b: targetEmissive.b, duration: 0.3 });
+    } else {
+      gsap.to(sharedMaterial, { emissiveIntensity: targetIntensity, duration: 0.3 });
+      gsap.to(sharedMaterial.emissive, { r: targetEmissive.r, g: targetEmissive.g, b: targetEmissive.b, duration: 0.3 });
+    }
+  }, [isActive, activeCommand, sharedMaterial]);
 
   useFrame(({ clock }) => {
     if (!glyphGroupRef.current) return;
     const elapsed = clock.getElapsedTime();
-    // Gentle bobbing
-    glyphGroupRef.current.position.y = BLOCK_HEIGHT * 0.5 - 0.04 + Math.sin(elapsed * 2) * 0.015;
     // Smooth, consistent rotation around the Y axis for dynamic "sync/swap" feel
     glyphGroupRef.current.rotation.y = elapsed * 0.8;
   });
@@ -85,39 +112,34 @@ function ToggleGlyph() {
   const arc = Math.PI * 0.65; // ~117 degrees length for each arrow
 
   return (
-    <group ref={glyphGroupRef} position={[0, BLOCK_HEIGHT * 0.5 - 0.04, 0]}>
+    <group ref={glyphGroupRef} position={[0, BLOCK_HEIGHT * 0.5 - 0.015, 0]}>
       {/* Lay flat conceptually on top of the tile, scaled up to be larger */}
       <group rotation={[-Math.PI / 2, 0, 0]} scale={1.4}>
 
         {/* Core resting dot */}
-        <mesh position={[0, 0, 0]}>
+        <mesh position={[0, 0, 0]} material={sharedMaterial}>
           <sphereGeometry args={[0.04, 16, 16]} />
-          <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
         </mesh>
 
         {/* Curved Arrow 1 */}
         <group>
-          <mesh>
+          <mesh material={sharedMaterial}>
             {/* The tail trail */}
             <torusGeometry args={[R, tube, 12, 32, arc]} />
-            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
           </mesh>
           {/* Arrowhead pointed tangentially at the terminal of the arc */}
-          <mesh position={[R * Math.cos(arc), R * Math.sin(arc), 0]} rotation={[0, 0, arc + Math.PI / 2]}>
+          <mesh position={[R * Math.cos(arc), R * Math.sin(arc), 0]} rotation={[0, 0, arc + Math.PI / 2]} material={sharedMaterial}>
             <coneGeometry args={[0.08, 0.18, 12]} />
-            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
           </mesh>
         </group>
 
         {/* Curved Arrow 2 - Mirrors Arrow 1 exactly 180 degrees */}
         <group rotation={[0, 0, Math.PI]}>
-          <mesh>
+          <mesh material={sharedMaterial}>
             <torusGeometry args={[R, tube, 12, 32, arc]} />
-            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
           </mesh>
-          <mesh position={[R * Math.cos(arc), R * Math.sin(arc), 0]} rotation={[0, 0, arc + Math.PI / 2]}>
+          <mesh position={[R * Math.cos(arc), R * Math.sin(arc), 0]} rotation={[0, 0, arc + Math.PI / 2]} material={sharedMaterial}>
             <coneGeometry args={[0.08, 0.18, 12]} />
-            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
           </mesh>
         </group>
 
@@ -127,6 +149,7 @@ function ToggleGlyph() {
 }
 
 function TileBlockInner({
+  activeCommand,
   failureBlink,
   failurePulseToken,
   isActive,
@@ -134,6 +157,7 @@ function TileBlockInner({
   tile,
   victoryGlow,
 }: TileBlockProps) {
+  const tileRootGroupRef = useRef<Group>(null);
   const topMaterialRef = useRef<MeshStandardMaterial | MeshPhysicalMaterial>(null);
   const targetCoreMaterialRef = useRef<MeshStandardMaterial>(null);
   const targetHaloMaterialRef = useRef<MeshBasicMaterial>(null);
@@ -409,43 +433,46 @@ function TileBlockInner({
     targetLightRef.current.intensity = baseLightIntensity + pulse * (isLit ? 0.24 : 0.14);
   });
 
+  useEffect(() => {
+    if (isSwitch && activeCommand === "TOGGLE" && tileRootGroupRef.current) {
+      const tl = gsap.timeline();
+      tl.to(tileRootGroupRef.current.position, { y: -0.15, duration: 0.15, ease: "power2.out" });
+      tl.to(tileRootGroupRef.current.position, { y: 0, duration: 0.4, ease: "power2.inOut" }, 0.2);
+    }
+  }, [isSwitch, activeCommand]);
+
   return (
     <group position={[tile.x * TILE_SIZE, 0, tile.y * TILE_SIZE]}>
-      {Array.from({ length: stackCount }, (_, layer) => (
-        <group key={layer} position={[0, BLOCK_HEIGHT * (layer + 0.5), 0]}>
-          <>
-            <RoundedBox args={[1.92, BLOCK_HEIGHT - 0.06, 1.92]} radius={0.22} smoothness={8}>
-              <meshPhysicalMaterial
-                color={shellColor}
-                clearcoat={0}
-                clearcoatRoughness={1}
-                depthWrite={!isTransparentShell}
-                emissive={shellEmissive}
-                emissiveIntensity={shellEmissiveIntensity}
-                envMapIntensity={0}
-                ior={1.02}
-                metalness={0}
-                opacity={shellOpacity}
-                ref={topMaterialRef}
-                roughness={1}
-                thickness={0.05}
-                transmission={shellTransmission}
-                transparent={isTransparentShell}
-              />
-            </RoundedBox>
-            <RoundedBox args={[1.28, BLOCK_HEIGHT * 0.5, 1.28]} position={[0, -0.02, 0]} radius={0.13} smoothness={6}>
-              <meshBasicMaterial color={innerFillColor} depthWrite={false} opacity={innerFillOpacity} toneMapped={false} transparent />
-            </RoundedBox>
-            <RoundedBox args={[1.94, BLOCK_HEIGHT - 0.04, 1.94]} radius={0.22} smoothness={8}>
-              <meshBasicMaterial color="#f9fcff" depthWrite={false} opacity={surfaceOpacity} toneMapped={false} transparent />
-              <Edges color={edgeColor} scale={1} threshold={30} />
-            </RoundedBox>
-            {isSwitch && layer === stackCount - 1 ? <ToggleGlyph /> : null}
-          </>
-        </group>
-      ))}
-      {isTarget ? (
-        <group position={[0, chamberCenterY, 0]} ref={targetOrbGroupRef}>
+      <group ref={tileRootGroupRef}>
+        {Array.from({ length: stackCount }, (_, layer) => (
+          <group key={layer} position={[0, BLOCK_HEIGHT * (layer + 0.5), 0]}>
+            <>
+              <RoundedBox args={[1.92, BLOCK_HEIGHT - 0.06, 1.92]} radius={0.22} smoothness={8}>
+                <meshPhysicalMaterial
+                  color={shellColor}
+                  depthTest
+                  emissive={shellEmissive}
+                  emissiveIntensity={shellEmissiveIntensity}
+                  opacity={shellOpacity}
+                  roughness={tileStyle.frostedShellRoughness}
+                  thickness={tileStyle.frostedShellThickness}
+                  transmission={shellTransmission}
+                  transparent
+                />
+              </RoundedBox>
+              <RoundedBox args={[1.7, BLOCK_HEIGHT - 0.24, 1.7]} radius={0.16} smoothness={4}>
+                <meshBasicMaterial color={innerFillColor} depthTest opacity={innerFillOpacity} transparent />
+              </RoundedBox>
+              <RoundedBox args={[2.08, BLOCK_HEIGHT + 0.08, 2.08]} radius={0.18} smoothness={8}>
+                <meshBasicMaterial color="#f9fcff" depthWrite={false} opacity={surfaceOpacity} toneMapped={false} transparent />
+                <Edges color={edgeColor} scale={1} threshold={30} />
+              </RoundedBox>
+              {isSwitch && layer === stackCount - 1 ? <ToggleGlyph isActive={isActive} activeCommand={activeCommand} /> : null}
+            </>
+          </group>
+        ))}
+        {isTarget ? (
+          <group position={[0, chamberCenterY, 0]} ref={targetOrbGroupRef}>
           <pointLight
             color={isLit ? tileStyle.targetCoreColorLit : tileStyle.targetCoreColor}
             distance={isLit ? 6.5 : 3.5}
@@ -496,16 +523,14 @@ function TileBlockInner({
           </mesh>
         </group>
       ) : null}
-      {isSwitch ? (
-        null
-      ) : null}
-      {isActive ? null : null}
+      </group>
     </group>
   );
 }
 
 export const TileBlock = memo(TileBlockInner, (previousProps, nextProps) => {
   return (
+    previousProps.activeCommand === nextProps.activeCommand &&
     previousProps.failureBlink === nextProps.failureBlink &&
     previousProps.failurePulseToken === nextProps.failurePulseToken &&
     previousProps.isActive === nextProps.isActive &&

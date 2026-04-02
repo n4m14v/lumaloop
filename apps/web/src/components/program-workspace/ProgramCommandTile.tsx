@@ -51,12 +51,12 @@ function DebossedIcon({
       />
       <Icon
         absoluteStrokeWidth
-        className="absolute inset-0 h-full w-full text-[color:var(--icon-deboss-base)]"
+        className="absolute inset-0 h-full w-full text-[color:var(--icon-deboss-base)] transition-all duration-[50ms] group-active:text-[var(--accent)] group-active:[filter:drop-shadow(0_0_6px_var(--accent))]"
         strokeWidth={ICON_STROKE + 0.2}
       />
       <Icon
         absoluteStrokeWidth
-        className="relative h-full w-full text-[color:var(--icon-deboss-base)] opacity-90"
+        className="relative h-full w-full text-[color:var(--icon-deboss-base)] opacity-90 transition-all duration-[50ms] group-active:text-[var(--accent)]"
         strokeWidth={ICON_STROKE + 0.55}
       />
     </span>
