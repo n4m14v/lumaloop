@@ -11,12 +11,14 @@ import { useI18n } from "../i18n/I18nProvider";
 export function GameMenu({
   level,
   onSetRobotColorId,
+  onReplayTutorial,
   onSetShowAllActions,
   robotColorId,
   showAllActions,
 }: {
   level: LevelDefinition;
   onSetRobotColorId: (value: RobotColorId) => void;
+  onReplayTutorial: () => void;
   onSetShowAllActions: (value: boolean) => void;
   robotColorId: RobotColorId;
   showAllActions: boolean;
@@ -165,6 +167,17 @@ export function GameMenu({
             >
               <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.hint}</span>
               <Info className="h-4 w-4 text-[var(--text-muted)]" />
+            </button>
+
+            <button
+              className="ui-button flex w-full items-center justify-between rounded-[14px] px-4 py-3 text-left"
+              onClick={() => {
+                setOpen(false);
+                onReplayTutorial();
+              }}
+              type="button"
+            >
+              <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.replayTutorial}</span>
             </button>
           </div>
         </div>

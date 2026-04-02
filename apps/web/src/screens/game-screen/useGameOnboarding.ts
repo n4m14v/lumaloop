@@ -3,8 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Command } from "@lumaloop/engine";
 
 import { useI18n } from "../../i18n/I18nProvider";
-
-const ONBOARDING_STORAGE_KEY = "lumaloop-onboarding-v1";
+import { ONBOARDING_STORAGE_KEY } from "./onboardingStorage";
 const LEVEL_ONE_ID = "world-01-level-01";
 const LEVEL_TWO_ID = "world-01-level-02";
 const TOGGLE_LEVEL_ONE_ID = "world-11-level-01";
@@ -33,7 +32,7 @@ type OnboardingTarget =
 type OnboardingStep = {
   content: StepContent;
   id: string;
-  target: OnboardingTarget;
+  target?: OnboardingTarget;
   type: "action" | "manual";
   whenComplete?: (commands: Command[], hasRunStarted: boolean) => boolean;
 };
@@ -112,7 +111,6 @@ function buildLevelTwoSteps(copy: ReturnType<typeof useI18n>["t"]): OnboardingSt
     {
       content: copy.onboardingLevel2.boardIntro,
       id: "level2-board-intro",
-      target: "game-board",
       type: "manual",
     },
     {
@@ -151,7 +149,6 @@ function buildToggleIntroSteps(copy: ReturnType<typeof useI18n>["t"]): Onboardin
     {
       content: copy.onboardingToggleIntro.boardIntro,
       id: "toggle-board-intro",
-      target: "game-board",
       type: "manual",
     },
     {
@@ -175,11 +172,13 @@ export function useGameOnboarding({
   hasRunStarted,
   levelId,
   mainSlots,
+  refreshToken,
   result,
 }: {
   hasRunStarted: boolean;
   levelId: string;
   mainSlots: (Command | null)[];
+  refreshToken?: number;
   result: object | null;
 }) {
   const { t } = useI18n();
@@ -228,8 +227,16 @@ export function useGameOnboarding({
   }, [flow, t]);
 
   useEffect(() => {
+    if (refreshToken === undefined) {
+      return;
+    }
+
+    setProgress(loadProgress());
+  }, [refreshToken]);
+
+  useEffect(() => {
     setAcknowledgedSteps({});
-  }, [flow]);
+  }, [flow, refreshToken]);
 
   const currentStep = useMemo(() => {
     return steps.find((step) => {

@@ -157,7 +157,7 @@ export function GameWalkthroughDialog({
               <div className="mt-auto flex flex-col gap-2">
                 {activeSlide.bullets.map((bullet) => (
                   <div
-                    className="flex w-full items-start gap-3 rounded-[12px] border border-[var(--panel-border)] bg-[var(--panel-bg-soft)] p-3 text-[13px] leading-relaxed text-[var(--text-primary)] shadow-sm backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-[var(--panel-bg)] md:text-[14px]"
+                    className="flex w-full items-start gap-3 rounded-[12px] p-3 text-[13px] leading-relaxed text-[var(--text-primary)] md:text-[14px]"
                     key={bullet}
                   >
                     <div className="mt-1.5 flex h-2 w-2 shrink-0 rounded-[4px] bg-[var(--accent)] shadow-[0_0_8px_var(--accent)]" />

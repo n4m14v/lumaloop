@@ -1,4 +1,5 @@
 import type { Command, LevelDefinition, RoutineName } from "@lumaloop/engine";
+import type { RunStatus } from "@lumaloop/engine";
 
 export const SUPPORTED_LOCALES = ["en", "ru", "he"] as const;
 
@@ -50,6 +51,9 @@ type Messages = {
   showingLevelCommands: string;
   skipToEnd: string;
   successBody: string;
+  replayTutorial: string;
+  failureBodies: Record<RunStatus, string>;
+  failureTitles: Record<RunStatus, string>;
   walkthroughClose: string;
   walkthroughDone: string;
   walkthroughNext: string;
@@ -134,6 +138,31 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "Showing level-allowed commands only.",
     skipToEnd: "Skip to End",
     successBody: "All targets are lit. You can replay this level or move on to the next puzzle.",
+    replayTutorial: "Replay Tutorial",
+    failureBodies: {
+      SUCCESS: "The run already succeeded.",
+      FAILED_INVALID_MOVE: "The robot tried to walk onto a tile that was not reachable from its current position.",
+      FAILED_INVALID_JUMP: "The robot tried to jump where the height change or landing tile was invalid.",
+      FAILED_INVALID_TOGGLE: "The robot used Toggle while not standing on a valid switch tile.",
+      FAILED_WRONG_LIGHT: "The robot tried to activate a tile that was not a target.",
+      FAILED_INCOMPLETE: "You have part of the solution working. Keep building until every target is lit.",
+      FAILED_MAX_STEPS: "The run exceeded the safety step limit. That usually means the program is looping too long.",
+      FAILED_RECURSION: "A process called itself too deeply and hit the recursion limit.",
+      FAILED_EMPTY_PROCEDURE: "The program called a process that has no commands in it.",
+      FAILED_INVALID_PROGRAM: "The program could not run because its structure was invalid.",
+    },
+    failureTitles: {
+      SUCCESS: "Puzzle Solved",
+      FAILED_INVALID_MOVE: "That Move Was Not Legal",
+      FAILED_INVALID_JUMP: "That Jump Did Not Work",
+      FAILED_INVALID_TOGGLE: "Toggle Needs A Switch",
+      FAILED_WRONG_LIGHT: "Activate Only Works On Targets",
+      FAILED_INCOMPLETE: "Some Targets Are Still Dark",
+      FAILED_MAX_STEPS: "The Program Ran Too Long",
+      FAILED_RECURSION: "The Processes Recurred Too Deeply",
+      FAILED_EMPTY_PROCEDURE: "One Process Is Empty",
+      FAILED_INVALID_PROGRAM: "The Program Could Not Run",
+    },
     walkthroughClose: "Close guide",
     walkthroughDone: "Start Playing",
     walkthroughNext: "Continue",
@@ -307,6 +336,31 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "Показаны только команды, разрешенные уровнем.",
     skipToEnd: "До конца",
     successBody: "Все цели зажжены. Можно переиграть уровень или перейти к следующей головоломке.",
+    replayTutorial: "Повторить обучение",
+    failureBodies: {
+      SUCCESS: "Запуск уже завершился успешно.",
+      FAILED_INVALID_MOVE: "Робот попытался шагнуть на клетку, до которой нельзя дойти из текущей позиции.",
+      FAILED_INVALID_JUMP: "Робот попытался прыгнуть туда, где перепад высоты или место приземления недопустимы.",
+      FAILED_INVALID_TOGGLE: "Робот использовал переключение, не стоя на подходящей плитке-переключателе.",
+      FAILED_WRONG_LIGHT: "Робот попытался активировать плитку, которая не является целью.",
+      FAILED_INCOMPLETE: "Часть решения уже работает. Продолжайте строить программу, пока не загорятся все цели.",
+      FAILED_MAX_STEPS: "Запуск превысил безопасный лимит шагов. Обычно это означает слишком длинный цикл.",
+      FAILED_RECURSION: "Процессы вызывали сами себя слишком глубоко и уперлись в лимит рекурсии.",
+      FAILED_EMPTY_PROCEDURE: "Программа вызвала процесс, в котором нет ни одной команды.",
+      FAILED_INVALID_PROGRAM: "Программу не удалось выполнить из-за неверной структуры.",
+    },
+    failureTitles: {
+      SUCCESS: "Головоломка решена",
+      FAILED_INVALID_MOVE: "Так ходить нельзя",
+      FAILED_INVALID_JUMP: "Этот прыжок не сработал",
+      FAILED_INVALID_TOGGLE: "Переключение работает только на переключателе",
+      FAILED_WRONG_LIGHT: "Активировать можно только цель",
+      FAILED_INCOMPLETE: "Некоторые цели все еще темные",
+      FAILED_MAX_STEPS: "Программа выполнялась слишком долго",
+      FAILED_RECURSION: "Процессы ушли слишком глубоко в рекурсию",
+      FAILED_EMPTY_PROCEDURE: "Один из процессов пуст",
+      FAILED_INVALID_PROGRAM: "Программу нельзя выполнить",
+    },
     walkthroughClose: "Закрыть гид",
     walkthroughDone: "Начать играть",
     walkthroughNext: "Продолжить",
@@ -480,6 +534,31 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "מוצגות רק הפקודות המותרות לשלב.",
     skipToEnd: "דלג לסוף",
     successBody: "כל היעדים מוארים. אפשר להפעיל שוב את השלב או לעבור לחידה הבאה.",
+    replayTutorial: "הפעל שוב את ההדרכה",
+    failureBodies: {
+      SUCCESS: "ההרצה כבר הסתיימה בהצלחה.",
+      FAILED_INVALID_MOVE: "הרובוט ניסה ללכת אל אריח שלא ניתן להגיע אליו מהמיקום הנוכחי.",
+      FAILED_INVALID_JUMP: "הרובוט ניסה לקפוץ כאשר הפרש הגבהים או אריח הנחיתה לא היו חוקיים.",
+      FAILED_INVALID_TOGGLE: "הרובוט השתמש במתג בלי לעמוד על אריח מתג תקין.",
+      FAILED_WRONG_LIGHT: "הרובוט ניסה להפעיל אריח שאינו יעד.",
+      FAILED_INCOMPLETE: "חלק מהפתרון כבר עובד. המשיכו לבנות את התוכנית עד שכל היעדים יהיו מוארים.",
+      FAILED_MAX_STEPS: "ההרצה עברה את מגבלת הצעדים הבטוחה. בדרך כלל זה אומר שהתוכנית רצה בלולאה ארוכה מדי.",
+      FAILED_RECURSION: "התהליכים קראו לעצמם עמוק מדי והגיעו למגבלת הרקורסיה.",
+      FAILED_EMPTY_PROCEDURE: "התוכנית קראה לתהליך שאין בו אף פקודה.",
+      FAILED_INVALID_PROGRAM: "לא ניתן היה להריץ את התוכנית בגלל מבנה לא תקין.",
+    },
+    failureTitles: {
+      SUCCESS: "החידה נפתרה",
+      FAILED_INVALID_MOVE: "המהלך הזה לא חוקי",
+      FAILED_INVALID_JUMP: "הקפיצה הזאת לא עבדה",
+      FAILED_INVALID_TOGGLE: "מתג עובד רק על אריח מתג",
+      FAILED_WRONG_LIGHT: "הפעלה עובדת רק על יעדים",
+      FAILED_INCOMPLETE: "חלק מהיעדים עדיין כבויים",
+      FAILED_MAX_STEPS: "התוכנית רצה זמן רב מדי",
+      FAILED_RECURSION: "התהליכים נכנסו עמוק מדי לרקורסיה",
+      FAILED_EMPTY_PROCEDURE: "אחד התהליכים ריק",
+      FAILED_INVALID_PROGRAM: "לא ניתן להריץ את התוכנית",
+    },
     walkthroughClose: "סגירת המדריך",
     walkthroughDone: "להתחיל לשחק",
     walkthroughNext: "להמשיך",

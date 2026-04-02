@@ -8,6 +8,7 @@ import type { RobotColorId } from "../../features/game/robotColors";
 import { useI18n } from "../../i18n/I18nProvider";
 import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
+import { GameStatusSnackbar, type GameStatusFeedback } from "./GameStatusSnackbar";
 import { GameWalkthroughDialog } from "./GameWalkthroughDialog";
 
 interface GameHeaderBarProps {
@@ -17,6 +18,8 @@ interface GameHeaderBarProps {
   level: LevelDefinition;
   localizedLevels: LevelDefinition[];
   onRunWithMode: (mode: "normal" | "fast" | "instant" | "pov") => void;
+  onReplayTutorial: () => void;
+  runFeedback?: GameStatusFeedback | null;
   onSetLevelIndex: (index: number) => void;
   onSetRobotColorId: (value: RobotColorId) => void;
   onSetShowAllActions: (value: boolean) => void;
@@ -57,6 +60,8 @@ export function GameHeaderBar({
   level,
   localizedLevels,
   onRunWithMode,
+  onReplayTutorial,
+  runFeedback,
   onSetLevelIndex,
   onSetRobotColorId,
   onSetShowAllActions,
@@ -131,13 +136,14 @@ export function GameHeaderBar({
     <div className="pointer-events-none relative z-10 flex min-h-[calc(100vh-3rem)] flex-col">
       <div className="pointer-events-none relative xl:pr-[364px]">
         <div
-          className="ui-gloss-panel pointer-events-auto grid gap-3 px-4 py-2.5 md:grid-cols-[1fr_auto_1fr] md:items-center"
+          className="ui-gloss-panel pointer-events-auto relative z-20 grid gap-3 px-4 py-2.5 md:grid-cols-[1fr_auto_1fr] md:items-center"
           dir="ltr"
         >
           <div className="flex items-center gap-2 md:justify-self-start">
             <GameMenu
               level={level}
               onSetRobotColorId={onSetRobotColorId}
+              onReplayTutorial={onReplayTutorial}
               onSetShowAllActions={onSetShowAllActions}
               robotColorId={robotColorId}
               showAllActions={showAllActions}
@@ -297,6 +303,11 @@ export function GameHeaderBar({
             </div>
           </div>
         </div>
+
+        <GameStatusSnackbar
+          className="absolute right-4 xl:right-[380px] top-[calc(100%+20px)] w-[min(24rem,calc(100vw-2rem))] z-10"
+          feedback={runFeedback ?? null}
+        />
       </div>
 
       <GameWalkthroughDialog onClose={() => setIsWalkthroughOpen(false)} open={isWalkthroughOpen} />

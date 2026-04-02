@@ -43,8 +43,8 @@ function getBubblePosition(rect: Rect | null) {
   if (!rect || typeof window === "undefined") {
     return {
       left: "50%",
-      top: "50%",
-      transform: "translate(-50%, -50%)",
+      top: "5.5rem",
+      transform: "translateX(-50%)",
     };
   }
 
@@ -79,15 +79,22 @@ export function GameOnboardingOverlay({
   onContinue: (() => void) | undefined;
   onSkip: () => void;
   skipLabel: string;
-  target: SpotlightTarget;
+  target: SpotlightTarget | undefined;
   title: string;
   type: "action" | "manual";
 }) {
   const [rect, setRect] = useState<Rect | null>(null);
 
   useEffect(() => {
+    if (!target) {
+      setRect(null);
+      return;
+    }
+
+    const activeTarget = target;
+
     function updateRect() {
-      setRect(getSpotlightRect(target));
+      setRect(getSpotlightRect(activeTarget));
     }
 
     updateRect();
