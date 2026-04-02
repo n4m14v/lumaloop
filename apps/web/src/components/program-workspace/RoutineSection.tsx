@@ -68,6 +68,7 @@ interface RoutineSectionProps {
   isActive: boolean;
   isLocked: boolean;
   label: string;
+  onboardingId?: string;
   onClear: () => void;
   onRemove: (index: number) => void;
   onSelect: () => void;
@@ -80,6 +81,7 @@ export function RoutineSection({
   isActive,
   isLocked,
   label,
+  onboardingId,
   onClear,
   onRemove,
   onSelect,
@@ -95,6 +97,7 @@ export function RoutineSection({
         isActive ? "ui-panel-active" : "",
         isLocked ? "opacity-60" : "",
       ].join(" ")}
+      data-onboarding={onboardingId}
       onClick={() => {
         if (!isLocked) {
           onSelect();

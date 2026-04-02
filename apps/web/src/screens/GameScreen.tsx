@@ -2,11 +2,19 @@ import { DarkBackdropNebula } from "../components/DarkBackdropNebula";
 import { GameCanvas } from "../components/GameCanvas";
 import { ProgramWorkspace } from "../components/ProgramWorkspace";
 import { GameHeaderBar } from "../components/game-screen/GameHeaderBar";
+import { GameOnboardingOverlay } from "../components/game-screen/GameOnboardingOverlay";
 import { GameSuccessDialog } from "../components/game-screen/GameSuccessDialog";
+import { useGameOnboarding } from "./game-screen/useGameOnboarding";
 import { useGameScreenController } from "./game-screen/useGameScreenController";
 
 export function GameScreen() {
   const controller = useGameScreenController();
+  const onboarding = useGameOnboarding({
+    hasRunStarted: controller.isAutoRunning ?? false,
+    levelId: controller.level?.id ?? "",
+    mainSlots: controller.level ? controller.slots.main : [],
+    result: controller.result ?? null,
+  });
 
   if (!controller.level) {
     return null;
@@ -39,6 +47,7 @@ export function GameScreen() {
               />
 
               {controller.successDialog ? <GameSuccessDialog {...controller.successDialog} /> : null}
+              {onboarding ? <GameOnboardingOverlay {...onboarding} /> : null}
             </>
           }
         />

@@ -216,7 +216,7 @@ export function LevelScene({
 
         return (
           <TileBlock
-            activeCommand={tileKey === activeTileKey ? activeFrame?.command : undefined}
+            activeCommand={tileKey === activeTileKey ? (activeFrame?.command ?? null) : null}
             failureBlink={tileKey === failureTileKey}
             failurePulseToken={failurePulseToken}
             isActive={tileKey === activeTileKey}

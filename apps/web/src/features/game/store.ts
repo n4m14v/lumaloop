@@ -29,7 +29,6 @@ export type RoutineSlots = Record<RoutineName, SlotCommand[]>;
 export type PlaybackSpeed = 1 | 2 | 4;
 export const ALL_COMMANDS: Command[] = ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "JUMP", "ACTIVATE", "TOGGLE", "CALL_P1", "CALL_P2"];
 const DEFAULT_PROC_SLOTS = 4;
-const COMPLETED_LEVELS_STORAGE_KEY = "lumaloop-completed-level-ids";
 
 const MAX_STEPS = 1000;
 const MAX_CALL_DEPTH = 100;
@@ -47,16 +46,6 @@ export const campaignLevels = [
   ...world09Trickery,
   ...world10Phantoms,
 ];
-
-const campaignLevelIds = new Set(campaignLevels.map((level) => level.id));
-
-function sanitizeCompletedLevelIds(levelIds: string[]) {
-  return [...new Set(levelIds.filter((levelId) => campaignLevelIds.has(levelId)))];
-}
-
-export function getCompletedLevelsStorageKey() {
-  return COMPLETED_LEVELS_STORAGE_KEY;
-}
 
 function createRoutineSlots(level: LevelDefinition): RoutineSlots {
   return {
@@ -120,7 +109,6 @@ function cloneSlots(slots: RoutineSlots): RoutineSlots {
 interface GameStoreState {
   activeRoutine: RoutineName;
   cameraQuarterTurns: number;
-  completedLevelIds: string[];
   committedFrames: number;
   isAutoRunning: boolean;
   levelIndex: number;
@@ -137,7 +125,6 @@ interface GameStoreState {
   queueNextFrame: () => void;
   removeCommand: (routine: RoutineName, index: number) => void;
   rotateCamera: (delta: number) => void;
-  hydrateCompletedLevelIds: (levelIds: string[]) => void;
   setActiveRoutine: (routine: RoutineName) => void;
   setRobotColorId: (value: RobotColorId) => void;
   setShowAllActions: (value: boolean) => void;
@@ -157,7 +144,6 @@ export function createSlotsForLevel(level: LevelDefinition) {
 export const useGameStore = create<GameStoreState>((set, get) => ({
   activeRoutine: "main",
   cameraQuarterTurns: 0,
-  completedLevelIds: [],
   committedFrames: 0,
   isAutoRunning: false,
   levelIndex: 0,
@@ -258,15 +244,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       state.result && state.committedFrames < state.result.trace.length
         ? state.result
         : getRunResult(level, slots, state.showAllActions);
-    const completedLevelIds =
-      result.status === "SUCCESS" && !state.completedLevelIds.includes(level.id)
-        ? [...state.completedLevelIds, level.id]
-        : state.completedLevelIds;
 
     set({
       activeFrameIndex: null,
       committedFrames: result.trace.length,
-      completedLevelIds,
       isAutoRunning: false,
       result,
     });
@@ -314,11 +295,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     set((state) => ({
       cameraQuarterTurns: ((state.cameraQuarterTurns + delta) % 4 + 4) % 4,
     }));
-  },
-  hydrateCompletedLevelIds: (levelIds) => {
-    set({
-      completedLevelIds: sanitizeCompletedLevelIds(levelIds),
-    });
   },
   setActiveRoutine: (routine) => {
     set({ activeRoutine: routine });
@@ -375,19 +351,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     const committedFrames = state.activeFrameIndex + 1;
     const isComplete = committedFrames >= state.result.trace.length;
-    const level = getLevel(state.levelIndex);
-    const completedLevelIds =
-      level &&
-        isComplete &&
-        state.result.status === "SUCCESS" &&
-        !state.completedLevelIds.includes(level.id)
-        ? [...state.completedLevelIds, level.id]
-        : state.completedLevelIds;
 
     set({
       activeFrameIndex: null,
       committedFrames,
-      completedLevelIds,
       isAutoRunning: isComplete ? false : state.isAutoRunning,
     });
   },
@@ -408,17 +375,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     const result = getRunResult(level, slots, state.showAllActions);
     const shouldAnimate = result.trace.length > 0;
-    const completedLevelIds =
-      result.status === "SUCCESS" &&
-        !shouldAnimate &&
-        !state.completedLevelIds.includes(level.id)
-        ? [...state.completedLevelIds, level.id]
-        : state.completedLevelIds;
 
     set({
       activeFrameIndex: shouldAnimate ? 0 : null,
       committedFrames: 0,
-      completedLevelIds,
       isAutoRunning: shouldAnimate,
       result,
     });

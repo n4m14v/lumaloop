@@ -84,6 +84,7 @@ export function GameCanvas({
   return (
     <div
       className={`${className ?? "relative h-[420px] w-full overflow-hidden md:h-[640px]"} ${cursorClassName}`}
+      data-onboarding="game-board"
       ref={canvasContainerRef}
       style={{ touchAction: "none" }}
       {...canvasInteractionProps}

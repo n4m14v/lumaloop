@@ -63,6 +63,27 @@ type Messages = {
     eyebrow: string;
     title: string;
   }[];
+  onboardingContinue: string;
+  onboardingSkip: string;
+  onboardingLevel1: {
+    activate: { body: string; title: string };
+    firstForward: { body: string; title: string };
+    mainRoutine: { body: string; title: string };
+    play: { body: string; title: string };
+    secondForward: { body: string; title: string };
+  };
+  onboardingLevel2: {
+    activate: { body: string; title: string };
+    boardIntro: { body: string; title: string };
+    forwardTwice: { body: string; title: string };
+    play: { body: string; title: string };
+    turnRight: { body: string; title: string };
+  };
+  onboardingToggleIntro: {
+    boardIntro: { body: string; title: string };
+    play: { body: string; title: string };
+    toggle: { body: string; title: string };
+  };
 };
 
 const messages: Record<Locale, Messages> = {
@@ -121,6 +142,66 @@ const messages: Record<Locale, Messages> = {
     walkthroughSubtitle:
       "A quick mission briefing on the controls, the puzzle loop, and the thinking skills Lumaloop strengthens as you play.",
     walkthroughTitle: "How to Play Lumaloop",
+    onboardingContinue: "Continue",
+    onboardingSkip: "Skip tutorial",
+    onboardingLevel1: {
+      activate: {
+        body: "Click Activate to light the target once the robot reaches it.",
+        title: "Finish The Program",
+      },
+      firstForward: {
+        body: "Click Forward to add the first step. Your program is built one command at a time.",
+        title: "Start In The Actions Tray",
+      },
+      mainRoutine: {
+        body: "This is your Main program. Each click fills the next empty slot here in execution order.",
+        title: "Watch The Program Fill In",
+      },
+      play: {
+        body: "Press Play to run the program you just built.",
+        title: "Run The Robot",
+      },
+      secondForward: {
+        body: "Click Forward one more time. This level is a straight line, so you need two moves before the lamp.",
+        title: "Add The Next Move",
+      },
+    },
+    onboardingLevel2: {
+      activate: {
+        body: "Now add Activate so the robot lights the lamp after reaching it.",
+        title: "Finish The Sequence",
+      },
+      boardIntro: {
+        body: "Level 2 introduces turning. The robot starts facing right, but the lamp is straight ahead on the vertical path, so direction matters before movement.",
+        title: "This Level Teaches Turning",
+      },
+      forwardTwice: {
+        body: "Click Forward twice. After turning, the robot can move up the path toward the lamp.",
+        title: "Move After Turning",
+      },
+      play: {
+        body: "Press Play to test the full sequence.",
+        title: "Run It",
+      },
+      turnRight: {
+        body: "Click Turn Right first. Turning changes what the next Forward command will do.",
+        title: "Face The Lamp",
+      },
+    },
+    onboardingToggleIntro: {
+      boardIntro: {
+        body: "This level introduces switches. The glowing switch tile can change the board layout and unlock a path that was blocked a moment ago.",
+        title: "Switches Change The Board",
+      },
+      play: {
+        body: "Press Play after adding Toggle so you can watch the board change and see why this action matters.",
+        title: "Test The Switch",
+      },
+      toggle: {
+        body: "Click Toggle to add the new switch action. Use it while standing on the switch tile to move the linked floor segment.",
+        title: "Meet The Toggle Action",
+      },
+    },
     walkthroughSlides: [
       {
         eyebrow: "Mission",
@@ -234,6 +315,66 @@ const messages: Record<Locale, Messages> = {
     walkthroughSubtitle:
       "Короткий брифинг об управлении, игровом цикле и мыслительных навыках, которые Lumaloop постепенно развивает.",
     walkthroughTitle: "Как играть в Lumaloop",
+    onboardingContinue: "Продолжить",
+    onboardingSkip: "Пропустить обучение",
+    onboardingLevel1: {
+      activate: {
+        body: "Теперь нажмите «Активировать», чтобы зажечь цель, когда робот до нее дойдет.",
+        title: "Завершите программу",
+      },
+      firstForward: {
+        body: "Нажмите «Вперед», чтобы добавить первый шаг. Программа собирается по одной команде.",
+        title: "Начните с панели действий",
+      },
+      mainRoutine: {
+        body: "Это главный процесс. Каждый ваш клик заполняет здесь следующую пустую ячейку по порядку выполнения.",
+        title: "Посмотрите, как заполняется программа",
+      },
+      play: {
+        body: "Нажмите «Старт», чтобы запустить программу, которую вы только что собрали.",
+        title: "Запустите робота",
+      },
+      secondForward: {
+        body: "Нажмите «Вперед» еще раз. На этом уровне путь прямой, поэтому до лампы нужно два шага.",
+        title: "Добавьте следующее движение",
+      },
+    },
+    onboardingLevel2: {
+      activate: {
+        body: "Теперь добавьте «Активировать», чтобы робот зажег лампу после того, как доберется до нее.",
+        title: "Завершите последовательность",
+      },
+      boardIntro: {
+        body: "На втором уровне появляется поворот. Робот смотрит вправо, а лампа находится впереди по вертикальной дорожке, поэтому сначала важен выбор направления.",
+        title: "Этот уровень учит повороту",
+      },
+      forwardTwice: {
+        body: "Нажмите «Вперед» два раза. После поворота робот сможет подняться по дорожке к лампе.",
+        title: "Двигайтесь после поворота",
+      },
+      play: {
+        body: "Нажмите «Старт», чтобы проверить всю последовательность.",
+        title: "Запустите решение",
+      },
+      turnRight: {
+        body: "Сначала нажмите «Поворот вправо». Поворот меняет то, как будет работать следующая команда «Вперед».",
+        title: "Повернитесь к лампе",
+      },
+    },
+    onboardingToggleIntro: {
+      boardIntro: {
+        body: "На этом уровне появляются переключатели. Светящаяся плитка-переключатель может менять раскладку поля и открывать путь, который секунду назад был закрыт.",
+        title: "Переключатели меняют поле",
+      },
+      play: {
+        body: "После того как добавите «Переключить», нажмите «Старт», чтобы увидеть, как меняется поле и зачем нужна эта команда.",
+        title: "Проверьте переключатель",
+      },
+      toggle: {
+        body: "Нажмите «Переключить», чтобы добавить новое действие. Его нужно использовать, стоя на плитке-переключателе, чтобы сдвинуть связанную часть пола.",
+        title: "Новая команда: переключить",
+      },
+    },
     walkthroughSlides: [
       {
         eyebrow: "Миссия",
@@ -347,6 +488,66 @@ const messages: Record<Locale, Messages> = {
     walkthroughSubtitle:
       "תדריך קצר על השליטה, על לולאת הפתרון של המשחק, ועל מיומנויות החשיבה ש-Lumaloop מחזק בהדרגה.",
     walkthroughTitle: "איך משחקים ב-Lumaloop",
+    onboardingContinue: "להמשיך",
+    onboardingSkip: "דלג על ההדרכה",
+    onboardingLevel1: {
+      activate: {
+        body: "עכשיו לחצו על \"הפעל\" כדי להדליק את היעד כשהרובוט יגיע אליו.",
+        title: "משלימים את התוכנית",
+      },
+      firstForward: {
+        body: "לחצו על \"קדימה\" כדי להוסיף את הצעד הראשון. התוכנית נבנית פקודה אחרי פקודה.",
+        title: "מתחילים ממגש הפעולות",
+      },
+      mainRoutine: {
+        body: "זהו התהליך הראשי. כל לחיצה ממלאת כאן את המשבצת הפנויה הבאה לפי סדר הביצוע.",
+        title: "רואים איך התוכנית מתמלאת",
+      },
+      play: {
+        body: "לחצו על \"הפעל\" כדי להריץ את התוכנית שבניתם עכשיו.",
+        title: "מריצים את הרובוט",
+      },
+      secondForward: {
+        body: "לחצו שוב על \"קדימה\". בשלב הזה המסלול ישר, לכן צריך שני צעדים לפני המנורה.",
+        title: "מוסיפים את התנועה הבאה",
+      },
+    },
+    onboardingLevel2: {
+      activate: {
+        body: "עכשיו הוסיפו \"הפעל\" כדי שהרובוט ידליק את המנורה אחרי שיגיע אליה.",
+        title: "משלימים את הרצף",
+      },
+      boardIntro: {
+        body: "בשלב 2 לומדים לפנות. הרובוט מתחיל כשהוא פונה ימינה, אבל המנורה נמצאת בהמשך המסלול האנכי, לכן לכיוון יש משמעות לפני התנועה.",
+        title: "השלב הזה מלמד פנייה",
+      },
+      forwardTwice: {
+        body: "לחצו פעמיים על \"קדימה\". אחרי הפנייה הרובוט יוכל להתקדם במסלול אל המנורה.",
+        title: "זזים אחרי שפונים",
+      },
+      play: {
+        body: "לחצו על \"הפעל\" כדי לבדוק את כל הרצף.",
+        title: "מריצים",
+      },
+      turnRight: {
+        body: "קודם לחצו על \"פנה ימינה\". פנייה משנה מה תעשה פקודת \"קדימה\" הבאה.",
+        title: "פונים אל המנורה",
+      },
+    },
+    onboardingToggleIntro: {
+      boardIntro: {
+        body: "בשלב הזה מופיעים מתגים. אריח המתג הזוהר יכול לשנות את מבנה הלוח ולפתוח מסלול שהיה חסום רגע קודם.",
+        title: "מתגים משנים את הלוח",
+      },
+      play: {
+        body: "אחרי שתוסיפו \"מתג\", לחצו על \"הפעל\" כדי לראות איך הלוח משתנה ולמה הפעולה הזאת חשובה.",
+        title: "בודקים את המתג",
+      },
+      toggle: {
+        body: "לחצו על \"מתג\" כדי להוסיף את הפעולה החדשה. משתמשים בה כשעומדים על אריח המתג כדי להזיז את חלק הרצפה שמקושר אליו.",
+        title: "היכרות עם פעולת המתג",
+      },
+    },
     walkthroughSlides: [
       {
         eyebrow: "משימה",

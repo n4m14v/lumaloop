@@ -22,6 +22,7 @@ function ActionButton({
 }) {
   const { t } = useI18n();
   const label = t.commandLabels[command];
+  const onboardingId = `palette-${command.toLowerCase().replaceAll("_", "-")}`;
 
   return (
     <button
@@ -32,6 +33,7 @@ function ActionButton({
           ? "border-[var(--panel-border)] text-[var(--text-muted)] opacity-70"
           : "border-[var(--panel-border)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:shadow-[0_0_18px_var(--accent-shadow)]",
       ].join(" ")}
+      data-onboarding={onboardingId}
       disabled={disabled}
       onClick={onClick}
       title={label}

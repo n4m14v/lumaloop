@@ -31,6 +31,8 @@ const DARK_TILE_STYLE = {
   frostedShellEmissive: "#a6d7ef",
   frostedShellEmissiveIntensity: 0.02,
   frostedShellOpacity: 1,
+  frostedShellRoughness: 0.14,
+  frostedShellThickness: 0,
   frostedShellTransmission: 0,
   frostedSurfaceOpacity: 0.05,
   targetCoreColor: "#47d7ff",
@@ -65,7 +67,7 @@ interface TileBlockProps {
   victoryGlow: boolean;
 }
 
-function ToggleGlyph({ isActive, activeCommand }: { isActive: boolean; activeCommand?: string | null }) {
+function ToggleGlyph({ isActive, activeCommand }: { isActive: boolean; activeCommand: string | null }) {
   const glyphGroupRef = useRef<Group>(null);
   const baseColor = "#1a1a1a";
   const sharedMaterial = useMemo(
@@ -467,7 +469,7 @@ function TileBlockInner({
                 <meshBasicMaterial color="#f9fcff" depthWrite={false} opacity={surfaceOpacity} toneMapped={false} transparent />
                 <Edges color={edgeColor} scale={1} threshold={30} />
               </RoundedBox>
-              {isSwitch && layer === stackCount - 1 ? <ToggleGlyph isActive={isActive} activeCommand={activeCommand} /> : null}
+              {isSwitch && layer === stackCount - 1 ? <ToggleGlyph isActive={isActive} activeCommand={activeCommand ?? null} /> : null}
             </>
           </group>
         ))}

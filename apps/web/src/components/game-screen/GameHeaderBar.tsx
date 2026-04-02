@@ -230,6 +230,7 @@ export function GameHeaderBar({
                     "max-[980px]:min-w-[52px] max-[980px]:px-3",
                     isRunMenuOpen ? "rounded-tl-[12px]" : "rounded-l-[12px]",
                   ].join(" ")}
+                  data-onboarding="run-button"
                   disabled={!isAutoRunning && !canStartRun}
                   onClick={onToggleRun}
                   type="button"

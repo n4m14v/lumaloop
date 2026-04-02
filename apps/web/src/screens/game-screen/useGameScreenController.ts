@@ -9,7 +9,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   campaignLevels,
   createSlotsForLevel,
-  getCompletedLevelsStorageKey,
   useGameStore,
 } from "../../features/game/store";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -21,7 +20,6 @@ const ROBOT_DEATH_STATUSES = new Set([
   "FAILED_INVALID_TOGGLE",
   "FAILED_WRONG_LIGHT",
 ]);
-const COMPLETED_LEVELS_STORAGE_KEY = getCompletedLevelsStorageKey();
 const LEVEL_INDEX_STORAGE_KEY = "lumaloop-level-index";
 
 type RunMode = "normal" | "fast" | "instant" | "pov";
@@ -45,9 +43,7 @@ export function useGameScreenController() {
   const clearRoutine = useGameStore((state) => state.clearRoutine);
   const completeRunImmediately = useGameStore((state) => state.completeRunImmediately);
   const committedFrames = useGameStore((state) => state.committedFrames);
-  const completedLevelIds = useGameStore((state) => state.completedLevelIds);
   const ensureLevelProgram = useGameStore((state) => state.ensureLevelProgram);
-  const hydrateCompletedLevelIds = useGameStore((state) => state.hydrateCompletedLevelIds);
   const isAutoRunning = useGameStore((state) => state.isAutoRunning);
   const levelIndex = useGameStore((state) => state.levelIndex);
   const programs = useGameStore((state) => state.programs);
@@ -70,33 +66,12 @@ export function useGameScreenController() {
   const level = localizedLevels[levelIndex] ?? localizedLevels[0]!;
   const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
   const unlockedLevels = localizedLevels.map((_, index) => {
-    if (isAdmin || index === 0 || index <= unlockedLevelIndex) {
-      return true;
-    }
-
-    const previousLevel = localizedLevels[index - 1];
-    return previousLevel ? completedLevelIds.includes(previousLevel.id) : false;
+    return isAdmin || index === 0 || index <= unlockedLevelIndex;
   });
 
   useEffect(() => {
     ensureLevelProgram();
   }, [ensureLevelProgram, levelIndex]);
-
-  useEffect(() => {
-    const savedCompletedLevelIds = window.localStorage.getItem(COMPLETED_LEVELS_STORAGE_KEY);
-
-    if (!savedCompletedLevelIds) {
-      hydrateCompletedLevelIds([]);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(savedCompletedLevelIds);
-      hydrateCompletedLevelIds(Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : []);
-    } catch {
-      hydrateCompletedLevelIds([]);
-    }
-  }, [hydrateCompletedLevelIds]);
 
   useEffect(() => {
     const savedLevelIndex = window.localStorage.getItem(LEVEL_INDEX_STORAGE_KEY);
@@ -118,10 +93,6 @@ export function useGameScreenController() {
     setLevelIndex(nextLevelIndex);
     setHasHydratedLevelIndex(true);
   }, [setLevelIndex]);
-
-  useEffect(() => {
-    window.localStorage.setItem(COMPLETED_LEVELS_STORAGE_KEY, JSON.stringify(completedLevelIds));
-  }, [completedLevelIds]);
 
   useEffect(() => {
     if (!isAutoRunning || activeFrameIndex !== null || !result || committedFrames >= result.trace.length) {

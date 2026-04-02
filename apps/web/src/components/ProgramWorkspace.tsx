@@ -59,6 +59,7 @@ export function ProgramWorkspace({
             isActive={activeRoutine === "main"}
             isLocked={false}
             label={getRoutineLabel(locale, "main")}
+            onboardingId="routine-main"
             onClear={() => onClearRoutine("main")}
             onRemove={(index) => onRemoveCommand("main", index)}
             onSelect={() => onSelectRoutine("main")}
