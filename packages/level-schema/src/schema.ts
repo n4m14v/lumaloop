@@ -8,11 +8,12 @@ export const commandSchema = z.enum([
   "TURN_RIGHT",
   "JUMP",
   "ACTIVATE",
+  "TOGGLE",
   "CALL_P1",
   "CALL_P2",
 ]);
 
-export const tileKindSchema = z.enum(["NORMAL", "TARGET", "BLOCKED"]);
+export const tileKindSchema = z.enum(["NORMAL", "TARGET", "SWITCH"]);
 
 export const routineNameSchema = z.enum(["main", "p1", "p2"]);
 
@@ -30,6 +31,14 @@ export const tileSchema = z
     y: z.number().int(),
     z: z.number().int().nonnegative(),
     kind: tileKindSchema,
+    toggleGroup: z.string().min(1).optional(),
+    moveTo: z
+      .object({
+        x: z.number().int(),
+        y: z.number().int(),
+        z: z.number().int().nonnegative(),
+      })
+      .optional(),
   })
   .superRefine((tile, ctx) => {
     if (tile.kind === "TARGET" && !tile.id) {
@@ -45,6 +54,68 @@ export const tileSchema = z
         code: z.ZodIssueCode.custom,
         message: "Only TARGET tiles may declare an id.",
         path: ["id"],
+      });
+    }
+
+    if (tile.kind === "SWITCH" && !tile.toggleGroup) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "SWITCH tiles must declare a toggleGroup.",
+        path: ["toggleGroup"],
+      });
+    }
+
+    if (tile.kind === "SWITCH" && tile.moveTo) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "SWITCH tiles may not declare a moveTo position.",
+        path: ["moveTo"],
+      });
+    }
+
+    if (tile.kind === "TARGET" && tile.toggleGroup) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "TARGET tiles may not declare a toggleGroup.",
+        path: ["toggleGroup"],
+      });
+    }
+
+    if (tile.kind === "TARGET" && tile.moveTo) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "TARGET tiles may not declare a moveTo position.",
+        path: ["moveTo"],
+      });
+    }
+
+    if (tile.kind === "NORMAL" && tile.toggleGroup && !tile.moveTo) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Movable floor tiles must declare a moveTo position.",
+        path: ["moveTo"],
+      });
+    }
+
+    if (tile.kind === "NORMAL" && !tile.toggleGroup && tile.moveTo) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "moveTo requires a toggleGroup.",
+        path: ["toggleGroup"],
+      });
+    }
+
+    if (
+      tile.kind === "NORMAL" &&
+      tile.moveTo &&
+      tile.moveTo.x === tile.x &&
+      tile.moveTo.y === tile.y &&
+      tile.moveTo.z === tile.z
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "moveTo must differ from the tile's default position.",
+        path: ["moveTo"],
       });
     }
   });

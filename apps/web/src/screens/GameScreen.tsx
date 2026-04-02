@@ -1,6 +1,5 @@
-import { DarkThemeNebula } from "../components/DarkThemeNebula";
+import { DarkBackdropNebula } from "../components/DarkBackdropNebula";
 import { GameCanvas } from "../components/GameCanvas";
-import { LightThemeClouds } from "../components/LightThemeClouds";
 import { ProgramWorkspace } from "../components/ProgramWorkspace";
 import { GameHeaderBar } from "../components/game-screen/GameHeaderBar";
 import { GameSuccessDialog } from "../components/game-screen/GameSuccessDialog";
@@ -15,8 +14,7 @@ export function GameScreen() {
 
   return (
     <main className="relative isolate min-h-screen px-4 py-3 text-[var(--text-primary)] md:px-6 md:py-4">
-      {controller.theme === "dark" ? <DarkThemeNebula /> : null}
-      {controller.theme === "light" ? <LightThemeClouds /> : null}
+      <DarkBackdropNebula />
       <div className="relative z-10 mx-auto max-w-[1920px]">
         <ProgramWorkspace
           activeRoutine={controller.workspace.activeRoutine}
@@ -26,6 +24,7 @@ export function GameScreen() {
           onClearRoutine={controller.workspace.onClearRoutine}
           onRemoveCommand={controller.workspace.onRemoveCommand}
           onSelectRoutine={controller.workspace.onSelectRoutine}
+          paletteCommands={controller.workspace.paletteCommands}
           routines={controller.workspace.routines}
           showAllActions={controller.workspace.showAllActions}
           scene={

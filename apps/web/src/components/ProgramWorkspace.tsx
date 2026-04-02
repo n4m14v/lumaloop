@@ -16,6 +16,7 @@ export function ProgramWorkspace({
   onClearRoutine,
   onRemoveCommand,
   onSelectRoutine,
+  paletteCommands,
   routines,
   scene,
   showAllActions,
@@ -27,6 +28,7 @@ export function ProgramWorkspace({
   onClearRoutine: (routine: RoutineName) => void;
   onRemoveCommand: (routine: RoutineName, index: number) => void;
   onSelectRoutine: (routine: RoutineName) => void;
+  paletteCommands: Command[];
   routines: RoutineSlots;
   scene: ReactNode;
   showAllActions: boolean;
@@ -44,6 +46,7 @@ export function ProgramWorkspace({
           <ActionPalette
             allowedCommands={allowedCommands}
             onAppendCommand={onAppendCommand}
+            paletteCommands={paletteCommands}
             showAllActions={showAllActions}
           />
 

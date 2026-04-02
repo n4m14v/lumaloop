@@ -7,6 +7,7 @@ import { ProgramActionGlyph } from "./ProgramCommandTile";
 interface ActionPaletteProps {
   allowedCommands: Command[];
   onAppendCommand: (command: Command) => void;
+  paletteCommands: Command[];
   showAllActions: boolean;
 }
 
@@ -44,10 +45,14 @@ function ActionButton({
 export function ActionPalette({
   allowedCommands,
   onAppendCommand,
+  paletteCommands,
   showAllActions,
 }: ActionPaletteProps) {
   const { t } = useI18n();
-  const visibleCommands = showAllActions ? ALL_COMMANDS : allowedCommands;
+  const toggleVisible = paletteCommands.includes("TOGGLE");
+  const visibleCommands = showAllActions
+    ? ALL_COMMANDS.filter((command) => command !== "TOGGLE" || toggleVisible)
+    : paletteCommands;
 
   return (
     <section className="ui-panel rounded-[16px] p-3.5">

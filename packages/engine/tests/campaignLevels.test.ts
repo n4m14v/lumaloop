@@ -12,12 +12,14 @@ import { world07VeryHard } from "../../level-data/src/worlds/world-07-very-hard/
 import { world08Mastery } from "../../level-data/src/worlds/world-08-mastery/levels";
 import { world09Trickery } from "../../level-data/src/worlds/world-09-trickery/levels";
 import { world10Phantoms } from "../../level-data/src/worlds/world-10-phantoms/levels";
+import { world11Switches } from "../../level-data/src/worlds/world-11-switches/levels";
 
 const campaignLevels = [
   ...world01Basics,
   ...world02Orientation,
   ...world03Height,
   ...world04Procedures,
+  ...world11Switches,
   ...world05Recursion,
   ...world06Hard,
   ...world07VeryHard,
@@ -27,42 +29,23 @@ const campaignLevels = [
 ];
 
 const referencePrograms: Record<string, ProgramSlots> = {
-  "world-01-level-05": {
+  "world-01-level-04": {
     main: [
       "FORWARD",
       "FORWARD",
+      "ACTIVATE",
       "TURN_RIGHT",
       "FORWARD",
-      "TURN_LEFT",
-      "FORWARD",
-      "FORWARD",
-      "TURN_LEFT",
       "FORWARD",
       "ACTIVATE",
     ],
   },
-  "world-02-level-05": {
+  "world-02-level-01": {
     main: [
       "FORWARD",
       "FORWARD",
       "ACTIVATE",
       "TURN_RIGHT",
-      "FORWARD",
-      "TURN_RIGHT",
-      "FORWARD",
-      "FORWARD",
-      "TURN_LEFT",
-      "FORWARD",
-      "ACTIVATE",
-    ],
-  },
-  "world-02-level-06": {
-    main: [
-      "FORWARD",
-      "FORWARD",
-      "ACTIVATE",
-      "TURN_LEFT",
-      "FORWARD",
       "FORWARD",
       "TURN_LEFT",
       "FORWARD",
@@ -78,6 +61,25 @@ const referencePrograms: Record<string, ProgramSlots> = {
   },
   "world-03-level-07": {
     main: ["JUMP", "FORWARD", "JUMP", "TURN_RIGHT", "FORWARD", "JUMP", "TURN_LEFT", "FORWARD", "ACTIVATE"],
+  },
+  "world-11-level-01": {
+    main: ["TOGGLE", "CALL_P1", "CALL_P1"],
+    p1: ["FORWARD", "FORWARD", "ACTIVATE"],
+  },
+  "world-11-level-02": {
+    main: ["CALL_P1", "TOGGLE", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD"],
+    p2: ["CALL_P1", "TURN_RIGHT"],
+  },
+  "world-11-level-03": {
+    main: ["FORWARD", "TOGGLE", "CALL_P1", "ACTIVATE", "CALL_P2", "TOGGLE", "TURN_LEFT", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["TURN_LEFT", "TURN_LEFT", "CALL_P1"],
+  },
+  "world-11-level-04": {
+    main: ["TOGGLE", "CALL_P1", "CALL_P2", "TURN_RIGHT", "CALL_P1", "TOGGLE", "TURN_RIGHT", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["JUMP", "FORWARD", "ACTIVATE"],
   },
   "world-04-level-03": {
     main: ["ACTIVATE", "CALL_P1", "CALL_P1", "CALL_P1"],
@@ -265,6 +267,21 @@ const referencePrograms: Record<string, ProgramSlots> = {
     p1: ["TURN_RIGHT", "JUMP"],
     p2: ["ACTIVATE", "FORWARD", "CALL_P1", "FORWARD", "CALL_P2"],
   },
+  "world-10-level-06": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["FORWARD", "FORWARD", "TURN_LEFT", "FORWARD", "CALL_P1"],
+  },
+  "world-10-level-07": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "CALL_P2"],
+    p2: ["JUMP", "FORWARD", "TURN_LEFT", "FORWARD", "CALL_P1"],
+  },
+  "world-10-level-08": {
+    main: ["CALL_P2", "CALL_P2", "ACTIVATE", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["ACTIVATE", "CALL_P1", "TURN_RIGHT", "CALL_P1"],
+  },
 };
 
 function getProgramLength(program: ProgramSlots) {
@@ -272,8 +289,8 @@ function getProgramLength(program: ProgramSlots) {
 }
 
 describe("campaign levels", () => {
-  it("contains 60 handcrafted levels with unique ids", () => {
-    expect(campaignLevels).toHaveLength(60);
+  it("contains 61 handcrafted levels with unique ids", () => {
+    expect(campaignLevels).toHaveLength(61);
     expect(new Set(campaignLevels.map((level) => level.id)).size).toBe(campaignLevels.length);
   });
 

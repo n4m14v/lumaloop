@@ -19,7 +19,6 @@ type Messages = {
   clear: string;
   commandLabels: Record<Command, string>;
   defaultHint: string;
-  darkMode: string;
   fastPlay: string;
   hint: string;
   idealSize: (value: number) => string;
@@ -29,7 +28,6 @@ type Messages = {
   levelOnly: string;
   levelOptionLabel: (index: number, name: string) => string;
   lockedForLevel: string;
-  lightMode: string;
   mainRoutine: string;
   menu: string;
   next: string;
@@ -52,7 +50,6 @@ type Messages = {
   showingLevelCommands: string;
   skipToEnd: string;
   successBody: string;
-  theme: string;
   walkthroughClose: string;
   walkthroughDone: string;
   walkthroughNext: string;
@@ -80,11 +77,11 @@ const messages: Record<Locale, Messages> = {
       TURN_RIGHT: "Turn Right",
       JUMP: "Jump",
       ACTIVATE: "Activate",
+      TOGGLE: "Toggle",
       CALL_P1: "Process 1",
       CALL_P2: "Process 2",
     },
     defaultHint: "Activate every goal tile.",
-    darkMode: "Dark",
     fastPlay: "Fast Play",
     hint: "Hint",
     idealSize: (value) => `Ideal Size ${value}`,
@@ -94,7 +91,6 @@ const messages: Record<Locale, Messages> = {
     levelOnly: "Level Only",
     levelOptionLabel: (index, name) => `Level ${index} - ${name}`,
     lockedForLevel: "Locked for this level",
-    lightMode: "Light",
     mainRoutine: "Main Process",
     menu: "Menu",
     next: "Next",
@@ -117,7 +113,6 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "Showing level-allowed commands only.",
     skipToEnd: "Skip to End",
     successBody: "All targets are lit. You can replay this level or move on to the next puzzle.",
-    theme: "Theme",
     walkthroughClose: "Close guide",
     walkthroughDone: "Start Playing",
     walkthroughNext: "Continue",
@@ -195,11 +190,11 @@ const messages: Record<Locale, Messages> = {
       TURN_RIGHT: "Поворот вправо",
       JUMP: "Прыжок",
       ACTIVATE: "Активировать",
+      TOGGLE: "Переключить",
       CALL_P1: "Процесс 1",
       CALL_P2: "Процесс 2",
     },
     defaultHint: "Активируйте каждую целевую плитку.",
-    darkMode: "Темная",
     fastPlay: "Быстро",
     hint: "Подсказка",
     idealSize: (value) => `Идеальный размер ${value}`,
@@ -209,7 +204,6 @@ const messages: Record<Locale, Messages> = {
     levelOnly: "Только уровень",
     levelOptionLabel: (index, name) => `Уровень ${index} - ${name}`,
     lockedForLevel: "Недоступно на этом уровне",
-    lightMode: "Светлая",
     mainRoutine: "Главный процесс",
     menu: "Меню",
     next: "Дальше",
@@ -232,7 +226,6 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "Показаны только команды, разрешенные уровнем.",
     skipToEnd: "До конца",
     successBody: "Все цели зажжены. Можно переиграть уровень или перейти к следующей головоломке.",
-    theme: "Тема",
     walkthroughClose: "Закрыть гид",
     walkthroughDone: "Начать играть",
     walkthroughNext: "Продолжить",
@@ -310,11 +303,11 @@ const messages: Record<Locale, Messages> = {
       TURN_RIGHT: "פנה ימינה",
       JUMP: "קפיצה",
       ACTIVATE: "הפעל",
+      TOGGLE: "מתג",
       CALL_P1: "תהליך 1",
       CALL_P2: "תהליך 2",
     },
     defaultHint: "הפעילו כל אריח יעד.",
-    darkMode: "כהה",
     fastPlay: "הרצה מהירה",
     hint: "רמז",
     idealSize: (value) => `גודל אידיאלי ${value}`,
@@ -324,7 +317,6 @@ const messages: Record<Locale, Messages> = {
     levelOnly: "רק לשלב",
     levelOptionLabel: (index, name) => `שלב ${index} - ${name}`,
     lockedForLevel: "נעול בשלב הזה",
-    lightMode: "בהיר",
     mainRoutine: "תהליך ראשי",
     menu: "תפריט",
     next: "הבא",
@@ -347,7 +339,6 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "מוצגות רק הפקודות המותרות לשלב.",
     skipToEnd: "דלג לסוף",
     successBody: "כל היעדים מוארים. אפשר להפעיל שוב את השלב או לעבור לחידה הבאה.",
-    theme: "ערכת נושא",
     walkthroughClose: "סגירת המדריך",
     walkthroughDone: "להתחיל לשחק",
     walkthroughNext: "להמשיך",
@@ -440,9 +431,9 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       designerNotes: "Поворот нужен после прямого участка, а не до него.",
     },
     "world-01-level-04": {
-      name: "Поворот в обе стороны",
-      concept: "Левый и правый поворот не взаимозаменяемы",
-      designerNotes: "Один выбор поворота ведет к цели, другой уводит от нее.",
+      name: "Две лампы",
+      concept: "Прохождение не закончено, пока не зажжены все цели",
+      designerNotes: "Первая лампа - это только середина маршрута. Планируйте до тех пор, пока не загорятся обе цели.",
     },
     "world-01-level-05": {
       name: "Обратный зигзаг",
@@ -450,9 +441,9 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       designerNotes: "Считайте каждый изгиб контрольной точкой. Последнюю смену направления легко пропустить.",
     },
     "world-02-level-01": {
-      name: "Зигзагообразный коридор",
-      concept: "Планирование пути с чередованием поворотов",
-      designerNotes: "Продумайте весь зигзаг до того, как поставите первый поворот.",
+      name: "Контрольный маршрут",
+      concept: "Нужно спланировать весь путь еще до первой локальной победы",
+      designerNotes: "Раннее ответвление выглядит заманчиво, но правильный маршрут сначала зажигает первую цель, а уже потом уходит в поворот.",
     },
     "world-02-level-02": {
       name: "Ложная развилка",
@@ -724,6 +715,41 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       concept: "Иногда самый маленький процесс должен владеть только поворотом, даже если поле предлагает много правдоподобных площадок приземления",
       designerNotes: "Дополнительные уступы создают ощущение, будто подъем каждый раз новый. Это не так. Крошечный процесс поворота все еще остается шарниром, который удерживает рекурсивную фразу компактной.",
     },
+    "world-10-level-06": {
+      name: "Призрачная аркада",
+      concept: "Правильный крюк все еще побеждает, даже когда боковые коридоры прячут его в шуме",
+      designerNotes: "Несколько проходов выглядят так, будто для них нужен отдельный процесс. Это ложь. Правильная абстракция все равно повторяет один и тот же крюк от лампы к лампе.",
+    },
+    "world-10-level-07": {
+      name: "Хребет призраков",
+      concept: "Шумный рельеф опаснее всего, когда ложные уступы сохраняют тот же силуэт, что и настоящий крюк",
+      designerNotes: "Игнорируйте силуэт и читайте фразу движения. Правильная рекурсия все еще держится на стабильном ритме: прыжок, шаг, поворот, шаг.",
+    },
+    "world-10-level-08": {
+      name: "Призрачная сортировка",
+      concept: "Плотные ложные коридоры скрывают макро-разбиение, даже когда те же два помощника по-прежнему решают все поле",
+      designerNotes: "Центральная сетка нужна только для того, чтобы украсть ваше внимание. Правильное разбиение все равно хранит расстояние в одном процессе, а фразу «лампа-поворот» - в другом.",
+    },
+    "world-11-level-01": {
+      name: "Первый переключатель",
+      concept: "TOGGLE меняет поле еще до того, как начинается движение",
+      designerNotes: "Переключатель ничего не делает роботу напрямую. Он меняет то, какая плитка существует впереди.",
+    },
+    "world-11-level-02": {
+      name: "Открой и поверни",
+      concept: "Переключатель может открыть путь в другой части поля",
+      designerNotes: "Сначала доберитесь до переключателя, а потом думайте о том маршруте, который он открывает, а не о том, который вы уже прошли.",
+    },
+    "world-11-level-03": {
+      name: "Двойной проход",
+      concept: "Один и тот же переключатель может помочь первой фазе маршрута и помешать второй",
+      designerNotes: "Первое переключение правильное, но этого недостаточно. Здесь нужна вторая фаза, а не просто удлиненная версия первой.",
+    },
+    "world-11-level-04": {
+      name: "Поднятая эстафета",
+      concept: "Планирование переключателей может соединяться с фазами движения и высоты",
+      designerNotes: "Думайте о маршруте как о двух закрытых секциях, соединенных подъемом. Каждый переключатель важен только для следующей секции.",
+    },
   },
   he: {
     "world-01-level-01": {
@@ -742,9 +768,9 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       designerNotes: "הפנייה צריכה לקרות אחרי הקטע הישר, לא לפניו.",
     },
     "world-01-level-04": {
-      name: "פנו לשני הכיוונים",
-      concept: "פנייה שמאלה ופנייה ימינה אינן שקולות",
-      designerNotes: "בחירת פנייה אחת מכוונת אל היעד, והאחרת מרחיקה ממנו.",
+      name: "שתי מנורות",
+      concept: "ההרצה לא הושלמה עד שכל היעדים מוארים",
+      designerNotes: "המנורה הראשונה היא רק אמצע המסלול. ממשיכים לתכנן עד ששני היעדים נדלקים.",
     },
     "world-01-level-05": {
       name: "זיגזג חוזר",
@@ -752,9 +778,9 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       designerNotes: "התייחסו לכל פנייה כאל נקודת ביקורת. קל לפספס דווקא את שינוי הכיוון האחרון.",
     },
     "world-02-level-01": {
-      name: "מסדרון מזגזג",
-      concept: "תכנון מסלול עם פניות מתחלפות",
-      designerNotes: "תכננו את כל הזיגזג לפני שאתם מציבים את הפנייה הראשונה.",
+      name: "מסלול בדיקה",
+      concept: "צריך לתכנן את כל המסלול עוד לפני ההצלחה המקומית הראשונה",
+      designerNotes: "הפנייה המוקדמת נראית מפתה, אבל המסלול הנכון מדליק קודם את היעד הראשון ורק אחר כך מתחייב לפנייה.",
     },
     "world-02-level-02": {
       name: "הסתעפות מטעה",
@@ -1025,6 +1051,41 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       name: "גן צירים",
       concept: "לפעמים התהליך הקטן ביותר צריך להחזיק רק את הציר, גם כשהלוח מציע הרבה נחיתות שנראות סבירות",
       designerNotes: "המדפים הנוספים גורמים לטיפוס להרגיש כאילו הוא משתנה כל פעם מחדש. הוא לא. תהליך הציר הזעיר עדיין נשאר הציר שמחזיק את המשפט הרקורסיבי קומפקטי.",
+    },
+    "world-10-level-06": {
+      name: "ארקדה רפאית",
+      concept: "גם כשמסדרונות הצד מטביעים את הצורה ברעש, הוו הנכון עדיין מנצח",
+      designerNotes: "כמה מעברים נראים כאילו מגיע להם תהליך נפרד. זו הטעיה. ההפשטה הנכונה עדיין חוזרת על אותו משפט וו מפנס לפנס.",
+    },
+    "world-10-level-07": {
+      name: "רכס רפאים",
+      concept: "רעש טופוגרפי נעשה מסוכן במיוחד כשהמדפים המזויפים שומרים על אותו קו מתאר כמו הוו האמיתי",
+      designerNotes: "התעלמו מהצללית וקראו את משפט התנועה. הרקורסיה הנכונה עדיין נשענת על קצב יציב של קפיצה, צעד, פנייה, צעד.",
+    },
+    "world-10-level-08": {
+      name: "חצר מסילות רפאים",
+      concept: "מסדרונות שווא צפופים מסתירים את הפירוק המאקרו, גם כשהם עדיין נפתרים בדיוק עם אותם שני תהליכי עזר",
+      designerNotes: "הרשת שבמרכז קיימת רק כדי לגנוב לכם קשב. הפיצול הנכון עדיין שומר מרחק בתהליך אחד ואת משפט 'פנס-פנייה' בתהליך השני.",
+    },
+    "world-11-level-01": {
+      name: "המתג הראשון",
+      concept: "TOGGLE משנה את הלוח עוד לפני שהתנועה מתחילה",
+      designerNotes: "המתג לא עושה שום דבר ישירות לרובוט. הוא משנה איזו משבצת בכלל קיימת לפניו.",
+    },
+    "world-11-level-02": {
+      name: "פתח ואז פנה",
+      concept: "מתג יכול לפתוח מסלול בחלק אחר של הלוח",
+      designerNotes: "קודם מגיעים למתג, ורק אחר כך חושבים על הנתיב שהוא פתח, לא על הנתיב שכבר הלכתם בו.",
+    },
+    "world-11-level-03": {
+      name: "מעבר כפול",
+      concept: "אותו מתג יכול לעזור לפאזה הראשונה של המסלול ולחסום את השנייה",
+      designerNotes: "ההפעלה הראשונה נכונה אבל לא מספיקה. צריך כאן פאזה שנייה, לא רק גרסה ארוכה יותר של הראשונה.",
+    },
+    "world-11-level-04": {
+      name: "ממסר מורם",
+      concept: "תכנון מתגים יכול להתחבר עם פאוזות של תנועה וגובה",
+      designerNotes: "חשבו על המסלול כשתי מקטעים נעולים שמחוברים בעלייה. כל מתג חשוב רק למקטע שאחריו.",
     },
   },
 };

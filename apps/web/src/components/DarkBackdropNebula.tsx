@@ -11,7 +11,7 @@ const NEBULA_STYLE = {
   top: "20%",
 } as CSSProperties;
 
-export function DarkThemeNebula() {
+export function DarkBackdropNebula() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <div className="dark-nebula" style={NEBULA_STYLE}>

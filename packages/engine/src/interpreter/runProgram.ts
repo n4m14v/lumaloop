@@ -1,4 +1,4 @@
-import type { Command, ProgramSlots, Tile } from "@lumaloop/level-schema";
+import type { Command, ProgramSlots } from "@lumaloop/level-schema";
 
 import { createTraceFrame } from "../trace/createTraceFrame";
 import { validateLevel, validateProgram } from "../validation/validateLevel";
@@ -13,10 +13,6 @@ import type {
 
 const DEFAULT_MAX_STEPS = 1000;
 const DEFAULT_MAX_CALL_DEPTH = 100;
-
-function toBoardIndex(board: Tile[]): Map<string, Tile> {
-  return new Map(board.map((tile) => [`${tile.x},${tile.y}`, tile]));
-}
 
 function countProgramLength(program: ProgramSlots): number {
   return program.main.length + (program.p1?.length ?? 0) + (program.p2?.length ?? 0);
@@ -84,8 +80,8 @@ export function runProgram({ level, program, options }: RunProgramInput): RunRes
   const maxSteps = options?.maxSteps ?? DEFAULT_MAX_STEPS;
   const maxCallDepth = options?.maxCallDepth ?? DEFAULT_MAX_CALL_DEPTH;
   const trace: TraceFrame[] = [];
-  const boardIndex = toBoardIndex(level.board);
   const activatedTargetIds = new Set<string>();
+  const activeToggleGroups = new Set<string>();
   const programLength = countProgramLength(program);
   const requiredTargetIds = level.board
     .filter((tile) => tile.kind === "TARGET")
@@ -202,7 +198,8 @@ export function runProgram({ level, program, options }: RunProgramInput): RunRes
     const result = executeCommand({
       command,
       robot,
-      boardIndex,
+      board: level.board,
+      activeToggleGroups,
       activatedTargetIds,
     });
 
@@ -221,8 +218,11 @@ export function runProgram({ level, program, options }: RunProgramInput): RunRes
     }
 
     robot = result.robotAfter;
+    const nextActiveToggleGroups = new Set(result.activeToggleGroups);
+
     trace.push(
       createTraceFrame({
+        activeToggleGroups: nextActiveToggleGroups,
         command,
         pointer,
         robotBefore,
@@ -236,6 +236,10 @@ export function runProgram({ level, program, options }: RunProgramInput): RunRes
     activatedTargetIds.clear();
     for (const id of nextActivatedTargetIds) {
       activatedTargetIds.add(id);
+    }
+    activeToggleGroups.clear();
+    for (const toggleGroup of nextActiveToggleGroups) {
+      activeToggleGroups.add(toggleGroup);
     }
 
     if (isSuccessState(requiredTargetIds, activatedTargetIds)) {

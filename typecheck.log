@@ -1,0 +1,31 @@
+
+> @lumaloop/web@0.1.0 typecheck /Users/ilyavaiman/Projects/progbot/apps/web
+> tsc -p tsconfig.json --noEmit
+
+src/components/game-canvas/POVCamera.tsx(46,25): error TS2339: Property 'isPresenting' does not exist on type 'Readonly<{ body?: XRBody; session?: XRSession; mediaBinding?: XRMediaBinding; originReferenceSpace?: XRReferenceSpace; origin?: Object3D<Object3DEventMap>; ... 8 more ...; emulator?: XRDevice; } & WithRecord<...>>'.
+src/components/Robot.tsx(220,43): error TS2345: Argument of type 'Group<Object3DEventMap>' is not assignable to parameter of type 'Object3D<Object3DEventMap>'.
+  Type 'Group<Object3DEventMap>' is missing the following properties from type 'Object3D<Object3DEventMap>': setPointerCapture, releasePointerCapture, hasPointerCapture
+src/components/Robot.tsx(221,50): error TS2345: Argument of type 'Object3D<Object3DEventMap>' is not assignable to parameter of type 'Object3D<Object3DEventMap> | AnimationObjectGroup'.
+  Type 'import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/build/three.module").Object3D<import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/src/core/Object3D").Object3DEventMap>' is not assignable to type 'import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/src/core/Object3D").Object3D<import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/src/core/Object3D").Object3DEventMap>'.
+    The types returned by 'applyQuaternion(...)' are incompatible between these types.
+      Type 'Object3D<Object3DEventMap>' is not assignable to type 'this' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        'this' could be instantiated with an arbitrary type which could be unrelated to 'Object3D<Object3DEventMap>'.
+src/components/Robot.tsx(277,43): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(clip: AnimationClip, optionalRoot?: Object3D<Object3DEventMap> | AnimationObjectGroup | undefined, blendMode?: AnimationBlendMode | undefined): AnimationAction', gave the following error.
+    Argument of type 'Object3D<Object3DEventMap>' is not assignable to parameter of type 'Object3D<Object3DEventMap> | AnimationObjectGroup | undefined'.
+      Type 'import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/build/three.module").Object3D<import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/src/core/Object3D").Object3DEventMap>' is not assignable to type 'import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/src/core/Object3D").Object3D<import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/src/core/Object3D").Object3DEventMap>'.
+        The types returned by 'applyQuaternion(...)' are incompatible between these types.
+          Type 'Object3D<Object3DEventMap>' is not assignable to type 'this' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+            'this' could be instantiated with an arbitrary type which could be unrelated to 'Object3D<Object3DEventMap>'.
+  Overload 2 of 2, '(clip: string | AnimationClip, optionalRoot?: Object3D<Object3DEventMap> | AnimationObjectGroup | undefined, blendMode?: AnimationBlendMode | undefined): AnimationAction | null', gave the following error.
+    Argument of type 'Object3D<Object3DEventMap>' is not assignable to parameter of type 'Object3D<Object3DEventMap> | AnimationObjectGroup | undefined'.
+      Type 'import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/build/three.module").Object3D<import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/src/core/Object3D").Object3DEventMap>' is not assignable to type 'import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/src/core/Object3D").Object3D<import("/Users/ilyavaiman/Projects/progbot/node_modules/.pnpm/@types+three@0.180.0/node_modules/@types/three/src/core/Object3D").Object3DEventMap>'.
+        The types returned by 'applyQuaternion(...)' are incompatible between these types.
+          Type 'Object3D<Object3DEventMap>' is not assignable to type 'this' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+            'this' could be instantiated with an arbitrary type which could be unrelated to 'Object3D<Object3DEventMap>'.
+src/components/Robot.tsx(288,26): error TS2345: Argument of type '(child: Object3D) => void' is not assignable to parameter of type '(object: Object3D<Object3DEventMap>) => any'.
+  Types of parameters 'child' and 'object' are incompatible.
+    Type 'Object3D<Object3DEventMap>' is missing the following properties from type 'Object3D<Object3DEventMap>': setPointerCapture, releasePointerCapture, hasPointerCapture
+/Users/ilyavaiman/Projects/progbot/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @lumaloop/web@0.1.0 typecheck: `tsc -p tsconfig.json --noEmit`
+Exit status 2

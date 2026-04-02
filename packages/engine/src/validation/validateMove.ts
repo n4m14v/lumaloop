@@ -26,17 +26,13 @@ function getDestination(
   return boardIndex.get(getCoordinateKey(robot.x + delta.dx, robot.y + delta.dy));
 }
 
-function isTraversableTile(tile: Tile | undefined): tile is Tile {
-  return Boolean(tile && tile.kind !== "BLOCKED");
-}
-
 export function validateForwardMove(
   robot: RobotState,
   boardIndex: Map<string, Tile>,
 ): MoveValidationResult {
   const tile = getDestination(robot, boardIndex);
 
-  if (!isTraversableTile(tile) || tile.z !== robot.z) {
+  if (!tile || tile.z !== robot.z) {
     return {
       success: false,
       reason: "FAILED_INVALID_MOVE",
@@ -61,7 +57,7 @@ export function validateJumpMove(
 ): MoveValidationResult {
   const tile = getDestination(robot, boardIndex);
 
-  if (!isTraversableTile(tile)) {
+  if (!tile) {
     return {
       success: false,
       reason: "FAILED_INVALID_JUMP",

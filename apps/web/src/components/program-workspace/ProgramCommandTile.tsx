@@ -5,6 +5,7 @@ import {
   CornerUpRight,
   Power,
   Workflow,
+  RefreshCcwDot
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -24,6 +25,7 @@ const commandMeta: Record<
   TURN_RIGHT: { icon: CornerUpRight },
   JUMP: { icon: ChevronsUp },
   ACTIVATE: { icon: Power },
+  TOGGLE: { icon: RefreshCcwDot },
   CALL_P1: { icon: Workflow, badge: "1" },
   CALL_P2: { icon: Workflow, badge: "2" },
 };

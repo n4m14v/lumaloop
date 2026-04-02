@@ -39,20 +39,6 @@ const DARK_FLOOR_STYLE = {
   undershadowRoughness: 0.18,
 } as const;
 
-const LIGHT_FLOOR_STYLE = {
-  circuitOpacity: 0.24,
-  edgeColor: "#586977",
-  sideColor: "#a7b4be",
-  sideOpacity: 0.26,
-  sideRoughness: 0.24,
-  topColor: "#c4d0d8",
-  topOpacity: 0.18,
-  topRoughness: 0.2,
-  undershadowColor: "#91a0ac",
-  undershadowOpacity: 0.34,
-  undershadowRoughness: 0.28,
-} as const;
-
 function hashCoordinateSeed(x: number, y: number) {
   let seed = Math.imul(x + 37, 73856093) ^ Math.imul(y - 19, 19349663);
   seed ^= seed >>> 13;
@@ -176,22 +162,22 @@ function createCircuitTexture(seed: number, anisotropy: number) {
 const FloatingFloorTile = memo(function FloatingFloorTile({
   animated,
   maxAnisotropy,
-  theme,
+  showCircuit,
   x,
   y,
 }: {
   animated: boolean;
   maxAnisotropy: number;
-  theme: "dark" | "light";
+  showCircuit: boolean;
   x: number;
   y: number;
 }) {
   const groupRef = useRef<Group>(null);
   const phase = x * 0.45 + y * 0.6;
-  const floorStyle = theme === "light" ? LIGHT_FLOOR_STYLE : DARK_FLOOR_STYLE;
+  const floorStyle = DARK_FLOOR_STYLE;
   const circuitTexture = useMemo(
-    () => (animated ? createCircuitTexture(hashCoordinateSeed(x, y), maxAnisotropy) : null),
-    [animated, maxAnisotropy, x, y],
+    () => (animated && showCircuit ? createCircuitTexture(hashCoordinateSeed(x, y), maxAnisotropy) : null),
+    [animated, maxAnisotropy, showCircuit, x, y],
   );
 
   useEffect(() => {
@@ -281,23 +267,41 @@ const FloatingFloorTile = memo(function FloatingFloorTile({
   );
 });
 
-function GridFloorInner({ level, theme }: { level: LevelDefinition; theme: "dark" | "light" }) {
+function GridFloorInner({
+  level,
+}: {
+  level: LevelDefinition;
+}) {
   const { gl } = useThree();
   const { minX, maxX, minY, maxY } = getBoardMetrics(level);
   const padding = 2;
   const maxAnisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
   const tiles = useMemo(() => {
     const floorTiles = [];
-    const occupiedTiles = new Set(level.board.map((tile) => `${tile.x},${tile.y}`));
+    const occupiedTiles = new Set<string>();
+    const blankTiles = new Set<string>();
+
+    for (const tile of level.board) {
+      const sourceKey = `${tile.x},${tile.y}`;
+      occupiedTiles.add(sourceKey);
+      
+      if (tile.kind === "NORMAL" && tile.moveTo) {
+        const targetKey = `${tile.moveTo.x},${tile.moveTo.y}`;
+        occupiedTiles.add(targetKey);
+        blankTiles.add(targetKey);
+        blankTiles.add(sourceKey);
+      }
+    }
 
     for (let x = minX - padding; x <= maxX + padding; x += 1) {
       for (let y = minY - padding; y <= maxY + padding; y += 1) {
+        const key = `${x},${y}`;
         floorTiles.push(
           <FloatingFloorTile
-            animated={!occupiedTiles.has(`${x},${y}`)}
-            key={`${x},${y}`}
+            animated={!occupiedTiles.has(key)}
+            key={key}
             maxAnisotropy={maxAnisotropy}
-            theme={theme}
+            showCircuit={!blankTiles.has(key)}
             x={x}
             y={y}
           />,
@@ -306,12 +310,12 @@ function GridFloorInner({ level, theme }: { level: LevelDefinition; theme: "dark
     }
 
     return floorTiles;
-  }, [level.board, maxAnisotropy, maxX, maxY, minX, minY, theme]);
+  }, [level.board, maxAnisotropy, maxX, maxY, minX, minY]);
 
   return <group>{tiles}</group>;
 }
 
 export const GridFloor = memo(
   GridFloorInner,
-  (previousProps, nextProps) => previousProps.level === nextProps.level && previousProps.theme === nextProps.theme,
+  (previousProps, nextProps) => previousProps.level === nextProps.level,
 );

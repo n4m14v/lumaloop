@@ -20,6 +20,7 @@ export type RunStatus =
   | "SUCCESS"
   | "FAILED_INVALID_MOVE"
   | "FAILED_INVALID_JUMP"
+  | "FAILED_INVALID_TOGGLE"
   | "FAILED_WRONG_LIGHT"
   | "FAILED_INCOMPLETE"
   | "FAILED_MAX_STEPS"
@@ -33,6 +34,7 @@ export interface ExecutionPointer {
 }
 
 export interface TraceFrame {
+  activeToggleGroups: string[];
   command: Command;
   pointer: ExecutionPointer;
   robotBefore: RobotState;

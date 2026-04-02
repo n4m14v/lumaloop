@@ -28,7 +28,7 @@ export const ROBOT_VICTORY_BOT_FLOAT_START_SECONDS = 0.12;
 export const ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS = 1;
 export const ROBOT_VICTORY_POPUP_DELAY_MS = 200;
 
-type RobotProps = {
+interface RobotProps {
   activeFrame: TraceFrame | null;
   colorId: RobotColorId;
   failurePulse: boolean;
@@ -38,10 +38,12 @@ type RobotProps = {
   onVictorySequenceComplete: () => void;
   playbackSpeed: number;
   robot: RobotState;
-  theme: "dark" | "light";
+  isAutoRunning: boolean;
   victoryExpressionActive: boolean;
   victorySequenceActive: boolean;
-};
+  externalRootRef?: React.RefObject<import("three").Group | null> | undefined;
+  externalModelRef?: React.RefObject<import("three").Group | null> | undefined;
+}
 
 function getScaledDuration(baseDuration: number, playbackSpeed: number, minimumDuration: number) {
   return Math.max(minimumDuration, baseDuration / Math.max(playbackSpeed, 1));
@@ -93,21 +95,35 @@ function isMeshLike(
   return "isMesh" in object && object.isMesh === true && "material" in object;
 }
 
-function findClip(clips: AnimationClip[], candidates: string[]) {
+function findClip(clips: AnimationClip[], candidates: string[]): AnimationClip | null {
   if (clips.length === 0) {
     return null;
   }
 
   const normalizedCandidates = candidates.map((candidate) => candidate.toLowerCase());
 
+  // 1. First Pass: Try Exact Match
   for (const candidate of normalizedCandidates) {
     const exact = clips.find((clip) => clip.name.toLowerCase() === candidate);
     if (exact) {
+      console.log(`[Robot] findClip exact match: ${candidate} -> ${exact.name}`);
       return exact;
     }
   }
 
+  // 2. Second Pass: Try StartWith
   for (const candidate of normalizedCandidates) {
+    const startsWith = clips.find((clip) => clip.name.toLowerCase().startsWith(candidate));
+    if (startsWith) {
+      return startsWith;
+    }
+  }
+
+  // 3. Third Pass: Try Partial Match (only for candidates longer than 2 chars to avoid partial "no" matching "normal" etc)
+  for (const candidate of normalizedCandidates) {
+    if (candidate.length <= 2) {
+      continue;
+    }
     const partial = clips.find((clip) => clip.name.toLowerCase().includes(candidate));
     if (partial) {
       return partial;
@@ -199,9 +215,11 @@ export function Robot({
   onVictorySequenceComplete,
   playbackSpeed,
   robot,
-  theme,
+  isAutoRunning,
   victoryExpressionActive,
   victorySequenceActive,
+  externalRootRef,
+  externalModelRef,
 }: RobotProps) {
   const rootRef = useRef<Group>(null);
   const modelRef = useRef<Group>(null);
@@ -217,8 +235,8 @@ export function Robot({
   const onFrameCompleteRef = useRef(onFrameComplete);
   const onVictorySequenceCompleteRef = useRef(onVictorySequenceComplete);
   const { scene, animations } = useGLTF(MODEL_URL);
-  const clonedScene = useMemo(() => clone(scene), [scene]);
-  const mixer = useMemo(() => new AnimationMixer(clonedScene), [clonedScene]);
+  const clonedScene = useMemo(() => clone(scene as any) as any, [scene]);
+  const mixer = useMemo(() => new AnimationMixer(clonedScene as any), [clonedScene]);
   const palette = ROBOT_PALETTES[colorId];
   const isMetallicPalette = palette.finish === "metallic";
 
@@ -242,6 +260,18 @@ export function Robot({
   useEffect(() => {
     onVictorySequenceCompleteRef.current = onVictorySequenceComplete;
   }, [onVictorySequenceComplete]);
+
+  useEffect(() => {
+    if (externalRootRef && 'current' in externalRootRef) {
+      externalRootRef.current = rootRef.current;
+    }
+  }, [externalRootRef]);
+
+  useEffect(() => {
+    if (externalModelRef && 'current' in externalModelRef) {
+      externalModelRef.current = modelRef.current;
+    }
+  }, [externalModelRef]);
 
   useEffect(() => {
     mixerRef.current = mixer;
@@ -274,7 +304,7 @@ export function Robot({
       return cached;
     }
 
-    const action = mixer.clipAction(clip, clonedScene);
+    const action = mixer.clipAction(clip, clonedScene as any);
     actionCacheRef.current.set(clip.name, action);
     return action;
   }
@@ -285,7 +315,7 @@ export function Robot({
     const standardSurfaceBindings: StandardSurfaceBinding[] = [];
     const surpriseMorphs: MorphBinding[] = [];
 
-    clonedScene.traverse((child: Object3D) => {
+    clonedScene.traverse((child: any) => {
       if (isMorphCapableObject(child) && child.morphTargetDictionary && child.morphTargetInfluences) {
         const surpriseIndex = Object.entries(child.morphTargetDictionary).find(([name]) =>
           name.toLowerCase().includes("surpris"),
@@ -360,10 +390,9 @@ export function Robot({
     const shellLight = new Color(palette.shellLight);
     const accent = new Color(palette.gltfAccent);
     const lightLift = new Color("#f7f9fc");
-    const isLightTheme = theme === "light";
-    const primaryBodyLift = isMetallicPalette ? (isLightTheme ? 0.1 : 0.04) : (isLightTheme ? 0.06 : 0.02);
-    const primaryAccentLift = isMetallicPalette ? (isLightTheme ? 0.12 : 0.06) : (isLightTheme ? 0.08 : 0.03);
-    const neutralLift = isLightTheme ? 0.02 : 0;
+    const primaryBodyLift = isMetallicPalette ? 0.04 : 0.02;
+    const primaryAccentLift = isMetallicPalette ? 0.06 : 0.03;
+    const neutralLift = 0;
 
     for (const binding of standardSurfaceBindingsRef.current) {
       const {
@@ -391,17 +420,14 @@ export function Robot({
       if (role === "primaryLight") {
         material.color.copy(accent);
         material.color.lerp(shellLight, 0.5);
-        if (isLightTheme) material.color.multiplyScalar(isMetallicPalette ? 1.5 : 1.3);
         material.color.lerp(lightLift, primaryAccentLift);
         material.emissiveIntensity = Math.max(originalEmissiveIntensity, isMetallicPalette ? 0.06 : 0.02);
       } else if (role === "primaryMid") {
         material.color.copy(shellMid);
-        if (isLightTheme) material.color.multiplyScalar(isMetallicPalette ? 1.5 : 1.3);
         material.color.lerp(lightLift, primaryBodyLift);
         material.emissiveIntensity = Math.max(originalEmissiveIntensity, isMetallicPalette ? 0.07 : 0.02);
       } else {
         material.color.copy(shellDark);
-        if (isLightTheme) material.color.multiplyScalar(isMetallicPalette ? 1.5 : 1.3);
         material.color.lerp(lightLift, primaryBodyLift * 0.35);
         material.emissiveIntensity = Math.max(originalEmissiveIntensity, isMetallicPalette ? 0.05 : 0.015);
       }
@@ -424,7 +450,7 @@ export function Robot({
             ? 0.86
             : 0.95;
     }
-  }, [isMetallicPalette, palette, theme]);
+  }, [isMetallicPalette, palette]);
 
   useEffect(() => {
     setMorphInfluence(surpriseMorphsRef.current, DEFAULT_SURPRISE_INFLUENCE);
@@ -472,7 +498,7 @@ export function Robot({
 
   useEffect(() => {
     const idleAction = getAction(animationSet.idle);
-    if (!idleAction || activeFrame || failurePulse || victorySequenceActive) {
+    if (!idleAction || activeFrame || failurePulse || victorySequenceActive || isAutoRunning) {
       return;
     }
 
@@ -557,7 +583,9 @@ export function Robot({
           ? getScaledDuration(FORWARD_MOVE_DURATION, playbackSpeed, 0.28)
           : activeFrame.command === "ACTIVATE"
             ? getScaledDuration(0.44, playbackSpeed, 0.16)
-            : getScaledDuration(0.22, playbackSpeed, 0.1);
+            : activeFrame.command === "TOGGLE"
+              ? getScaledDuration(0.56, playbackSpeed, 0.26)
+              : getScaledDuration(0.22, playbackSpeed, 0.1);
     const nextClip =
       activeFrame.command === "FORWARD"
         ? playbackSpeed > 1
@@ -565,9 +593,9 @@ export function Robot({
           : animationSet.walk ?? animationSet.run
         : activeFrame.command === "JUMP"
           ? animationSet.jump
-          : activeFrame.command === "ACTIVATE"
+          : activeFrame.command === "ACTIVATE" || activeFrame.command === "TOGGLE"
             ? animationSet.sit ?? animationSet.idle
-          : animationSet.idle;
+            : animationSet.idle;
     const nextAction = getAction(nextClip);
 
     if (nextAction) {
@@ -579,10 +607,15 @@ export function Robot({
       nextAction.enabled = true;
       nextAction.reset();
       nextAction.setLoop(
-        activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE" ? LoopOnce : LoopRepeat,
-        activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE" ? 1 : Infinity,
+        activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE" || activeFrame.command === "TOGGLE"
+          ? LoopOnce
+          : LoopRepeat,
+        activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE" || activeFrame.command === "TOGGLE"
+          ? 1
+          : Infinity,
       );
-      nextAction.clampWhenFinished = activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE";
+      nextAction.clampWhenFinished =
+        activeFrame.command === "JUMP" || activeFrame.command === "ACTIVATE" || activeFrame.command === "TOGGLE";
       nextAction.timeScale =
         activeFrame.command === "FORWARD"
           ? playbackSpeed > 1
@@ -590,7 +623,9 @@ export function Robot({
             : FORWARD_WALK_TIME_SCALE
           : activeFrame.command === "ACTIVATE"
             ? 2.1 * playbackSpeed
-            : playbackSpeed;
+            : activeFrame.command === "TOGGLE"
+              ? 1.8 * playbackSpeed
+              : playbackSpeed;
       nextAction.fadeIn(0.12).play();
       activeActionRef.current = nextAction;
     }
@@ -604,7 +639,7 @@ export function Robot({
           nextAction.fadeOut(0.1);
         }
 
-        if (idleAction) {
+        if (idleAction && !isAutoRunning) {
           idleAction.enabled = true;
           idleAction.reset();
           idleAction.setLoop(LoopRepeat, Infinity);
@@ -651,7 +686,7 @@ export function Robot({
       timeline.to(root.position, { duration: movementDuration / 2, y: targetY }, movementDuration / 2);
     } else if (activeFrame.command === "TURN_LEFT" || activeFrame.command === "TURN_RIGHT") {
       timeline.to(root.rotation, { duration: movementDuration, y: targetRotation }, 0);
-    } else if (activeFrame.command === "ACTIVATE") {
+    } else if (activeFrame.command === "ACTIVATE" || activeFrame.command === "TOGGLE") {
       timeline.to({}, { duration: movementDuration }, 0);
     } else {
       timeline.to(root.position, { duration: 0.18, x: targetX, y: targetY, z: targetZ }, 0);
@@ -782,8 +817,8 @@ export function Robot({
         opacity: 0.68,
       },
       ROBOT_VICTORY_EMOTE_DELAY_MS / 1000 +
-        ROBOT_VICTORY_BOT_FLOAT_START_SECONDS +
-        ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.5,
+      ROBOT_VICTORY_BOT_FLOAT_START_SECONDS +
+      ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.5,
     );
     timeline.to(
       fadeMaterialsRef.current,
@@ -793,8 +828,8 @@ export function Robot({
         opacity: 0,
       },
       ROBOT_VICTORY_EMOTE_DELAY_MS / 1000 +
-        ROBOT_VICTORY_BOT_FLOAT_START_SECONDS +
-        ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.78,
+      ROBOT_VICTORY_BOT_FLOAT_START_SECONDS +
+      ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.78,
     );
     timeline.to(
       {},

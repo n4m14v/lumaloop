@@ -19,6 +19,7 @@ import {
   world08Mastery,
   world09Trickery,
   world10Phantoms,
+  world11Switches,
 } from "@lumaloop/level-data";
 
 import type { RobotColorId } from "./robotColors";
@@ -26,7 +27,7 @@ import type { RobotColorId } from "./robotColors";
 export type SlotCommand = Command | null;
 export type RoutineSlots = Record<RoutineName, SlotCommand[]>;
 export type PlaybackSpeed = 1 | 2 | 4;
-export const ALL_COMMANDS: Command[] = ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "JUMP", "ACTIVATE", "CALL_P1", "CALL_P2"];
+export const ALL_COMMANDS: Command[] = ["FORWARD", "TURN_LEFT", "TURN_RIGHT", "JUMP", "ACTIVATE", "TOGGLE", "CALL_P1", "CALL_P2"];
 const DEFAULT_PROC_SLOTS = 4;
 const COMPLETED_LEVELS_STORAGE_KEY = "lumaloop-completed-level-ids";
 
@@ -38,6 +39,7 @@ export const campaignLevels = [
   ...world02Orientation,
   ...world03Height,
   ...world04Procedures,
+  ...world11Switches,
   ...world05Recursion,
   ...world06Hard,
   ...world07VeryHard,

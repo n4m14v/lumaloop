@@ -6,6 +6,7 @@ import type {
 } from "../types";
 
 export function createTraceFrame(input: {
+  activeToggleGroups: Iterable<string>;
   command: Command;
   pointer: ExecutionPointer;
   robotBefore: RobotState;
@@ -14,6 +15,7 @@ export function createTraceFrame(input: {
   callStackDepth: number;
 }): TraceFrame {
   return {
+    activeToggleGroups: [...input.activeToggleGroups].sort(),
     command: input.command,
     pointer: input.pointer,
     robotBefore: input.robotBefore,

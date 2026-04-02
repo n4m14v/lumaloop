@@ -8,3 +8,4 @@ export * from "./worlds/world-07-very-hard/levels";
 export * from "./worlds/world-08-mastery/levels";
 export * from "./worlds/world-09-trickery/levels";
 export * from "./worlds/world-10-phantoms/levels";
+export * from "./worlds/world-11-switches/levels";

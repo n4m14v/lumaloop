@@ -8,7 +8,6 @@ import type { RobotColorId } from "../../features/game/robotColors";
 import { useI18n } from "../../i18n/I18nProvider";
 import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
-import { ThemeToggle } from "../ThemeToggle";
 import { GameWalkthroughDialog } from "./GameWalkthroughDialog";
 
 interface GameHeaderBarProps {
@@ -17,20 +16,24 @@ interface GameHeaderBarProps {
   isAutoRunning: boolean;
   level: LevelDefinition;
   localizedLevels: LevelDefinition[];
-  onRunWithMode: (mode: "normal" | "fast" | "instant") => void;
+  onRunWithMode: (mode: "normal" | "fast" | "instant" | "pov") => void;
   onSetLevelIndex: (index: number) => void;
   onSetRobotColorId: (value: RobotColorId) => void;
   onSetShowAllActions: (value: boolean) => void;
   onToggleRun: () => void;
-  onToggleTheme: () => void;
   robotColorId: RobotColorId;
-  selectedRunMode: "normal" | "fast" | "instant";
+  selectedRunMode: "normal" | "fast" | "instant" | "pov";
   showAllActions: boolean;
-  theme: "dark" | "light";
   unlockedLevels: boolean[];
 }
 
-function RunModeIcon({ mode }: { mode: "normal" | "fast" | "instant" }) {
+function RunModeIcon({ mode }: { mode: "normal" | "fast" | "instant" | "pov" }) {
+  if (mode === "pov") {
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+    );
+  }
+
   if (mode === "instant") {
     return <SkipForward className="h-4 w-4" />;
   }
@@ -58,11 +61,9 @@ export function GameHeaderBar({
   onSetRobotColorId,
   onSetShowAllActions,
   onToggleRun,
-  onToggleTheme,
   robotColorId,
   selectedRunMode,
   showAllActions,
-  theme,
   unlockedLevels,
 }: GameHeaderBarProps) {
   const { t } = useI18n();
@@ -124,7 +125,7 @@ export function GameHeaderBar({
   }, [currentLevelIndex, isLevelMenuOpen]);
 
   const selectedRunLabel =
-    selectedRunMode === "fast" ? t.fastPlay : selectedRunMode === "instant" ? t.skipToEnd : t.play;
+    selectedRunMode === "fast" ? t.fastPlay : selectedRunMode === "instant" ? t.skipToEnd : selectedRunMode === "pov" ? "POV Play" : t.play;
 
   return (
     <div className="pointer-events-none relative z-10 flex min-h-[calc(100vh-3rem)] flex-col">
@@ -142,7 +143,6 @@ export function GameHeaderBar({
               showAllActions={showAllActions}
             />
             <LanguageSelect />
-            <ThemeToggle onToggle={onToggleTheme} theme={theme} />
             <button
               aria-label={t.walkthroughOpen}
               className="ui-button h-8 w-8 justify-center rounded-full px-0 font-display text-sm font-semibold text-[var(--text-primary)]"
@@ -262,6 +262,7 @@ export function GameHeaderBar({
                     {[
                       { label: t.play, mode: "normal" as const },
                       { label: t.fastPlay, mode: "fast" as const },
+                      { label: "POV Mode", mode: "pov" as const },
                       { label: t.skipToEnd, mode: "instant" as const },
                     ].map((option) => (
                       <button

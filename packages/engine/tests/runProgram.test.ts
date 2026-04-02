@@ -45,6 +45,24 @@ describe("validateLevel", () => {
     expect(result.success).toBe(false);
     expect(result.issues[0]?.message).toContain("coordinates");
   });
+
+  it("rejects switch levels that omit TOGGLE from the palette", () => {
+    const result = validateLevel({
+      ...baseLevel,
+      board: [
+        { x: 0, y: 0, z: 0, kind: "SWITCH", toggleGroup: "amber" },
+        { x: 0, y: 1, z: 0, kind: "NORMAL", toggleGroup: "amber", moveTo: { x: 1, y: 0, z: 0 } },
+        { id: "goal-1", x: 2, y: 0, z: 0, kind: "TARGET" },
+      ],
+      allowedCommands: ["FORWARD", "ACTIVATE"],
+      slotLimits: {
+        main: 4,
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.issues.some((issue) => issue.message.includes("TOGGLE"))).toBe(true);
+  });
 });
 
 describe("runProgram", () => {
@@ -105,6 +123,46 @@ describe("runProgram", () => {
     });
 
     expect(result.status).toBe("FAILED_WRONG_LIGHT");
+  });
+
+  it("moves a floor tile when TOGGLE is used on a switch", () => {
+    const result = runProgram({
+      level: {
+        ...baseLevel,
+        board: [
+          { x: 0, y: 0, z: 0, kind: "SWITCH", toggleGroup: "amber" },
+          { x: 0, y: 1, z: 0, kind: "NORMAL", toggleGroup: "amber", moveTo: { x: 1, y: 0, z: 0 } },
+          { id: "goal-1", x: 2, y: 0, z: 0, kind: "TARGET" },
+        ],
+        allowedCommands: ["TOGGLE", "FORWARD", "ACTIVATE"],
+        slotLimits: {
+          main: 4,
+        },
+      },
+      program: {
+        main: ["TOGGLE", "FORWARD", "FORWARD", "ACTIVATE"],
+      },
+    });
+
+    expect(result.status).toBe("SUCCESS");
+    expect(result.trace[0]?.activeToggleGroups).toEqual(["amber"]);
+  });
+
+  it("fails when TOGGLE is used on a non-switch tile", () => {
+    const result = runProgram({
+      level: {
+        ...baseLevel,
+        allowedCommands: ["TOGGLE"],
+        slotLimits: {
+          main: 1,
+        },
+      },
+      program: {
+        main: ["TOGGLE"],
+      },
+    });
+
+    expect(result.status).toBe("FAILED_INVALID_TOGGLE");
   });
 
   it("fails when the program finishes with unlit targets", () => {

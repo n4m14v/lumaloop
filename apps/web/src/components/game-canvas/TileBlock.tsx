@@ -56,49 +56,84 @@ const DARK_TILE_STYLE = {
   targetSurfaceOpacity: 0.14,
 } as const;
 
-const LIGHT_TILE_STYLE = {
-  edgeColor: "#a3bfd2",
-  frostedInnerFillColor: "#e6eef5",
-  frostedInnerFillOpacity: 0.3,
-  frostedShellColor: "#f7fbff",
-  frostedShellEmissive: "#ffffff",
-  frostedShellEmissiveIntensity: 0.1,
-  frostedShellOpacity: 1,
-  frostedShellTransmission: 0,
-  frostedSurfaceOpacity: 0.08,
-  targetCoreColor: "#39c5f5",
-  targetCoreColorLit: "#ffd700",
-  targetEdgeColor: "#2da8d9",
-  targetEdgeColorLit: "#ffc254",
-  targetHaloColor: "#6fd7fa",
-  targetHaloColorLit: "#fff099",
-  targetHaloOpacity: 0.15,
-  targetHaloOpacityLit: 0.2,
-  targetInnerFillColor: "#5ec6f2",
-  targetInnerFillColorLit: "#ffe680",
-  targetInnerFillOpacity: 0.3,
-  targetShellColor: "#72cdf2",
-  targetShellColorLit: "#fff3b0",
-  targetShellEmissive: "#8cdcf7",
-  targetShellEmissiveLit: "#fff8cc",
-  targetShellEmissiveIntensity: 0.3,
-  targetShellEmissiveIntensityLit: 0.5,
-  targetShellOpacity: 0.95,
-  targetShellTransmission: 0,
-  targetSurfaceOpacity: 0.16,
-} as const;
-
 interface TileBlockProps {
   failureBlink: boolean;
   failurePulseToken: object | null;
   isActive: boolean;
   isLit: boolean;
   tile: LevelDefinition["board"][number];
-  theme: "dark" | "light";
   victoryGlow: boolean;
 }
 
-function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile, theme, victoryGlow }: TileBlockProps) {
+function ToggleGlyph() {
+  const glyphGroupRef = useRef<Group>(null);
+  // Ensure strict 6-character hex - 8-character hex with alpha can cause Three.js to fallback to pure white.
+  const color = "#1a1a1a";
+  const emissive = "#000";
+
+  useFrame(({ clock }) => {
+    if (!glyphGroupRef.current) return;
+    const elapsed = clock.getElapsedTime();
+    // Gentle bobbing
+    glyphGroupRef.current.position.y = BLOCK_HEIGHT * 0.5 - 0.04 + Math.sin(elapsed * 2) * 0.015;
+    // Smooth, consistent rotation around the Y axis for dynamic "sync/swap" feel
+    glyphGroupRef.current.rotation.y = elapsed * 0.8;
+  });
+
+  const R = 0.18;
+  const tube = 0.035;
+  const arc = Math.PI * 0.65; // ~117 degrees length for each arrow
+
+  return (
+    <group ref={glyphGroupRef} position={[0, BLOCK_HEIGHT * 0.5 - 0.04, 0]}>
+      {/* Lay flat conceptually on top of the tile, scaled up to be larger */}
+      <group rotation={[-Math.PI / 2, 0, 0]} scale={1.4}>
+
+        {/* Core resting dot */}
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[0.04, 16, 16]} />
+          <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
+        </mesh>
+
+        {/* Curved Arrow 1 */}
+        <group>
+          <mesh>
+            {/* The tail trail */}
+            <torusGeometry args={[R, tube, 12, 32, arc]} />
+            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
+          </mesh>
+          {/* Arrowhead pointed tangentially at the terminal of the arc */}
+          <mesh position={[R * Math.cos(arc), R * Math.sin(arc), 0]} rotation={[0, 0, arc + Math.PI / 2]}>
+            <coneGeometry args={[0.08, 0.18, 12]} />
+            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
+          </mesh>
+        </group>
+
+        {/* Curved Arrow 2 - Mirrors Arrow 1 exactly 180 degrees */}
+        <group rotation={[0, 0, Math.PI]}>
+          <mesh>
+            <torusGeometry args={[R, tube, 12, 32, arc]} />
+            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
+          </mesh>
+          <mesh position={[R * Math.cos(arc), R * Math.sin(arc), 0]} rotation={[0, 0, arc + Math.PI / 2]}>
+            <coneGeometry args={[0.08, 0.18, 12]} />
+            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={0} roughness={0.7} metalness={0.2} />
+          </mesh>
+        </group>
+
+      </group>
+    </group>
+  );
+}
+
+function TileBlockInner({
+  failureBlink,
+  failurePulseToken,
+  isActive,
+  isLit,
+  tile,
+  victoryGlow,
+}: TileBlockProps) {
   const topMaterialRef = useRef<MeshStandardMaterial | MeshPhysicalMaterial>(null);
   const targetCoreMaterialRef = useRef<MeshStandardMaterial>(null);
   const targetHaloMaterialRef = useRef<MeshBasicMaterial>(null);
@@ -106,9 +141,9 @@ function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile
   const targetLightRef = useRef<PointLight>(null);
   const targetOrbGroupRef = useRef<Group>(null);
   const stackCount = tile.z + 1;
+  const isSwitch = tile.kind === "SWITCH";
   const isTarget = tile.kind === "TARGET";
-  const isFrostedVolume = !isTarget;
-  const tileStyle = theme === "light" ? LIGHT_TILE_STYLE : DARK_TILE_STYLE;
+  const tileStyle = DARK_TILE_STYLE;
   const chamberCenterY = stackCount * BLOCK_HEIGHT * 0.5;
   const shellColor = isTarget
     ? isLit
@@ -257,7 +292,7 @@ function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile
     const successGlowMaterial = targetSuccessGlowRef.current;
     const baseOpacity = 1;
     const baseScale = isLit ? 1.2 : 1;
-    const baseIntensity = isLit ? 4.6 : theme === "light" ? 0.38 : 0.6;
+    const baseIntensity = isLit ? 4.6 : 0.6;
     const baseColor = new Color(isLit ? tileStyle.targetCoreColorLit : tileStyle.targetCoreColor);
     const timeline = gsap.timeline();
 
@@ -303,7 +338,7 @@ function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile
           },
           0,
         );
-        timeline.to(haloMaterial, { duration: 0.28, ease: "power2.out", opacity: theme === "light" ? 0.08 : 0.1 }, 0);
+        timeline.to(haloMaterial, { duration: 0.28, ease: "power2.out", opacity: 0.1 }, 0);
       }
       if (successGlowMaterial) {
         timeline.to(successGlowMaterial, { duration: 0.32, ease: "power2.out", opacity: 0.95 }, 0.04);
@@ -348,7 +383,7 @@ function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile
     return () => {
       timeline.kill();
     };
-  }, [isLit, isTarget, theme, tileStyle.targetCoreColor, tileStyle.targetCoreColorLit, tileStyle.targetHaloOpacity, tileStyle.targetHaloOpacityLit, victoryGlow]);
+  }, [isLit, isTarget, tileStyle.targetCoreColor, tileStyle.targetCoreColorLit, tileStyle.targetHaloOpacity, tileStyle.targetHaloOpacityLit, victoryGlow]);
 
   useFrame(({ clock }) => {
     if (
@@ -366,10 +401,10 @@ function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile
     const pulse = (Math.sin(elapsed * 2.1 + tile.x * 0.35 + tile.y * 0.28) + 1) * 0.5;
     const baseScale = isLit ? 1.2 : 1;
     const baseHaloOpacity = isLit ? tileStyle.targetHaloOpacityLit : tileStyle.targetHaloOpacity;
-    const baseLightIntensity = isLit ? (theme === "light" ? 1.0 : 1.2) : theme === "light" ? 0.5 : 0.6;
+    const baseLightIntensity = isLit ? 1.2 : 0.6;
 
     targetOrbGroupRef.current.scale.setScalar(baseScale + pulse * 0.22);
-    targetCoreMaterialRef.current.emissiveIntensity = (isLit ? (theme === "light" ? 3.0 : 3.8) : theme === "light" ? 2.6 : 3.1) + pulse * (theme === "light" ? 1.8 : 2.2);
+    targetCoreMaterialRef.current.emissiveIntensity = (isLit ? 3.8 : 3.1) + pulse * 2.2;
     targetHaloMaterialRef.current.opacity = baseHaloOpacity + pulse * 0.24;
     targetLightRef.current.intensity = baseLightIntensity + pulse * (isLit ? 0.24 : 0.14);
   });
@@ -405,6 +440,7 @@ function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile
               <meshBasicMaterial color="#f9fcff" depthWrite={false} opacity={surfaceOpacity} toneMapped={false} transparent />
               <Edges color={edgeColor} scale={1} threshold={30} />
             </RoundedBox>
+            {isSwitch && layer === stackCount - 1 ? <ToggleGlyph /> : null}
           </>
         </group>
       ))}
@@ -412,8 +448,8 @@ function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile
         <group position={[0, chamberCenterY, 0]} ref={targetOrbGroupRef}>
           <pointLight
             color={isLit ? tileStyle.targetCoreColorLit : tileStyle.targetCoreColor}
-            distance={isLit ? 6.5 : theme === "light" ? 3.2 : 3.5}
-            intensity={isLit ? 4.6 : theme === "light" ? 0.5 : 0.6}
+            distance={isLit ? 6.5 : 3.5}
+            intensity={isLit ? 4.6 : 0.6}
             ref={targetLightRef}
           />
           <mesh renderOrder={2}>
@@ -421,7 +457,7 @@ function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile
             <meshStandardMaterial
               color={isLit ? tileStyle.targetCoreColorLit : tileStyle.targetCoreColor}
               emissive={isLit ? tileStyle.targetCoreColorLit : tileStyle.targetCoreColor}
-              emissiveIntensity={theme === "light" ? 3.0 : 3.8}
+              emissiveIntensity={3.8}
               depthTest
               opacity={1}
               roughness={0.14}
@@ -460,6 +496,9 @@ function TileBlockInner({ failureBlink, failurePulseToken, isActive, isLit, tile
           </mesh>
         </group>
       ) : null}
+      {isSwitch ? (
+        null
+      ) : null}
       {isActive ? null : null}
     </group>
   );
@@ -472,7 +511,6 @@ export const TileBlock = memo(TileBlockInner, (previousProps, nextProps) => {
     previousProps.isActive === nextProps.isActive &&
     previousProps.isLit === nextProps.isLit &&
     previousProps.tile === nextProps.tile &&
-    previousProps.theme === nextProps.theme &&
     previousProps.victoryGlow === nextProps.victoryGlow
   );
 });

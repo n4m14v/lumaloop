@@ -35,6 +35,20 @@ export function validateLevel(level: unknown): LevelValidationResult {
   const targetIds = definition.board
     .filter((tile) => tile.kind === "TARGET")
     .map((tile) => tile.id as string);
+  const switchGroupCounts = new Map<string, number>();
+  const movableGroupCounts = new Map<string, number>();
+  const moveToKeys: string[] = [];
+
+  for (const tile of definition.board) {
+    if (tile.kind === "SWITCH" && tile.toggleGroup) {
+      switchGroupCounts.set(tile.toggleGroup, (switchGroupCounts.get(tile.toggleGroup) ?? 0) + 1);
+    }
+
+    if (tile.kind === "NORMAL" && tile.toggleGroup && tile.moveTo) {
+      movableGroupCounts.set(tile.toggleGroup, (movableGroupCounts.get(tile.toggleGroup) ?? 0) + 1);
+      moveToKeys.push(keyForTile(tile.moveTo));
+    }
+  }
 
   if (hasDuplicates(coordinateKeys)) {
     issues.push({
@@ -61,7 +75,7 @@ export function validateLevel(level: unknown): LevelValidationResult {
     (tile) => tile.x === definition.start.x && tile.y === definition.start.y,
   );
 
-  if (!startTile || startTile.kind === "BLOCKED") {
+  if (!startTile) {
     issues.push({
       path: "start",
       message: "Start position must be on a traversable tile.",
@@ -85,6 +99,65 @@ export function validateLevel(level: unknown): LevelValidationResult {
       path: "slotLimits.p2",
       message: "PROC2 slot limit requires CALL_P2 in allowedCommands.",
     });
+  }
+
+  if (switchGroupCounts.size > 0 && !definition.allowedCommands.includes("TOGGLE")) {
+    issues.push({
+      path: "allowedCommands",
+      message: "Levels with SWITCH tiles must include TOGGLE in allowedCommands.",
+    });
+  }
+
+  if (hasDuplicates(moveToKeys)) {
+    issues.push({
+      path: "board",
+      message: "Movable floor destinations must be unique.",
+    });
+  }
+
+  for (const tile of definition.board) {
+    if (tile.kind !== "NORMAL" || !tile.toggleGroup || !tile.moveTo) {
+      continue;
+    }
+
+    if (coordinateKeys.includes(keyForTile(tile.moveTo))) {
+      issues.push({
+        path: "board",
+        message: `Movable floor group "${tile.toggleGroup}" points to an occupied destination.`,
+      });
+    }
+  }
+
+  for (const [toggleGroup, switchCount] of switchGroupCounts) {
+    if (!movableGroupCounts.has(toggleGroup)) {
+      issues.push({
+        path: "board",
+        message: `SWITCH group "${toggleGroup}" does not control any movable floor tile.`,
+      });
+    }
+
+    if (switchCount > 1) {
+      issues.push({
+        path: "board",
+        message: `SWITCH group "${toggleGroup}" must have exactly one SWITCH tile.`,
+      });
+    }
+  }
+
+  for (const [toggleGroup, movableCount] of movableGroupCounts) {
+    if (!switchGroupCounts.has(toggleGroup)) {
+      issues.push({
+        path: "board",
+        message: `Movable floor group "${toggleGroup}" has no SWITCH tile.`,
+      });
+    }
+
+    if (movableCount > 1) {
+      issues.push({
+        path: "board",
+        message: `Movable floor group "${toggleGroup}" must have exactly one movable floor tile.`,
+      });
+    }
   }
 
   return {

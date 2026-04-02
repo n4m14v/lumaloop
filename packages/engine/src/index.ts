@@ -1,3 +1,4 @@
+export * from "./boardState";
 export * from "./types";
 export * from "./interpreter/executeCommand";
 export * from "./interpreter/runProgram";

@@ -1,6 +1,6 @@
 /**
  * Comments:
- * - Centralizes GameScreen state wiring, derived view data, and screen-level side effects.
+ * - Centralizes GameScreen state wiring, derived view data, and dark-mode screen side effects.
  * - The screen component can stay layout-focused while desktop and mobile shells share this controller.
  */
 
@@ -18,30 +18,16 @@ import { localizeLevel } from "../../i18n/translations";
 const ROBOT_DEATH_STATUSES = new Set([
   "FAILED_INVALID_JUMP",
   "FAILED_INVALID_MOVE",
+  "FAILED_INVALID_TOGGLE",
   "FAILED_WRONG_LIGHT",
 ]);
-const THEME_STORAGE_KEY = "lumaloop-theme";
 const COMPLETED_LEVELS_STORAGE_KEY = getCompletedLevelsStorageKey();
 const LEVEL_INDEX_STORAGE_KEY = "lumaloop-level-index";
 
-type ThemeMode = "dark" | "light";
-type RunMode = "normal" | "fast" | "instant";
+type RunMode = "normal" | "fast" | "instant" | "pov";
 
 function countFilledSlots(slots: ReturnType<typeof createSlotsForLevel>) {
   return [...slots.main, ...slots.p1, ...slots.p2].filter(Boolean).length;
-}
-
-function getInitialTheme(): ThemeMode {
-  if (typeof window === "undefined") {
-    return "dark";
-  }
-
-  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  if (storedTheme === "dark" || storedTheme === "light") {
-    return storedTheme;
-  }
-
-  return "dark";
 }
 
 export function useGameScreenController() {
@@ -50,7 +36,7 @@ export function useGameScreenController() {
   const [hasHydratedLevelIndex, setHasHydratedLevelIndex] = useState(false);
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
   const [selectedRunMode, setSelectedRunMode] = useState<RunMode>("normal");
-  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
+  const isPovActive = selectedRunMode === "pov";
   const lastResolvedSuccessRef = useRef<object | null>(null);
   const activeRoutine = useGameStore((state) => state.activeRoutine);
   const activeFrameIndex = useGameStore((state) => state.activeFrameIndex);
@@ -81,7 +67,7 @@ export function useGameScreenController() {
   const stopRun = useGameStore((state) => state.stopRun);
   const toggleAutoRunning = useGameStore((state) => state.toggleAutoRunning);
   const localizedLevels = campaignLevels.map((campaignLevel) => localizeLevel(campaignLevel, locale));
-  const level = localizedLevels[levelIndex] ?? localizedLevels[0];
+  const level = localizedLevels[levelIndex] ?? localizedLevels[0]!;
   const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
   const unlockedLevels = localizedLevels.map((_, index) => {
     if (isAdmin || index === 0 || index <= unlockedLevelIndex) {
@@ -134,11 +120,6 @@ export function useGameScreenController() {
   }, [setLevelIndex]);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
-
-  useEffect(() => {
     window.localStorage.setItem(COMPLETED_LEVELS_STORAGE_KEY, JSON.stringify(completedLevelIds));
   }, [completedLevelIds]);
 
@@ -183,11 +164,14 @@ export function useGameScreenController() {
   const lastCommittedFrame = committedFrames > 0 ? result?.trace[committedFrames - 1] : undefined;
   const committedRobot =
     (committedFrames > 0 ? result?.trace[committedFrames - 1]?.robotAfter : level.start) ?? level.start;
+  const paletteCommands = level.allowedCommands;
+  const committedActiveToggleGroups = lastCommittedFrame?.activeToggleGroups ?? [];
   const isRunResolved = Boolean(result && committedFrames >= result.trace.length);
   const didRunFail = Boolean(result && isRunResolved && result.status !== "SUCCESS");
   const litTargets = didRunFail ? [] : lastCommittedFrame?.activatedTargetIds ?? [];
   const currentPointer = activeFrame?.pointer;
   const failurePulse = Boolean(
+    !isAutoRunning &&
     result &&
     isRunResolved &&
     ROBOT_DEATH_STATUSES.has(result.status),
@@ -223,10 +207,6 @@ export function useGameScreenController() {
   const isRotationLocked = isAutoRunning || activeFrame !== null || showVictorySequence || showSuccessPopup;
   const canStartRun = currentProgramLength > 0;
 
-  function handleToggleTheme() {
-    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
-  }
-
   function handleSetLevelIndex(nextLevelIndex: number) {
     if (!unlockedLevels[nextLevelIndex]) {
       return;
@@ -245,6 +225,7 @@ export function useGameScreenController() {
       return;
     }
 
+    // "pov" runs at normal speed (or we could make it slightly slower for better viz)
     setSpeed(mode === "fast" ? 2 : 1);
     startAutoRun();
   }
@@ -268,7 +249,13 @@ export function useGameScreenController() {
     }
 
     stopRun();
+    setSelectedRunMode("normal");
     handleSetLevelIndex(levelIndex + 1);
+  }
+
+  function handleReplayLevel() {
+    stopRun();
+    setSelectedRunMode("normal");
   }
 
   return {
@@ -283,7 +270,6 @@ export function useGameScreenController() {
     failurePulseToken,
     handleAdvanceToNextLevel,
     handleToggleRun,
-    handleToggleTheme,
     hasNextLevel,
     isAutoRunning,
     isRotationLocked,
@@ -305,7 +291,6 @@ export function useGameScreenController() {
     slots,
     speed,
     stopRun,
-    theme,
     workspace: {
       activeRoutine,
       allowedCommands: level.allowedCommands,
@@ -314,12 +299,14 @@ export function useGameScreenController() {
       onClearRoutine: clearRoutine,
       onRemoveCommand: removeCommand,
       onSelectRoutine: setActiveRoutine,
+      paletteCommands,
       routines: slots,
       showAllActions,
     },
     canvas: {
       activeFrame,
       committedRobot,
+      committedActiveToggleGroups,
       failurePulse,
       failurePulseToken,
       isRotationLocked,
@@ -332,7 +319,8 @@ export function useGameScreenController() {
       robotColorId,
       victoryExpressionActive: isSuccessResolved,
       showVictorySequence,
-      theme,
+      isPovActive,
+      isAutoRunning,
     },
     header: {
       canStartRun,
@@ -345,11 +333,9 @@ export function useGameScreenController() {
       onSetShowAllActions: setShowAllActions,
       onRunWithMode: handleSelectRunMode,
       onToggleRun: handleToggleRun,
-      onToggleTheme: handleToggleTheme,
       robotColorId,
       selectedRunMode,
       showAllActions,
-      theme,
       unlockedLevels,
     },
     successDialog: showSuccessPopup
@@ -357,7 +343,7 @@ export function useGameScreenController() {
           hasNextLevel,
           idealSolutionLength: level.metadata?.idealSolutionLength,
           onNext: handleAdvanceToNextLevel,
-          onReplay: stopRun,
+          onReplay: handleReplayLevel,
           programLength: result?.score.programLength ?? currentProgramLength,
           starsEarned: result?.score.starsEarned ?? 0,
         }
