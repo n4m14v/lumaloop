@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentProps } from "react";
+import { useState, type ComponentProps } from "react";
 
 import { DarkBackdropNebula } from "../components/DarkBackdropNebula";
 import { GameCanvas } from "../components/GameCanvas";
@@ -24,23 +24,10 @@ export function GameScreen() {
     refreshToken: onboardingRefreshToken,
     result: controller.result ?? null,
   });
-  const [lastSuccessDialog, setLastSuccessDialog] = useState<ComponentProps<typeof GameSuccessDialog> | null>(null);
-
-  useEffect(() => {
-    if (controller.successDialog) {
-      setLastSuccessDialog({ ...controller.successDialog, isOpen: true });
-    }
-  }, [controller.successDialog]);
 
   if (!controller.level) {
     return null;
   }
-
-  useEffect(() => {
-    if (!controller.result) {
-      setDismissedResult(null);
-    }
-  }, [controller.result]);
 
   const isResolved = Boolean(
     controller.result &&
@@ -59,7 +46,7 @@ export function GameScreen() {
   );
   const showRunFeedback = Boolean(
     (isIncompleteResult || isHardFailureResult) &&
-    controller.result !== dismissedResult,
+    controller.result !== (controller.result ? dismissedResult : null),
   );
   let runFeedback: ComponentProps<typeof GameHeaderBar>["runFeedback"] = null;
 
@@ -117,10 +104,9 @@ export function GameScreen() {
                 }}
               />
 
-              {controller.successDialog || lastSuccessDialog ? (
+              {controller.successDialog ? (
                 <GameSuccessDialog
-                  {...(controller.successDialog || lastSuccessDialog)!}
-                  isOpen={Boolean(controller.successDialog)}
+                  {...controller.successDialog}
                 />
               ) : null}
               {onboarding ? <GameOnboardingOverlay {...onboarding} /> : null}

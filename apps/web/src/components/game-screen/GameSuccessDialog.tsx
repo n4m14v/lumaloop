@@ -17,7 +17,6 @@ function renderScoreStars(starCount: number) {
 interface GameSuccessDialogProps {
   hasNextLevel: boolean;
   idealSolutionLength?: number | undefined;
-  isOpen: boolean;
   onNext: () => void;
   onReplay: () => void;
   programLength: number;
@@ -28,7 +27,6 @@ interface GameSuccessDialogProps {
 export function GameSuccessDialog({
   hasNextLevel,
   idealSolutionLength,
-  isOpen,
   onNext,
   onReplay,
   programLength,
@@ -38,19 +36,8 @@ export function GameSuccessDialog({
   const { t } = useI18n();
 
   return createPortal(
-    <div
-      aria-hidden={!isOpen}
-      className={[
-        "fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(3,7,13,0.7)] p-4 backdrop-blur-[18px] transition-all duration-300 ease-out",
-        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
-      ].join(" ")}
-    >
-      <div
-        className={[
-          "relative w-full max-w-[440px] overflow-hidden rounded-[32px] p-8 text-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          isOpen ? "translate-y-0 scale-100 opacity-100 delay-75" : "translate-y-4 scale-[0.98] opacity-0",
-        ].join(" ")}
-      >
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(3,7,13,0.7)] p-4 backdrop-blur-[18px]">
+      <div className="relative w-full max-w-[440px] overflow-hidden rounded-[32px] p-8 text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)] shadow-[0_0_32px_var(--accent-shadow)]">
           <Sparkles className="h-8 w-8" />
         </div>

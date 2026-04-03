@@ -145,7 +145,7 @@ export function LevelMapBackdrop({
             isOpen ? "translate-y-0 scale-100 opacity-100 delay-75" : "translate-y-4 scale-[0.98] opacity-0",
           ].join(" ")}
         >
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-5 py-4 md:px-7">
+          <div className="sticky top-0 z-10 flex items-center justify-between text-xs gap-4 px-5 py-4 md:px-7">
             <button
               className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
               onClick={onClose}
