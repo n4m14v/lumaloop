@@ -9,8 +9,8 @@ import { memo, useEffect, useRef, useMemo } from "react";
 import { Edges, RoundedBox } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import gsap from "gsap";
-import type { Group, MeshBasicMaterial, MeshPhysicalMaterial, PointLight } from "three";
-import { AdditiveBlending, MeshStandardMaterial, Color } from "three";
+import type { Group, MeshBasicMaterial, PointLight } from "three";
+import { AdditiveBlending, MeshStandardMaterial, Color, MeshPhysicalMaterial } from "three";
 
 import type { LevelDefinition } from "@lumaloop/engine";
 
@@ -69,30 +69,40 @@ interface TileBlockProps {
 
 function ToggleGlyph({ isActive, activeCommand }: { isActive: boolean; activeCommand: string | null }) {
   const glyphGroupRef = useRef<Group>(null);
-  const baseColor = "#1a1a1a";
+  const baseColor = "#97efff";
   const sharedMaterial = useMemo(
-    () => new MeshStandardMaterial({ color: baseColor, emissive: "#000", emissiveIntensity: 0, roughness: 0.7, metalness: 0.2 }),
+    () => new MeshPhysicalMaterial({
+      color: baseColor,
+      emissive: "#47d7ff",
+      emissiveIntensity: 0.4,
+      roughness: 0.1,
+      metalness: 0.5,
+      transmission: 0.4,
+      thickness: 0.1,
+      clearcoat: 1,
+      clearcoatRoughness: 0.1,
+    }),
     []
   );
 
   useEffect(() => {
-    let targetEmissive = new Color("#000000");
-    let targetIntensity = 0;
+    let targetEmissive = new Color("#47d7ff");
+    let targetIntensity = 0.4;
 
     if (activeCommand === "TOGGLE") {
       targetEmissive = new Color("#00ffff");
-      targetIntensity = 2.0;
+      targetIntensity = 2.5;
 
       const tl = gsap.timeline();
       tl.to(sharedMaterial, { emissiveIntensity: targetIntensity, duration: 0.1 });
       tl.to(sharedMaterial.emissive, { r: targetEmissive.r, g: targetEmissive.g, b: targetEmissive.b, duration: 0.1 }, 0);
 
       const activeEmissive = new Color("#00aaff");
-      tl.to(sharedMaterial, { emissiveIntensity: 0.8, duration: 0.3 }, 0.2);
+      tl.to(sharedMaterial, { emissiveIntensity: 1.2, duration: 0.3 }, 0.2);
       tl.to(sharedMaterial.emissive, { r: activeEmissive.r, g: activeEmissive.g, b: activeEmissive.b, duration: 0.3 }, 0.2);
     } else if (isActive) {
       targetEmissive = new Color("#00aaff");
-      targetIntensity = 0.8;
+      targetIntensity = 1.2;
 
       gsap.to(sharedMaterial, { emissiveIntensity: targetIntensity, duration: 0.3 });
       gsap.to(sharedMaterial.emissive, { r: targetEmissive.r, g: targetEmissive.g, b: targetEmissive.b, duration: 0.3 });
