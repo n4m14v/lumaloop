@@ -17,6 +17,7 @@ type Messages = {
   actions: string;
   addCommandToSlot: (routineLabel: string, index: number) => string;
   allActions: string;
+  backToPuzzle: string;
   clear: string;
   commandLabels: Record<Command, string>;
   defaultHint: string;
@@ -28,10 +29,12 @@ type Messages = {
   level: string;
   levelOnly: string;
   levelOptionLabel: (index: number, name: string) => string;
+  locked: string;
   lockedForLevel: string;
   mainRoutine: string;
   menu: string;
   next: string;
+  newMechanic: (label: string) => string;
   noSlots: string;
   pause: string;
   play: string;
@@ -43,6 +46,7 @@ type Messages = {
   puzzleSolved: string;
   removeCommandFromSlot: (routineLabel: string, index: number) => string;
   replay: string;
+  continuePlaying: string;
   robotColor: string;
   right: string;
   routineSlots: (filled: number, total: number) => string;
@@ -50,8 +54,12 @@ type Messages = {
   showingFullCommandSet: string;
   showingLevelCommands: string;
   skipToEnd: string;
+  starsProgress: (earned: number, total: number) => string;
   successBody: string;
   replayTutorial: string;
+  worldLabel: (index: number, name: string) => string;
+  worldProgressSummary: (completed: number, total: number, stars: number, totalStars: number) => string;
+  worldTheme: (label: string) => string;
   failureBodies: Record<RunStatus, string>;
   failureTitles: Record<RunStatus, string>;
   walkthroughClose: string;
@@ -95,6 +103,7 @@ const messages: Record<Locale, Messages> = {
     actions: "Actions",
     addCommandToSlot: (routineLabel, index) => `Add command to ${routineLabel} slot ${index}`,
     allActions: "All Actions",
+    backToPuzzle: "Back To Puzzle",
     clear: "Clear",
     commandLabels: {
       FORWARD: "Move Forward",
@@ -115,10 +124,12 @@ const messages: Record<Locale, Messages> = {
     level: "Level",
     levelOnly: "Level Only",
     levelOptionLabel: (index, name) => `Level ${index} - ${name}`,
+    locked: "Locked",
     lockedForLevel: "Locked for this level",
     mainRoutine: "Main Process",
     menu: "Menu",
     next: "Next",
+    newMechanic: (label) => label,
     noSlots: "No slots",
     pause: "Pause",
     play: "Play",
@@ -130,6 +141,7 @@ const messages: Record<Locale, Messages> = {
     puzzleSolved: "Puzzle Solved!",
     removeCommandFromSlot: (routineLabel, index) => `Remove command from ${routineLabel} slot ${index}`,
     replay: "Replay",
+    continuePlaying: "Continue",
     robotColor: "Robot Color",
     right: "Right",
     routineSlots: (filled, total) => `${filled} / ${total}`,
@@ -137,8 +149,13 @@ const messages: Record<Locale, Messages> = {
     showingFullCommandSet: "Showing the full command set.",
     showingLevelCommands: "Showing level-allowed commands only.",
     skipToEnd: "Skip to End",
+    starsProgress: (earned, total) => `${earned} / ${total} Stars`,
     successBody: "All targets are lit. You can replay this level or move on to the next puzzle.",
     replayTutorial: "Replay Tutorial",
+    worldLabel: (index, name) => `WORLD ${String(index).padStart(2, "0")}: ${name}`,
+    worldProgressSummary: (completed, total, stars, totalStars) =>
+      `${completed} / ${total} Completed • ${stars} / ${totalStars} Stars`,
+    worldTheme: (label) => `Theme: ${label}`,
     failureBodies: {
       SUCCESS: "The run already succeeded.",
       FAILED_INVALID_MOVE: "The robot tried to walk onto a tile that was not reachable from its current position.",
@@ -293,6 +310,7 @@ const messages: Record<Locale, Messages> = {
     actions: "Команды",
     addCommandToSlot: (routineLabel, index) => `Добавить команду в ${routineLabel}, ячейка ${index}`,
     allActions: "Все команды",
+    backToPuzzle: "Вернуться к пазлу",
     clear: "Очистить",
     commandLabels: {
       FORWARD: "Вперед",
@@ -313,10 +331,12 @@ const messages: Record<Locale, Messages> = {
     level: "Уровень",
     levelOnly: "Только уровень",
     levelOptionLabel: (index, name) => `Уровень ${index} - ${name}`,
+    locked: "Закрыто",
     lockedForLevel: "Недоступно на этом уровне",
     mainRoutine: "Главный процесс",
     menu: "Меню",
     next: "Дальше",
+    newMechanic: (label) => label,
     noSlots: "Нет ячеек",
     pause: "Пауза",
     play: "Старт",
@@ -328,6 +348,7 @@ const messages: Record<Locale, Messages> = {
     puzzleSolved: "Головоломка решена!",
     removeCommandFromSlot: (routineLabel, index) => `Убрать команду из ${routineLabel}, ячейка ${index}`,
     replay: "Повтор",
+    continuePlaying: "Продолжить",
     robotColor: "Цвет робота",
     right: "Вправо",
     routineSlots: (filled, total) => `${filled} / ${total}`,
@@ -335,8 +356,13 @@ const messages: Record<Locale, Messages> = {
     showingFullCommandSet: "Показан полный набор команд.",
     showingLevelCommands: "Показаны только команды, разрешенные уровнем.",
     skipToEnd: "До конца",
+    starsProgress: (earned, total) => `${earned} / ${total} звезд`,
     successBody: "Все цели зажжены. Можно переиграть уровень или перейти к следующей головоломке.",
     replayTutorial: "Повторить обучение",
+    worldLabel: (index, name) => `МИР ${String(index).padStart(2, "0")}: ${name}`,
+    worldProgressSummary: (completed, total, stars, totalStars) =>
+      `${completed} / ${total} завершено • ${stars} / ${totalStars} звезд`,
+    worldTheme: (label) => `Тема: ${label}`,
     failureBodies: {
       SUCCESS: "Запуск уже завершился успешно.",
       FAILED_INVALID_MOVE: "Робот попытался шагнуть на клетку, до которой нельзя дойти из текущей позиции.",
@@ -491,6 +517,7 @@ const messages: Record<Locale, Messages> = {
     actions: "פקודות",
     addCommandToSlot: (routineLabel, index) => `הוסף פקודה ל${routineLabel}, משבצת ${index}`,
     allActions: "כל הפקודות",
+    backToPuzzle: "חזרה לפאזל",
     clear: "נקה",
     commandLabels: {
       FORWARD: "קדימה",
@@ -511,10 +538,12 @@ const messages: Record<Locale, Messages> = {
     level: "שלב",
     levelOnly: "רק לשלב",
     levelOptionLabel: (index, name) => `שלב ${index} - ${name}`,
+    locked: "נעול",
     lockedForLevel: "נעול בשלב הזה",
     mainRoutine: "תהליך ראשי",
     menu: "תפריט",
     next: "הבא",
+    newMechanic: (label) => label,
     noSlots: "אין משבצות",
     pause: "השהה",
     play: "הפעל",
@@ -526,6 +555,7 @@ const messages: Record<Locale, Messages> = {
     puzzleSolved: "החידה נפתרה!",
     removeCommandFromSlot: (routineLabel, index) => `הסר פקודה מ${routineLabel}, משבצת ${index}`,
     replay: "הפעל שוב",
+    continuePlaying: "המשך",
     robotColor: "צבע הרובוט",
     right: "ימינה",
     routineSlots: (filled, total) => `${filled} / ${total}`,
@@ -533,8 +563,13 @@ const messages: Record<Locale, Messages> = {
     showingFullCommandSet: "מוצג סט הפקודות המלא.",
     showingLevelCommands: "מוצגות רק הפקודות המותרות לשלב.",
     skipToEnd: "דלג לסוף",
+    starsProgress: (earned, total) => `${earned} / ${total} כוכבים`,
     successBody: "כל היעדים מוארים. אפשר להפעיל שוב את השלב או לעבור לחידה הבאה.",
     replayTutorial: "הפעל שוב את ההדרכה",
+    worldLabel: (index, name) => `עולם ${String(index).padStart(2, "0")}: ${name}`,
+    worldProgressSummary: (completed, total, stars, totalStars) =>
+      `${completed} / ${total} הושלמו • ${stars} / ${totalStars} כוכבים`,
+    worldTheme: (label) => `נושא: ${label}`,
     failureBodies: {
       SUCCESS: "ההרצה כבר הסתיימה בהצלחה.",
       FAILED_INVALID_MOVE: "הרובוט ניסה ללכת אל אריח שלא ניתן להגיע אליו מהמיקום הנוכחי.",
@@ -716,11 +751,6 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       designerNotes: "Первая лампа - это только середина маршрута. Планируйте до тех пор, пока не загорятся обе цели.",
     },
     "world-01-level-05": {
-      name: "Обратный зигзаг",
-      concept: "Длинный маршрут требует заранее продумать и направление, и момент поворота",
-      designerNotes: "Считайте каждый изгиб контрольной точкой. Последнюю смену направления легко пропустить.",
-    },
-    "world-02-level-01": {
       name: "Контрольный маршрут",
       concept: "Нужно спланировать весь путь еще до первой локальной победы",
       designerNotes: "Раннее ответвление выглядит заманчиво, но правильный маршрут сначала зажигает первую цель, а уже потом уходит в поворот.",
@@ -1053,11 +1083,6 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       designerNotes: "המנורה הראשונה היא רק אמצע המסלול. ממשיכים לתכנן עד ששני היעדים נדלקים.",
     },
     "world-01-level-05": {
-      name: "זיגזג חוזר",
-      concept: "מסלול ארוך דורש לתכנן מראש גם את כיוון הפנייה וגם את התזמון שלה",
-      designerNotes: "התייחסו לכל פנייה כאל נקודת ביקורת. קל לפספס דווקא את שינוי הכיוון האחרון.",
-    },
-    "world-02-level-01": {
       name: "מסלול בדיקה",
       concept: "צריך לתכנן את כל המסלול עוד לפני ההצלחה המקומית הראשונה",
       designerNotes: "הפנייה המוקדמת נראית מפתה, אבל המסלול הנכון מדליק קודם את היעד הראשון ורק אחר כך מתחייב לפנייה.",

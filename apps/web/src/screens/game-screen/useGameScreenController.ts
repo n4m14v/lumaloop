@@ -13,6 +13,11 @@ import {
 } from "../../features/game/store";
 import { useI18n } from "../../i18n/I18nProvider";
 import { localizeLevel } from "../../i18n/translations";
+import {
+  readLevelStarProgress,
+  writeLevelStarProgress,
+  type LevelStarProgress,
+} from "./levelProgressStorage";
 
 const ROBOT_DEATH_STATUSES = new Set([
   "FAILED_INVALID_JUMP",
@@ -33,9 +38,11 @@ export function useGameScreenController() {
   const [unlockedLevelIndex, setUnlockedLevelIndex] = useState(0);
   const [hasHydratedLevelIndex, setHasHydratedLevelIndex] = useState(false);
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
+  const [levelStarProgress, setLevelStarProgress] = useState<LevelStarProgress>({});
   const [selectedRunMode, setSelectedRunMode] = useState<RunMode>("normal");
   const isPovActive = selectedRunMode === "pov";
   const lastResolvedSuccessRef = useRef<object | null>(null);
+  const lastPersistedSuccessRef = useRef<object | null>(null);
   const activeRoutine = useGameStore((state) => state.activeRoutine);
   const activeFrameIndex = useGameStore((state) => state.activeFrameIndex);
   const appendCommand = useGameStore((state) => state.appendCommand);
@@ -93,6 +100,10 @@ export function useGameScreenController() {
     setLevelIndex(nextLevelIndex);
     setHasHydratedLevelIndex(true);
   }, [setLevelIndex]);
+
+  useEffect(() => {
+    setLevelStarProgress(readLevelStarProgress());
+  }, []);
 
   useEffect(() => {
     if (!isAutoRunning || activeFrameIndex !== null || !result || committedFrames >= result.trace.length) {
@@ -154,6 +165,30 @@ export function useGameScreenController() {
     result.status === "SUCCESS" &&
     isRunResolved,
   );
+
+  useEffect(() => {
+    if (!isSuccessResolved || !result || lastPersistedSuccessRef.current === result) {
+      return;
+    }
+
+    lastPersistedSuccessRef.current = result;
+    setLevelStarProgress((currentProgress) => {
+      const currentStars = currentProgress[level.id] ?? 0;
+      const nextStars = Math.max(currentStars, result.score.starsEarned) as 0 | 1 | 2 | 3;
+
+      if (nextStars === currentStars) {
+        return currentProgress;
+      }
+
+      const nextProgress = {
+        ...currentProgress,
+        [level.id]: nextStars,
+      };
+
+      writeLevelStarProgress(nextProgress);
+      return nextProgress;
+    });
+  }, [isSuccessResolved, level.id, result]);
 
   useEffect(() => {
     if (!hasHydratedLevelIndex || !isSuccessResolved) {
@@ -247,6 +282,7 @@ export function useGameScreenController() {
     isRotationLocked,
     level,
     levelIndex,
+    levelStarProgress,
     litTargets,
     localizedLevels,
     removeCommand,
@@ -299,6 +335,7 @@ export function useGameScreenController() {
       currentLevelIndex: levelIndex,
       isAutoRunning,
       level,
+      levelStarProgress,
       localizedLevels,
       onReplayTutorial: () => {},
       onSetLevelIndex: handleSetLevelIndex,

@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import type { ProgramSlots } from "../src";
 import { runProgram, validateLevel } from "../src";
 import { world01Basics } from "../../level-data/src/worlds/world-01-basics/levels";
-import { world02Orientation } from "../../level-data/src/worlds/world-02-orientation/levels";
 import { world03Height } from "../../level-data/src/worlds/world-03-height/levels";
 import { world04Procedures } from "../../level-data/src/worlds/world-04-procedures/levels";
 import { world05Recursion } from "../../level-data/src/worlds/world-05-recursion/levels";
@@ -16,7 +15,6 @@ import { world11Switches } from "../../level-data/src/worlds/world-11-switches/l
 
 const campaignLevels = [
   ...world01Basics,
-  ...world02Orientation,
   ...world03Height,
   ...world04Procedures,
   ...world11Switches,
@@ -40,7 +38,7 @@ const referencePrograms: Record<string, ProgramSlots> = {
       "ACTIVATE",
     ],
   },
-  "world-02-level-01": {
+  "world-01-level-05": {
     main: [
       "FORWARD",
       "FORWARD",

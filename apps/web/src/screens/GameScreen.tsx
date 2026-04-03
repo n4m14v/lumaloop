@@ -14,6 +14,7 @@ import { useGameScreenController } from "./game-screen/useGameScreenController";
 export function GameScreen() {
   const { t } = useI18n();
   const controller = useGameScreenController();
+  const [isLevelMapOpen, setIsLevelMapOpen] = useState(false);
   const [onboardingRefreshToken, setOnboardingRefreshToken] = useState(0);
   const [dismissedResult, setDismissedResult] = useState<object | null>(null);
   const onboarding = useGameOnboarding({
@@ -88,12 +89,18 @@ export function GameScreen() {
           scene={
             <>
               <GameCanvas
-                className="fixed inset-0 h-screen w-screen overflow-hidden xl:-translate-x-[182px]"
+                className={[
+                  "fixed inset-0 h-screen w-screen overflow-hidden xl:-translate-x-[182px]",
+                  isLevelMapOpen ? "invisible opacity-0" : "visible opacity-100",
+                ].join(" ")}
                 {...controller.canvas}
               />
 
               <GameHeaderBar
                 {...controller.header}
+                isLevelMapOpen={isLevelMapOpen}
+                onCloseLevelMap={() => setIsLevelMapOpen(false)}
+                onOpenLevelMap={() => setIsLevelMapOpen(true)}
                 runFeedback={runFeedback}
                 onReplayTutorial={() => {
                   clearOnboardingProgress();

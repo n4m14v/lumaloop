@@ -10,7 +10,6 @@ import {
 } from "@lumaloop/engine";
 import {
   world01Basics,
-  world02Orientation,
   world03Height,
   world04Procedures,
   world05Recursion,
@@ -35,7 +34,6 @@ const MAX_CALL_DEPTH = 100;
 
 export const campaignLevels = [
   ...world01Basics,
-  ...world02Orientation,
   ...world03Height,
   ...world04Procedures,
   ...world11Switches,

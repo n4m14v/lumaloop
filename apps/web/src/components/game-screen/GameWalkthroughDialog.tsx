@@ -63,10 +63,6 @@ export function GameWalkthroughDialog({
     };
   }, [isRtl, onClose, open, totalSlides]);
 
-  if (!open) {
-    return null;
-  }
-
   if (!activeSlide) {
     return null;
   }
@@ -81,15 +77,21 @@ export function GameWalkthroughDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-4 md:p-6"
+      aria-hidden={!open}
+      className={[
+        "fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(3,7,13,0.7)] p-4 backdrop-blur-[18px] transition-all duration-300 ease-out md:p-6",
+        open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+      ].join(" ")}
       onClick={onClose}
     >
       <div
-        className="ui-panel relative w-full max-w-[52rem] overflow-hidden rounded-[26px] border-white/10 p-4 shadow-[0_24px_90px_rgba(0,0,0,0.42)] md:p-5"
+        className={[
+          "relative w-full max-w-[52rem] overflow-hidden p-4 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:p-5",
+          open ? "translate-y-0 scale-100 opacity-100 delay-75" : "translate-y-4 scale-[0.98] opacity-0",
+        ].join(" ")}
         dir={isRtl ? "rtl" : "ltr"}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_24%),linear-gradient(135deg,rgba(255,255,255,0.04),transparent_40%)]" />
 
         <div className="relative flex items-start justify-between gap-4">
           <div className="max-w-[38rem]">
@@ -142,7 +144,7 @@ export function GameWalkthroughDialog({
             </div>
           </div>
 
-          <div className="relative flex min-h-[16rem] flex-col overflow-hidden rounded-[24px] border border-[var(--panel-border-strong)] bg-[linear-gradient(145deg,var(--panel-bg-strong),var(--panel-bg-soft))] p-5 shadow-2xl md:min-h-[18rem] md:p-6">
+          <div className="relative flex min-h-[16rem] flex-col overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:min-h-[18rem] md:p-6">
             <div className="absolute -left-32 -top-32 h-64 w-64 rounded-full bg-[var(--accent)] opacity-[0.12] blur-[80px]" />
             <div className="absolute -bottom-32 -right-32 h-64 w-64 rounded-full bg-[var(--accent-strong)] opacity-[0.12] blur-[80px]" />
 
@@ -169,7 +171,7 @@ export function GameWalkthroughDialog({
           </div>
         </div>
 
-        <div className="relative mt-4 flex items-center justify-end gap-2 border-t border-white/8 pt-4">
+        <div className="relative mt-4 flex items-center justify-end gap-2 pt-4">
           <button
             className="ui-button h-10 min-w-[104px] rounded-[14px] px-4 text-sm"
             disabled={!showPrevious}
