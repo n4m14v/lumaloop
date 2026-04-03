@@ -24,6 +24,13 @@ export function GameScreen() {
     refreshToken: onboardingRefreshToken,
     result: controller.result ?? null,
   });
+  const [lastSuccessDialog, setLastSuccessDialog] = useState<ComponentProps<typeof GameSuccessDialog> | null>(null);
+
+  useEffect(() => {
+    if (controller.successDialog) {
+      setLastSuccessDialog({ ...controller.successDialog, isOpen: true });
+    }
+  }, [controller.successDialog]);
 
   if (!controller.level) {
     return null;
@@ -110,7 +117,12 @@ export function GameScreen() {
                 }}
               />
 
-              {controller.successDialog ? <GameSuccessDialog {...controller.successDialog} /> : null}
+              {controller.successDialog || lastSuccessDialog ? (
+                <GameSuccessDialog
+                  {...(controller.successDialog || lastSuccessDialog)!}
+                  isOpen={Boolean(controller.successDialog)}
+                />
+              ) : null}
               {onboarding ? <GameOnboardingOverlay {...onboarding} /> : null}
             </>
           }

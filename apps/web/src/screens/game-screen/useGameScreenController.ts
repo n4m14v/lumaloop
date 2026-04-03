@@ -355,6 +355,7 @@ export function useGameScreenController() {
           onNext: handleAdvanceToNextLevel,
           onReplay: handleReplayLevel,
           programLength: result?.score.programLength ?? currentProgramLength,
+          showLevelOnlyIdealNote: showAllActions,
           starsEarned: result?.score.starsEarned ?? 0,
         }
       : null,

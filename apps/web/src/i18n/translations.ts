@@ -20,10 +20,9 @@ type Messages = {
   backToPuzzle: string;
   clear: string;
   commandLabels: Record<Command, string>;
-  defaultHint: string;
   fastPlay: string;
-  hint: string;
   idealSize: (value: number) => string;
+  idealSizeLevelOnlyNote: string;
   language: string;
   left: string;
   level: string;
@@ -115,10 +114,9 @@ const messages: Record<Locale, Messages> = {
       CALL_P1: "Process 1",
       CALL_P2: "Process 2",
     },
-    defaultHint: "Activate every goal tile.",
     fastPlay: "Fast Play",
-    hint: "Hint",
     idealSize: (value) => `Ideal Size ${value}`,
+    idealSizeLevelOnlyNote: "Ideal size is based on Level Only actions.",
     language: "Language",
     left: "Left",
     level: "Level",
@@ -278,7 +276,7 @@ const messages: Record<Locale, Messages> = {
           "Press Play and watch the robot execute your code literally. When something goes wrong, that failure is useful information: compare what you expected with what actually happened, then revise the program and test again.",
         bullets: [
           "Pause, replay, and iterate as often as you need without losing your progress.",
-          "Hints point toward the key idea of the current puzzle without giving away the full answer.",
+          "A shorter or cleaner retry often reveals the core pattern faster than adding more commands.",
           "The moment the robot fails usually reveals whether the issue is order, direction, terrain, or a missing action.",
         ],
       },
@@ -322,10 +320,9 @@ const messages: Record<Locale, Messages> = {
       CALL_P1: "Процесс 1",
       CALL_P2: "Процесс 2",
     },
-    defaultHint: "Активируйте каждую целевую плитку.",
     fastPlay: "Быстро",
-    hint: "Подсказка",
     idealSize: (value) => `Идеальный размер ${value}`,
+    idealSizeLevelOnlyNote: "Идеальный размер рассчитан для режима только с командами уровня.",
     language: "Язык",
     left: "Влево",
     level: "Уровень",
@@ -485,7 +482,7 @@ const messages: Record<Locale, Messages> = {
           "Нажмите старт и наблюдайте, как робот буквально исполняет ваш код. Если что-то ломается, это полезный сигнал: сравните ожидаемый маршрут с тем, что произошло на самом деле, и затем исправьте программу.",
         bullets: [
           "Ставьте на паузу, переигрывайте и пробуйте заново столько раз, сколько нужно.",
-          "Подсказки направляют к ключевой идее уровня, но не выдают весь ответ целиком.",
+          "Более короткая или чистая новая попытка часто быстрее раскрывает главный шаблон, чем добавление новых команд.",
           "Момент сбоя обычно показывает, в чем проблема: в порядке, направлении, рельефе или пропущенном действии.",
         ],
       },
@@ -529,10 +526,9 @@ const messages: Record<Locale, Messages> = {
       CALL_P1: "תהליך 1",
       CALL_P2: "תהליך 2",
     },
-    defaultHint: "הפעילו כל אריח יעד.",
     fastPlay: "הרצה מהירה",
-    hint: "רמז",
     idealSize: (value) => `גודל אידיאלי ${value}`,
+    idealSizeLevelOnlyNote: "הגודל האידיאלי מחושב עבור מצב פקודות השלב בלבד.",
     language: "שפה",
     left: "שמאלה",
     level: "שלב",
@@ -692,7 +688,7 @@ const messages: Record<Locale, Messages> = {
           "לוחצים על הפעלה וצופים ברובוט מבצע את הקוד כפשוטו. כשמשהו משתבש, זו לא סתם טעות אלא מידע שימושי: משווים בין מה שציפיתם שיקרה לבין מה שקרה בפועל, ואז משפרים את התוכנית ומנסים שוב.",
         bullets: [
           "אפשר לעצור, להריץ מחדש, ולחזור על הניסיון כמה פעמים שצריך בלי לאבד התקדמות.",
-          "הרמזים מכוונים לרעיון המרכזי של השלב בלי לחשוף מיד את כל הפתרון.",
+          "ניסיון חוזר קצר או נקי יותר חושף בדרך כלל את הדפוס המרכזי מהר יותר מאשר להוסיף עוד פקודות.",
           "רגע הכישלון עצמו בדרך כלל מגלה אם הבעיה היא סדר, כיוון, גובה, או פעולה שחסרה.",
         ],
       },
