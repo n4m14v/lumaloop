@@ -6,16 +6,22 @@ import { ArrowLeft, CheckCircle2, LockKeyhole, Sparkles, Star, Target, Trophy } 
 import type { Command, LevelDefinition } from "@lumaloop/engine";
 
 import { useI18n } from "../../i18n/I18nProvider";
-import type { LevelBestSizeProgress, LevelStarProgress } from "../../screens/game-screen/levelProgressStorage";
+import {
+  getLevelBestProgramSize,
+  getLevelStars,
+  getWorldProgressSummary,
+  isLevelCompleted,
+  isLevelPerfected,
+  type LevelProgressState,
+} from "../../screens/game-screen/levelProgressStorage";
 
 interface LevelMapBackdropProps {
-  bestSizeByLevelId: LevelBestSizeProgress;
   currentLevelId: string;
   isOpen: boolean;
+  levelProgress: LevelProgressState;
   localizedLevels: LevelDefinition[];
   onClose: () => void;
   onSelectLevel: (index: number) => void;
-  progressByLevelId: LevelStarProgress;
   unlockedLevels: boolean[];
 }
 
@@ -45,14 +51,26 @@ function renderStars(count: number, activeClassName: string, idleClassName: stri
   ));
 }
 
+interface LevelMapEntry {
+  badgeLabel: string | null;
+  bestProgramLength?: number;
+  idealSolutionLength?: number;
+  index: number;
+  isCompleted: boolean;
+  isCurrent: boolean;
+  isLocked: boolean;
+  isPerfected: boolean;
+  level: LevelDefinition;
+  stars: number;
+}
+
 export function LevelMapBackdrop({
-  bestSizeByLevelId,
   currentLevelId,
   isOpen,
+  levelProgress,
   localizedLevels,
   onClose,
   onSelectLevel,
-  progressByLevelId,
   unlockedLevels,
 }: LevelMapBackdropProps) {
   const { isRtl, t } = useI18n();
@@ -68,22 +86,13 @@ export function LevelMapBackdrop({
     const seenCommands = new Set<Command>();
     const groups = new Map<string, {
       focusLabels: string[];
-      levels: Array<{
-        badgeLabel: string | null;
-        bestProgramLength?: number;
-        idealSolutionLength?: number;
-        index: number;
-        isCurrent: boolean;
-        isLocked: boolean;
-        level: LevelDefinition;
-        stars: number;
-      }>;
+      levels: LevelMapEntry[];
       totalStars: number;
     }>();
 
     localizedLevels.forEach((level, index) => {
-      const levelStars = progressByLevelId[level.id] ?? 0;
-      const bestProgramLength = bestSizeByLevelId[level.id];
+      const levelStars = getLevelStars(levelProgress, level.id);
+      const bestProgramLength = getLevelBestProgramSize(levelProgress, level.id);
       const newCommands = level.allowedCommands.filter((command) => !seenCommands.has(command));
 
       for (const command of level.allowedCommands) {
@@ -103,20 +112,13 @@ export function LevelMapBackdrop({
         }
       }
 
-      const nextLevelEntry: {
-        badgeLabel: string | null;
-        bestProgramLength?: number;
-        idealSolutionLength?: number;
-        index: number;
-        isCurrent: boolean;
-        isLocked: boolean;
-        level: LevelDefinition;
-        stars: number;
-      } = {
+      const nextLevelEntry: LevelMapEntry = {
         badgeLabel: newCommandLabels[0] ? t.newMechanic(newCommandLabels[0]) : null,
         index,
+        isCompleted: isLevelCompleted(levelProgress, level.id),
         isCurrent: level.id === currentLevelId,
         isLocked: !unlockedLevels[index],
+        isPerfected: isLevelPerfected(levelProgress, level.id),
         level,
         stars: levelStars,
       };
@@ -136,27 +138,29 @@ export function LevelMapBackdrop({
 
     return Array.from(groups.entries()).map(([worldId, group], worldOrderIndex) => {
       const worldName = t.worldDisplayName(worldId, parseWorldName(worldId));
-      const completedCount = group.levels.filter((levelEntry) => levelEntry.stars > 0).length;
-      const perfectedCount = group.levels.filter((levelEntry) => levelEntry.stars === 3).length;
+      const worldProgress = getWorldProgressSummary(
+        levelProgress,
+        group.levels.map((levelEntry) => levelEntry.level.id),
+      );
 
       return {
-        completedCount,
+        completedCount: worldProgress.completedCount,
         focusLine:
           group.focusLabels.length > 0
             ? group.focusLabels.join(" · ")
             : group.levels[0]?.level.metadata?.concept ?? group.levels[0]?.level.name ?? "",
         id: worldId,
         isCurrentWorld: group.levels.some((levelEntry) => levelEntry.isCurrent),
-        isPerfectedWorld: perfectedCount === group.levels.length,
-        isWorldComplete: completedCount === group.levels.length,
+        isPerfectedWorld: worldProgress.perfectedCount === group.levels.length,
+        isWorldComplete: worldProgress.completedCount === group.levels.length,
         levels: group.levels,
         maxStars: group.levels.length * 3,
-        perfectedCount,
+        perfectedCount: worldProgress.perfectedCount,
         title: t.worldLabel(worldOrderIndex + 1, worldName),
-        totalStars: group.totalStars,
+        totalStars: worldProgress.totalStars,
       };
     });
-  }, [bestSizeByLevelId, currentLevelId, localizedLevels, progressByLevelId, t, unlockedLevels]);
+  }, [currentLevelId, levelProgress, localizedLevels, t, unlockedLevels]);
 
   return createPortal(
     <div
@@ -262,8 +266,8 @@ export function LevelMapBackdrop({
                       <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(9.5rem,10.25rem))] justify-center gap-4 lg:justify-start">
                         {world.levels.map((levelEntry) => {
                           const isCurrent = levelEntry.isCurrent;
-                          const isCompleted = levelEntry.stars > 0;
-                          const isPerfect = levelEntry.stars === 3;
+                          const isCompleted = levelEntry.isCompleted;
+                          const isPerfect = levelEntry.isPerfected;
                           const bestSizeLabel = levelEntry.bestProgramLength
                             ? t.bestSize(levelEntry.bestProgramLength)
                             : null;

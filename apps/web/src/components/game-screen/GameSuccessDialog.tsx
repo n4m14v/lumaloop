@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles } from "lucide-react";
 
@@ -34,10 +35,31 @@ export function GameSuccessDialog({
   starsEarned,
 }: GameSuccessDialogProps) {
   const { t } = useI18n();
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      setIsVisible(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(3,7,13,0.7)] p-4 backdrop-blur-[18px]">
-      <div className="relative w-full max-w-[440px] overflow-hidden rounded-[32px] p-8 text-center">
+    <div
+      className={[
+        "fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(3,7,13,0.7)] p-4 backdrop-blur-[18px] transition-opacity duration-[280ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+        isVisible ? "opacity-100" : "opacity-0",
+      ].join(" ")}
+    >
+      <div
+        className={[
+          "relative w-full max-w-[440px] overflow-hidden rounded-[32px] p-8 text-center transition-all duration-[320ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+          isVisible ? "translate-y-0 scale-100 opacity-100" : "translate-y-3 scale-[0.97] opacity-0",
+        ].join(" ")}
+      >
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)] shadow-[0_0_32px_var(--accent-shadow)]">
           <Sparkles className="h-8 w-8" />
         </div>

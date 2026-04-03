@@ -5,7 +5,7 @@ import { ChevronDown, Pause, Play, SkipForward } from "lucide-react";
 import type { LevelDefinition } from "@lumaloop/engine";
 
 import type { RobotColorId } from "../../features/game/robotColors";
-import type { LevelBestSizeProgress, LevelStarProgress } from "../../screens/game-screen/levelProgressStorage";
+import type { LevelProgressState } from "../../screens/game-screen/levelProgressStorage";
 import { useI18n } from "../../i18n/I18nProvider";
 import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
@@ -19,8 +19,7 @@ interface GameHeaderBarProps {
   isAutoRunning: boolean;
   isLevelMapOpen: boolean;
   level: LevelDefinition;
-  levelBestSizeProgress: LevelBestSizeProgress;
-  levelStarProgress: LevelStarProgress;
+  levelProgress: LevelProgressState;
   localizedLevels: LevelDefinition[];
   onCloseLevelMap: () => void;
   onOpenLevelMap: () => void;
@@ -66,8 +65,7 @@ export function GameHeaderBar({
   isAutoRunning,
   isLevelMapOpen,
   level,
-  levelBestSizeProgress,
-  levelStarProgress,
+  levelProgress,
   localizedLevels,
   onCloseLevelMap,
   onOpenLevelMap,
@@ -277,11 +275,10 @@ export function GameHeaderBar({
       <LevelMapBackdrop
         currentLevelId={level.id}
         isOpen={isLevelMapOpen}
-        bestSizeByLevelId={levelBestSizeProgress}
         localizedLevels={localizedLevels}
         onClose={onCloseLevelMap}
         onSelectLevel={onSetLevelIndex}
-        progressByLevelId={levelStarProgress}
+        levelProgress={levelProgress}
         unlockedLevels={unlockedLevels}
       />
       <GameWalkthroughDialog onClose={() => setIsWalkthroughOpen(false)} open={isWalkthroughOpen} />

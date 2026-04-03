@@ -27,6 +27,8 @@ export const ROBOT_VICTORY_BEAM_FADE_PORTION = 0.72;
 export const ROBOT_VICTORY_BOT_FLOAT_START_SECONDS = 0.12;
 export const ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS = 1;
 export const ROBOT_VICTORY_POPUP_DELAY_MS = 200;
+const ROBOT_TURN_LEAN_RADIANS = 0.18;
+const ROBOT_INTERACT_DIP_DISTANCE = 0.12;
 
 interface RobotProps {
   activeFrame: TraceFrame | null;
@@ -106,7 +108,6 @@ function findClip(clips: AnimationClip[], candidates: string[]): AnimationClip |
   for (const candidate of normalizedCandidates) {
     const exact = clips.find((clip) => clip.name.toLowerCase() === candidate);
     if (exact) {
-      console.log(`[Robot] findClip exact match: ${candidate} -> ${exact.name}`);
       return exact;
     }
   }
@@ -474,6 +475,8 @@ export function Robot({
     }
 
     model.scale.setScalar(MODEL_SCALE);
+    model.position.set(0, 0, 0);
+    model.rotation.set(0, 0, 0);
   }, []);
 
   useEffect(() => {
@@ -571,6 +574,7 @@ export function Robot({
 
     const root = rootRef.current;
     const model = modelRef.current;
+    const statusLight = statusLightRef.current;
     const [targetX, targetY, targetZ] = toWorldPosition(activeFrame.robotAfter);
     const targetRotation = getShortestRotationTarget(
       root.rotation.y,
@@ -594,12 +598,14 @@ export function Robot({
         : activeFrame.command === "JUMP"
           ? animationSet.jump
           : activeFrame.command === "ACTIVATE" || activeFrame.command === "TOGGLE"
-            ? animationSet.sit ?? animationSet.idle
+            ? null
             : animationSet.idle;
     const nextAction = getAction(nextClip);
+    const baseStatusIntensity = statusLight?.intensity ?? 0.35;
+    const baseStatusColor = statusLight ? statusLight.color.clone() : null;
+    const previousAction = activeActionRef.current;
 
     if (nextAction) {
-      const previousAction = activeActionRef.current;
       if (previousAction && previousAction !== nextAction) {
         previousAction.fadeOut(0.12);
       }
@@ -628,6 +634,9 @@ export function Robot({
               : playbackSpeed;
       nextAction.fadeIn(0.12).play();
       activeActionRef.current = nextAction;
+    } else if (previousAction) {
+      previousAction.fadeOut(0.12);
+      activeActionRef.current = null;
     }
 
     const timeline = gsap.timeline({
@@ -647,6 +656,21 @@ export function Robot({
           activeActionRef.current = idleAction;
         }
 
+        if (model) {
+          gsap.set(model.position, { x: 0, y: 0, z: 0 });
+          gsap.set(model.rotation, { x: 0, y: 0, z: 0 });
+          gsap.set(model.scale, { x: MODEL_SCALE, y: MODEL_SCALE, z: MODEL_SCALE });
+        }
+
+        if (statusLight && baseStatusColor) {
+          gsap.set(statusLight, { intensity: baseStatusIntensity });
+          gsap.set(statusLight.color, {
+            r: baseStatusColor.r,
+            g: baseStatusColor.g,
+            b: baseStatusColor.b,
+          });
+        }
+
         onFrameCompleteRef.current();
       },
     });
@@ -658,6 +682,21 @@ export function Robot({
       timeline.to(root.position, { duration: movementDuration * 0.34, ease: "power1.out", y: travelStartY + 0.12 }, 0);
       timeline.to(root.position, { duration: movementDuration * 0.36, ease: "power1.in", y: targetY }, movementDuration * 0.34);
       if (model) {
+        timeline.to(model.rotation, {
+          duration: movementDuration * 0.2,
+          ease: "power2.out",
+          x: -0.08,
+        }, 0);
+        timeline.to(model.rotation, {
+          duration: movementDuration * 0.32,
+          ease: "power2.inOut",
+          x: 0.04,
+        }, movementDuration * 0.2);
+        timeline.to(model.rotation, {
+          duration: movementDuration * 0.18,
+          ease: "power2.out",
+          x: 0,
+        }, movementDuration * 0.52);
         timeline.to(model.scale, {
           duration: movementDuration * 0.24,
           ease: "power2.out",
@@ -684,9 +723,108 @@ export function Robot({
       timeline.to(root.position, { duration: movementDuration, x: targetX, z: targetZ }, 0);
       timeline.to(root.position, { duration: movementDuration / 2, y: targetY + 0.92 }, 0);
       timeline.to(root.position, { duration: movementDuration / 2, y: targetY }, movementDuration / 2);
+      if (model) {
+        timeline.to(model.rotation, { duration: movementDuration * 0.24, ease: "power2.out", x: -0.12 }, 0);
+        timeline.to(model.rotation, { duration: movementDuration * 0.26, ease: "power2.in", x: 0 }, movementDuration * 0.5);
+      }
     } else if (activeFrame.command === "TURN_LEFT" || activeFrame.command === "TURN_RIGHT") {
-      timeline.to(root.rotation, { duration: movementDuration, y: targetRotation }, 0);
+      const leanDirection = activeFrame.command === "TURN_LEFT" ? 1 : -1;
+      timeline.to(root.rotation, { duration: movementDuration * 0.86, y: targetRotation }, movementDuration * 0.04);
+      if (model) {
+        timeline.to(model.rotation, {
+          duration: movementDuration * 0.34,
+          ease: "power2.out",
+          z: leanDirection * ROBOT_TURN_LEAN_RADIANS,
+        }, 0);
+        timeline.to(model.rotation, {
+          duration: movementDuration * 0.52,
+          ease: "power2.inOut",
+          z: 0,
+        }, movementDuration * 0.34);
+      }
+      if (statusLight) {
+        timeline.to(statusLight, {
+          duration: movementDuration * 0.28,
+          ease: "power2.out",
+          intensity: baseStatusIntensity + 0.22,
+        }, 0);
+        timeline.to(statusLight, {
+          duration: movementDuration * 0.4,
+          ease: "power2.inOut",
+          intensity: baseStatusIntensity,
+        }, movementDuration * 0.28);
+      }
     } else if (activeFrame.command === "ACTIVATE" || activeFrame.command === "TOGGLE") {
+      if (model) {
+        timeline.to(model.position, {
+          duration: movementDuration * 0.28,
+          ease: "power2.out",
+          y: -ROBOT_INTERACT_DIP_DISTANCE,
+        }, 0);
+        timeline.to(model.position, {
+          duration: movementDuration * 0.18,
+          ease: "power2.out",
+          y: ROBOT_INTERACT_DIP_DISTANCE * 0.28,
+        }, movementDuration * 0.28);
+        timeline.to(model.position, {
+          duration: movementDuration * 0.24,
+          ease: "power2.inOut",
+          y: 0,
+        }, movementDuration * 0.46);
+        timeline.to(model.rotation, {
+          duration: movementDuration * 0.24,
+          ease: "power2.out",
+          x: activeFrame.command === "ACTIVATE" ? -0.12 : -0.08,
+          z: activeFrame.command === "TOGGLE" ? 0.08 : 0,
+        }, 0);
+        timeline.to(model.rotation, {
+          duration: movementDuration * 0.3,
+          ease: "power2.inOut",
+          x: 0,
+          z: 0,
+        }, movementDuration * 0.3);
+        timeline.to(model.scale, {
+          duration: movementDuration * 0.2,
+          ease: "power2.out",
+          x: MODEL_SCALE * 1.04,
+          y: MODEL_SCALE * 0.96,
+          z: MODEL_SCALE * 1.04,
+        }, 0);
+        timeline.to(model.scale, {
+          duration: movementDuration * 0.28,
+          ease: "power2.inOut",
+          x: MODEL_SCALE,
+          y: MODEL_SCALE,
+          z: MODEL_SCALE,
+        }, movementDuration * 0.2);
+      }
+      if (statusLight && baseStatusColor) {
+        const pulseColor = new Color(activeFrame.command === "ACTIVATE" ? "#ffe37a" : "#6de9ff");
+        timeline.to(statusLight, {
+          duration: movementDuration * 0.18,
+          ease: "power2.out",
+          intensity: activeFrame.command === "ACTIVATE" ? 1.35 : 1.1,
+        }, 0);
+        timeline.to(statusLight.color, {
+          duration: movementDuration * 0.18,
+          ease: "power2.out",
+          r: pulseColor.r,
+          g: pulseColor.g,
+          b: pulseColor.b,
+        }, 0);
+        timeline.to(statusLight, {
+          duration: movementDuration * 0.28,
+          ease: "power2.inOut",
+          intensity: baseStatusIntensity,
+        }, movementDuration * 0.18);
+        timeline.to(statusLight.color, {
+          duration: movementDuration * 0.28,
+          ease: "power2.inOut",
+          r: baseStatusColor.r,
+          g: baseStatusColor.g,
+          b: baseStatusColor.b,
+        }, movementDuration * 0.18);
+      }
       timeline.to({}, { duration: movementDuration }, 0);
     } else {
       timeline.to(root.position, { duration: 0.18, x: targetX, y: targetY, z: targetZ }, 0);
@@ -694,6 +832,19 @@ export function Robot({
 
     return () => {
       timeline.kill();
+      if (model) {
+        gsap.set(model.position, { x: 0, y: 0, z: 0 });
+        gsap.set(model.rotation, { x: 0, y: 0, z: 0 });
+        gsap.set(model.scale, { x: MODEL_SCALE, y: MODEL_SCALE, z: MODEL_SCALE });
+      }
+      if (statusLight && baseStatusColor) {
+        gsap.set(statusLight, { intensity: baseStatusIntensity });
+        gsap.set(statusLight.color, {
+          r: baseStatusColor.r,
+          g: baseStatusColor.g,
+          b: baseStatusColor.b,
+        });
+      }
     };
   }, [
     activeFrame,

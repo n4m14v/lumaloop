@@ -30,7 +30,7 @@ Focus on making the game feel complete, clear, and well-paced before adding back
 3. Remove weak standalone worlds and awkward transitions.
 4. Fill gaps where mechanics appear too abruptly.
 
-## Milestone 4: More Content (In Progress)
+## Milestone 4: More Content (Done)
 
 1. Add levels only where they support the teaching arc.
 2. Prioritize worlds that deepen:
@@ -39,14 +39,14 @@ Focus on making the game feel complete, clear, and well-paced before adding back
    - multi-step planning
 3. Avoid filler puzzles.
 
-## Milestone 5: Game Feel
+## Milestone 5: Game Feel (In Progress)
 
 1. Improve level-to-level transitions.
 2. Clean up success and failure animation timing.
 3. Add more intentional robot and board feedback.
 4. Add sound only if it supports the game feel clearly.
 
-## Milestone 6: Progression Data
+## Milestone 6: Progression Data (In Progress)
 
 1. Persist more completion-quality data locally when useful.
 2. Consider storing:

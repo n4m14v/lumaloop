@@ -1,4 +1,4 @@
-import { useState, type ComponentProps } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 
 import { DarkBackdropNebula } from "../components/DarkBackdropNebula";
 import { GameCanvas } from "../components/GameCanvas";
@@ -17,6 +17,8 @@ export function GameScreen() {
   const [isLevelMapOpen, setIsLevelMapOpen] = useState(false);
   const [onboardingRefreshToken, setOnboardingRefreshToken] = useState(0);
   const [dismissedResult, setDismissedResult] = useState<object | null>(null);
+  const [visibleFeedbackResult, setVisibleFeedbackResult] = useState<object | null>(null);
+  const feedbackTimeoutRef = useRef<number | null>(null);
   const onboarding = useGameOnboarding({
     hasRunStarted: controller.isAutoRunning ?? false,
     levelId: controller.level?.id ?? "",
@@ -44,8 +46,38 @@ export function GameScreen() {
     controller.result.status !== "SUCCESS" &&
     controller.result.status !== "FAILED_INCOMPLETE",
   );
+  useEffect(() => {
+    if (feedbackTimeoutRef.current !== null) {
+      window.clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
+
+    if (!controller.result || !isResolved || controller.result.status === "SUCCESS") {
+      setVisibleFeedbackResult(null);
+      return;
+    }
+
+    setVisibleFeedbackResult(null);
+
+    const feedbackDelayMs =
+      controller.result.status === "FAILED_INCOMPLETE" ? 180 : 320;
+
+    feedbackTimeoutRef.current = window.setTimeout(() => {
+      feedbackTimeoutRef.current = null;
+      setVisibleFeedbackResult(controller.result);
+    }, feedbackDelayMs);
+
+    return () => {
+      if (feedbackTimeoutRef.current !== null) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = null;
+      }
+    };
+  }, [controller.result, isResolved]);
+
   const showRunFeedback = Boolean(
     (isIncompleteResult || isHardFailureResult) &&
+    controller.result === visibleFeedbackResult &&
     controller.result !== (controller.result ? dismissedResult : null),
   );
   let runFeedback: ComponentProps<typeof GameHeaderBar>["runFeedback"] = null;

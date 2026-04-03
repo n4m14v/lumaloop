@@ -4,7 +4,7 @@
  * - This keeps the main scene assembly declarative while preserving existing effects.
  */
 
-import { memo, useEffect, useRef, useMemo } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 
 import { Edges, RoundedBox } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -176,6 +176,9 @@ function TileBlockInner({
   const targetSuccessGlowRef = useRef<MeshBasicMaterial>(null);
   const targetLightRef = useRef<PointLight>(null);
   const targetOrbGroupRef = useRef<Group>(null);
+  const switchPulseGroupRef = useRef<Group>(null);
+  const switchPulseMaterialRef = useRef<MeshBasicMaterial>(null);
+  const switchLightRef = useRef<PointLight>(null);
   const stackCount = tile.z + 1;
   const isSwitch = tile.kind === "SWITCH";
   const isTarget = tile.kind === "TARGET";
@@ -425,6 +428,7 @@ function TileBlockInner({
     if (
       !isTarget ||
       victoryGlow ||
+      activeCommand === "ACTIVATE" ||
       !targetOrbGroupRef.current ||
       !targetCoreMaterialRef.current ||
       !targetHaloMaterialRef.current ||
@@ -445,13 +449,103 @@ function TileBlockInner({
     targetLightRef.current.intensity = baseLightIntensity + pulse * (isLit ? 0.24 : 0.14);
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (
+      !isTarget ||
+      activeCommand !== "ACTIVATE" ||
+      !targetOrbGroupRef.current ||
+      !targetCoreMaterialRef.current ||
+      !targetHaloMaterialRef.current ||
+      !targetLightRef.current
+    ) {
+      return;
+    }
+
+    const orbGroup = targetOrbGroupRef.current;
+    const coreMaterial = targetCoreMaterialRef.current;
+    const haloMaterial = targetHaloMaterialRef.current;
+    const targetLight = targetLightRef.current;
+    const timeline = gsap.timeline();
+    const baseScale = isLit ? 1.2 : 1;
+    const baseHaloOpacity = isLit ? tileStyle.targetHaloOpacityLit : tileStyle.targetHaloOpacity;
+    const baseLightIntensity = isLit ? 1.2 : 0.6;
+    const baseEmissiveIntensity = isLit ? 3.8 : 3.1;
+
+    timeline.to(orbGroup.scale, { duration: 0.12, ease: "power2.out", x: baseScale * 1.4, y: baseScale * 1.4, z: baseScale * 1.4 }, 0);
+    timeline.to(coreMaterial, { duration: 0.12, ease: "power2.out", emissiveIntensity: baseEmissiveIntensity + 2.4 }, 0);
+    timeline.to(haloMaterial, { duration: 0.12, ease: "power2.out", opacity: Math.max(baseHaloOpacity, 0.58) }, 0);
+    timeline.to(targetLight, { duration: 0.12, ease: "power2.out", intensity: baseLightIntensity + 2.3 }, 0);
+    timeline.to(orbGroup.scale, { duration: 0.28, ease: "power2.inOut", x: baseScale, y: baseScale, z: baseScale }, 0.12);
+    timeline.to(coreMaterial, { duration: 0.28, ease: "power2.inOut", emissiveIntensity: baseEmissiveIntensity }, 0.12);
+    timeline.to(haloMaterial, { duration: 0.28, ease: "power2.inOut", opacity: baseHaloOpacity }, 0.12);
+    timeline.to(targetLight, { duration: 0.28, ease: "power2.inOut", intensity: baseLightIntensity }, 0.12);
+
+    return () => {
+      timeline.kill();
+    };
+  }, [activeCommand, isLit, isTarget, tileStyle.targetHaloOpacity, tileStyle.targetHaloOpacityLit]);
+
+  useFrame(({ clock }) => {
+    if (
+      !isSwitch ||
+      activeCommand === "TOGGLE" ||
+      !switchPulseGroupRef.current ||
+      !switchPulseMaterialRef.current ||
+      !switchLightRef.current
+    ) {
+      return;
+    }
+
+    const elapsed = clock.getElapsedTime();
+    const pulse = (Math.sin(elapsed * 2.6 + tile.x * 0.42 + tile.y * 0.33) + 1) * 0.5;
+    const baseScale = isActive ? 1.03 : 1;
+    const baseOpacity = isActive ? 0.12 : 0.08;
+    const baseLightIntensity = isActive ? 0.34 : 0.16;
+
+    switchPulseGroupRef.current.scale.setScalar(baseScale + pulse * 0.1);
+    switchPulseMaterialRef.current.opacity = baseOpacity + pulse * 0.08;
+    switchLightRef.current.intensity = baseLightIntensity + pulse * 0.18;
+  });
+
+  useLayoutEffect(() => {
     if (isSwitch && activeCommand === "TOGGLE" && tileRootGroupRef.current) {
       const tl = gsap.timeline();
       tl.to(tileRootGroupRef.current.position, { y: -0.15, duration: 0.15, ease: "power2.out" });
       tl.to(tileRootGroupRef.current.position, { y: 0, duration: 0.4, ease: "power2.inOut" }, 0.2);
+
+      return () => {
+        tl.kill();
+      };
     }
   }, [isSwitch, activeCommand]);
+
+  useLayoutEffect(() => {
+    if (
+      !isSwitch ||
+      activeCommand !== "TOGGLE" ||
+      !switchPulseGroupRef.current ||
+      !switchPulseMaterialRef.current ||
+      !switchLightRef.current
+    ) {
+      return;
+    }
+
+    const pulseGroup = switchPulseGroupRef.current;
+    const pulseMaterial = switchPulseMaterialRef.current;
+    const switchLight = switchLightRef.current;
+    const timeline = gsap.timeline();
+
+    timeline.to(pulseGroup.scale, { duration: 0.12, ease: "power2.out", x: 1.42, y: 1.42, z: 1.42 }, 0);
+    timeline.to(pulseMaterial, { duration: 0.12, ease: "power2.out", opacity: 0.52 }, 0);
+    timeline.to(switchLight, { duration: 0.12, ease: "power2.out", intensity: 1.7 }, 0);
+    timeline.to(pulseGroup.scale, { duration: 0.32, ease: "power2.inOut", x: 1.04, y: 1.04, z: 1.04 }, 0.12);
+    timeline.to(pulseMaterial, { duration: 0.32, ease: "power2.inOut", opacity: 0.16 }, 0.12);
+    timeline.to(switchLight, { duration: 0.32, ease: "power2.inOut", intensity: 0.34 }, 0.12);
+
+    return () => {
+      timeline.kill();
+    };
+  }, [activeCommand, isSwitch]);
 
   return (
     <group position={[tile.x * TILE_SIZE, 0, tile.y * TILE_SIZE]}>
@@ -483,6 +577,24 @@ function TileBlockInner({
             </>
           </group>
         ))}
+        {isSwitch ? (
+          <group position={[0, chamberCenterY, 0]} ref={switchPulseGroupRef}>
+            <pointLight color="#6de9ff" distance={4.8} intensity={0.16} position={[0, 0.12, 0]} ref={switchLightRef} />
+            <mesh position={[0, BLOCK_HEIGHT * 0.5 - 0.02, 0]} rotation-x={-Math.PI / 2} renderOrder={2}>
+              <ringGeometry args={[0.2, 0.62, 32]} />
+              <meshBasicMaterial
+                blending={AdditiveBlending}
+                color="#8cefff"
+                depthTest
+                depthWrite={false}
+                opacity={0.08}
+                ref={switchPulseMaterialRef}
+                toneMapped={false}
+                transparent
+              />
+            </mesh>
+          </group>
+        ) : null}
         {isTarget ? (
           <group position={[0, chamberCenterY, 0]} ref={targetOrbGroupRef}>
           <pointLight

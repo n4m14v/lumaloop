@@ -14,12 +14,11 @@ import {
 import { useI18n } from "../../i18n/I18nProvider";
 import { localizeLevel } from "../../i18n/translations";
 import {
-  readLevelBestSizeProgress,
-  readLevelStarProgress,
-  writeLevelBestSizeProgress,
-  writeLevelStarProgress,
-  type LevelBestSizeProgress,
-  type LevelStarProgress,
+  createEmptyLevelProgressState,
+  readLevelProgress,
+  recordLevelCompletion,
+  writeLevelProgress,
+  type LevelProgressState,
 } from "./levelProgressStorage";
 
 const ROBOT_DEATH_STATUSES = new Set([
@@ -41,8 +40,7 @@ export function useGameScreenController() {
   const [unlockedLevelIndex, setUnlockedLevelIndex] = useState(0);
   const [hasHydratedLevelIndex, setHasHydratedLevelIndex] = useState(false);
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
-  const [levelStarProgress, setLevelStarProgress] = useState<LevelStarProgress>({});
-  const [levelBestSizeProgress, setLevelBestSizeProgress] = useState<LevelBestSizeProgress>({});
+  const [levelProgress, setLevelProgress] = useState<LevelProgressState>(createEmptyLevelProgressState());
   const [selectedRunMode, setSelectedRunMode] = useState<RunMode>("normal");
   const isPovActive = selectedRunMode === "pov";
   const lastResolvedSuccessRef = useRef<object | null>(null);
@@ -106,8 +104,7 @@ export function useGameScreenController() {
   }, [setLevelIndex]);
 
   useEffect(() => {
-    setLevelStarProgress(readLevelStarProgress());
-    setLevelBestSizeProgress(readLevelBestSizeProgress());
+    setLevelProgress(readLevelProgress());
   }, []);
 
   useEffect(() => {
@@ -177,39 +174,19 @@ export function useGameScreenController() {
     }
 
     lastPersistedSuccessRef.current = result;
-    setLevelStarProgress((currentProgress) => {
-      const currentStars = currentProgress[level.id] ?? 0;
-      const nextStars = Math.max(currentStars, result.score.starsEarned) as 0 | 1 | 2 | 3;
-
-      if (nextStars === currentStars) {
-        return currentProgress;
-      }
-
-      const nextProgress = {
-        ...currentProgress,
-        [level.id]: nextStars,
-      };
-
-      writeLevelStarProgress(nextProgress);
-      return nextProgress;
-    });
-
-    setLevelBestSizeProgress((currentProgress) => {
+    setLevelProgress((currentProgress) => {
       const resultProgramLength = result.score.programLength ?? currentProgramLength;
-      const currentBest = currentProgress[level.id];
-      const nextBest =
-        currentBest === undefined ? resultProgramLength : Math.min(currentBest, resultProgramLength);
+      const nextProgress = recordLevelCompletion(currentProgress, {
+        levelId: level.id,
+        programLength: resultProgramLength,
+        starsEarned: result.score.starsEarned,
+      });
 
-      if (nextBest === currentBest) {
+      if (nextProgress === currentProgress) {
         return currentProgress;
       }
 
-      const nextProgress = {
-        ...currentProgress,
-        [level.id]: nextBest,
-      };
-
-      writeLevelBestSizeProgress(nextProgress);
+      writeLevelProgress(nextProgress);
       return nextProgress;
     });
   }, [currentProgramLength, isSuccessResolved, level.id, result]);
@@ -306,7 +283,7 @@ export function useGameScreenController() {
     isRotationLocked,
     level,
     levelIndex,
-    levelStarProgress,
+    levelProgress,
     litTargets,
     localizedLevels,
     removeCommand,
@@ -356,11 +333,10 @@ export function useGameScreenController() {
     },
     header: {
       canStartRun,
-      levelBestSizeProgress,
+      levelProgress,
       currentLevelIndex: levelIndex,
       isAutoRunning,
       level,
-      levelStarProgress,
       localizedLevels,
       onReplayTutorial: () => {},
       onSetLevelIndex: handleSetLevelIndex,
