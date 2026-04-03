@@ -5,7 +5,7 @@ import { ChevronDown, Pause, Play, SkipForward } from "lucide-react";
 import type { LevelDefinition } from "@lumaloop/engine";
 
 import type { RobotColorId } from "../../features/game/robotColors";
-import type { LevelStarProgress } from "../../screens/game-screen/levelProgressStorage";
+import type { LevelBestSizeProgress, LevelStarProgress } from "../../screens/game-screen/levelProgressStorage";
 import { useI18n } from "../../i18n/I18nProvider";
 import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
@@ -19,6 +19,7 @@ interface GameHeaderBarProps {
   isAutoRunning: boolean;
   isLevelMapOpen: boolean;
   level: LevelDefinition;
+  levelBestSizeProgress: LevelBestSizeProgress;
   levelStarProgress: LevelStarProgress;
   localizedLevels: LevelDefinition[];
   onCloseLevelMap: () => void;
@@ -65,6 +66,7 @@ export function GameHeaderBar({
   isAutoRunning,
   isLevelMapOpen,
   level,
+  levelBestSizeProgress,
   levelStarProgress,
   localizedLevels,
   onCloseLevelMap,
@@ -275,6 +277,7 @@ export function GameHeaderBar({
       <LevelMapBackdrop
         currentLevelId={level.id}
         isOpen={isLevelMapOpen}
+        bestSizeByLevelId={levelBestSizeProgress}
         localizedLevels={localizedLevels}
         onClose={onCloseLevelMap}
         onSelectLevel={onSetLevelIndex}

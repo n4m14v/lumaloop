@@ -1,6 +1,8 @@
 export type LevelStarProgress = Record<string, 0 | 1 | 2 | 3>;
+export type LevelBestSizeProgress = Record<string, number>;
 
 const LEVEL_STAR_PROGRESS_STORAGE_KEY = "lumaloop-level-stars-v1";
+const LEVEL_BEST_SIZE_PROGRESS_STORAGE_KEY = "lumaloop-level-best-sizes-v1";
 const LEGACY_LEVEL_ID_MIGRATIONS: Record<string, string> = {
   "world-02-level-01": "world-01-level-05",
 };
@@ -42,4 +44,44 @@ export function writeLevelStarProgress(progressByLevelId: LevelStarProgress) {
   }
 
   window.localStorage.setItem(LEVEL_STAR_PROGRESS_STORAGE_KEY, JSON.stringify(progressByLevelId));
+}
+
+export function readLevelBestSizeProgress(): LevelBestSizeProgress {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  const rawValue = window.localStorage.getItem(LEVEL_BEST_SIZE_PROGRESS_STORAGE_KEY);
+
+  if (!rawValue) {
+    return {};
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue) as Record<string, unknown>;
+    const normalizedProgress: LevelBestSizeProgress = {};
+
+    for (const [levelId, value] of Object.entries(parsedValue)) {
+      if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+        continue;
+      }
+
+      const nextLevelId = LEGACY_LEVEL_ID_MIGRATIONS[levelId] ?? levelId;
+      const existingValue = normalizedProgress[nextLevelId];
+      normalizedProgress[nextLevelId] =
+        existingValue === undefined ? value : Math.min(existingValue, value);
+    }
+
+    return normalizedProgress;
+  } catch {
+    return {};
+  }
+}
+
+export function writeLevelBestSizeProgress(progressByLevelId: LevelBestSizeProgress) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(LEVEL_BEST_SIZE_PROGRESS_STORAGE_KEY, JSON.stringify(progressByLevelId));
 }

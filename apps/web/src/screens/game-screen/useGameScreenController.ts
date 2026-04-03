@@ -14,8 +14,11 @@ import {
 import { useI18n } from "../../i18n/I18nProvider";
 import { localizeLevel } from "../../i18n/translations";
 import {
+  readLevelBestSizeProgress,
   readLevelStarProgress,
+  writeLevelBestSizeProgress,
   writeLevelStarProgress,
+  type LevelBestSizeProgress,
   type LevelStarProgress,
 } from "./levelProgressStorage";
 
@@ -39,6 +42,7 @@ export function useGameScreenController() {
   const [hasHydratedLevelIndex, setHasHydratedLevelIndex] = useState(false);
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
   const [levelStarProgress, setLevelStarProgress] = useState<LevelStarProgress>({});
+  const [levelBestSizeProgress, setLevelBestSizeProgress] = useState<LevelBestSizeProgress>({});
   const [selectedRunMode, setSelectedRunMode] = useState<RunMode>("normal");
   const isPovActive = selectedRunMode === "pov";
   const lastResolvedSuccessRef = useRef<object | null>(null);
@@ -103,6 +107,7 @@ export function useGameScreenController() {
 
   useEffect(() => {
     setLevelStarProgress(readLevelStarProgress());
+    setLevelBestSizeProgress(readLevelBestSizeProgress());
   }, []);
 
   useEffect(() => {
@@ -188,7 +193,26 @@ export function useGameScreenController() {
       writeLevelStarProgress(nextProgress);
       return nextProgress;
     });
-  }, [isSuccessResolved, level.id, result]);
+
+    setLevelBestSizeProgress((currentProgress) => {
+      const resultProgramLength = result.score.programLength ?? currentProgramLength;
+      const currentBest = currentProgress[level.id];
+      const nextBest =
+        currentBest === undefined ? resultProgramLength : Math.min(currentBest, resultProgramLength);
+
+      if (nextBest === currentBest) {
+        return currentProgress;
+      }
+
+      const nextProgress = {
+        ...currentProgress,
+        [level.id]: nextBest,
+      };
+
+      writeLevelBestSizeProgress(nextProgress);
+      return nextProgress;
+    });
+  }, [currentProgramLength, isSuccessResolved, level.id, result]);
 
   useEffect(() => {
     if (!hasHydratedLevelIndex || !isSuccessResolved) {
@@ -332,6 +356,7 @@ export function useGameScreenController() {
     },
     header: {
       canStartRun,
+      levelBestSizeProgress,
       currentLevelIndex: levelIndex,
       isAutoRunning,
       level,

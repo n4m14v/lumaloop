@@ -60,6 +60,18 @@ const referencePrograms: Record<string, ProgramSlots> = {
   "world-03-level-07": {
     main: ["JUMP", "FORWARD", "JUMP", "TURN_RIGHT", "FORWARD", "JUMP", "TURN_LEFT", "FORWARD", "ACTIVATE"],
   },
+  "world-11-level-toggle-intro": {
+    main: ["TOGGLE", "FORWARD", "FORWARD", "ACTIVATE"],
+  },
+  "world-11-level-toggle-stretch": {
+    main: ["TOGGLE", "FORWARD", "FORWARD", "ACTIVATE", "FORWARD", "FORWARD", "ACTIVATE"],
+  },
+  "world-11-level-toggle-turn": {
+    main: ["FORWARD", "TOGGLE", "FORWARD", "TURN_RIGHT", "FORWARD", "ACTIVATE"],
+  },
+  "world-11-level-toggle-chain": {
+    main: ["TOGGLE", "FORWARD", "FORWARD", "ACTIVATE", "FORWARD", "TOGGLE", "FORWARD", "FORWARD", "ACTIVATE"],
+  },
   "world-11-level-01": {
     main: ["TOGGLE", "CALL_P1", "CALL_P1"],
     p1: ["FORWARD", "FORWARD", "ACTIVATE"],
@@ -82,6 +94,10 @@ const referencePrograms: Record<string, ProgramSlots> = {
   "world-04-level-03": {
     main: ["ACTIVATE", "CALL_P1", "CALL_P1", "CALL_P1"],
     p1: ["FORWARD", "ACTIVATE"],
+  },
+  "world-04-level-07": {
+    main: ["CALL_P1", "TURN_RIGHT", "CALL_P1"],
+    p1: ["FORWARD", "FORWARD", "ACTIVATE"],
   },
   "world-04-level-04": {
     main: ["CALL_P1", "ACTIVATE", "CALL_P2", "ACTIVATE"],
@@ -287,8 +303,8 @@ function getProgramLength(program: ProgramSlots) {
 }
 
 describe("campaign levels", () => {
-  it("contains 61 handcrafted levels with unique ids", () => {
-    expect(campaignLevels).toHaveLength(61);
+  it("contains 66 handcrafted levels with unique ids", () => {
+    expect(campaignLevels).toHaveLength(66);
     expect(new Set(campaignLevels.map((level) => level.id)).size).toBe(campaignLevels.length);
   });
 

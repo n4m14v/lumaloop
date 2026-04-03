@@ -6,7 +6,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { ONBOARDING_STORAGE_KEY } from "./onboardingStorage";
 const LEVEL_ONE_ID = "world-01-level-01";
 const LEVEL_TWO_ID = "world-01-level-02";
-const TOGGLE_LEVEL_ONE_ID = "world-11-level-01";
+const TOGGLE_LEVEL_ONE_ID = "world-11-level-toggle-intro";
 
 type OnboardingProgress = {
   completedLevel1?: boolean;

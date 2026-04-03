@@ -54,10 +54,18 @@ type Messages = {
   showingLevelCommands: string;
   skipToEnd: string;
   starsProgress: (earned: number, total: number) => string;
+  bestSize: (value: number) => string;
+  idealShort: (value: number) => string;
+  currentLabel: string;
+  perfectLabel: string;
+  worldDisplayName: (worldId: string, fallbackName: string) => string;
+  worldCurrent: string;
+  worldCompleted: string;
+  worldPerfected: string;
   successBody: string;
   replayTutorial: string;
   worldLabel: (index: number, name: string) => string;
-  worldProgressSummary: (completed: number, total: number, stars: number, totalStars: number) => string;
+  worldProgressSummary: (completed: number, total: number, perfected: number, stars: number, totalStars: number) => string;
   worldTheme: (label: string) => string;
   failureBodies: Record<RunStatus, string>;
   failureTitles: Record<RunStatus, string>;
@@ -148,11 +156,61 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "Showing level-allowed commands only.",
     skipToEnd: "Skip to End",
     starsProgress: (earned, total) => `${earned} / ${total} Stars`,
+    bestSize: (value) => `Best ${value}`,
+    idealShort: (value) => `Ideal ${value}`,
+    currentLabel: "Current",
+    perfectLabel: "Perfect",
+    worldDisplayName: (worldId, fallbackName) => {
+      if (worldId === "world-01-basics") {
+        return "Basics";
+      }
+
+      if (worldId === "world-03-height") {
+        return "Height";
+      }
+
+      if (worldId === "world-04-procedures") {
+        return "Procedures";
+      }
+
+      if (worldId === "world-05-recursion") {
+        return "Recursion";
+      }
+
+      if (worldId === "world-06-hard") {
+        return "Recursive Patterns";
+      }
+
+      if (worldId === "world-07-very-hard") {
+        return "Advanced Composition";
+      }
+
+      if (worldId === "world-08-mastery") {
+        return "Mastery";
+      }
+
+      if (worldId === "world-09-trickery") {
+        return "Misdirection";
+      }
+
+      if (worldId === "world-10-phantoms") {
+        return "False Paths";
+      }
+
+      if (worldId === "world-11-switches") {
+        return "Switches";
+      }
+
+      return fallbackName;
+    },
+    worldCurrent: "Current World",
+    worldCompleted: "World Complete",
+    worldPerfected: "World Perfected",
     successBody: "All targets are lit. You can replay this level or move on to the next puzzle.",
     replayTutorial: "Replay Tutorial",
     worldLabel: (index, name) => `WORLD ${String(index).padStart(2, "0")}: ${name}`,
-    worldProgressSummary: (completed, total, stars, totalStars) =>
-      `${completed} / ${total} Completed • ${stars} / ${totalStars} Stars`,
+    worldProgressSummary: (completed, total, perfected, stars, totalStars) =>
+      `${completed} / ${total} Completed • ${perfected} Perfected • ${stars} / ${totalStars} Stars`,
     worldTheme: (label) => `Theme: ${label}`,
     failureBodies: {
       SUCCESS: "The run already succeeded.",
@@ -354,11 +412,61 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "Показаны только команды, разрешенные уровнем.",
     skipToEnd: "До конца",
     starsProgress: (earned, total) => `${earned} / ${total} звезд`,
+    bestSize: (value) => `Лучший ${value}`,
+    idealShort: (value) => `Идеал ${value}`,
+    currentLabel: "Текущий",
+    perfectLabel: "Идеально",
+    worldDisplayName: (worldId, fallbackName) => {
+      if (worldId === "world-01-basics") {
+        return "Основы";
+      }
+
+      if (worldId === "world-03-height") {
+        return "Высота";
+      }
+
+      if (worldId === "world-04-procedures") {
+        return "Процедуры";
+      }
+
+      if (worldId === "world-05-recursion") {
+        return "Рекурсия";
+      }
+
+      if (worldId === "world-06-hard") {
+        return "Рекурсивные паттерны";
+      }
+
+      if (worldId === "world-07-very-hard") {
+        return "Продвинутая композиция";
+      }
+
+      if (worldId === "world-08-mastery") {
+        return "Мастерство";
+      }
+
+      if (worldId === "world-09-trickery") {
+        return "Ложные ориентиры";
+      }
+
+      if (worldId === "world-10-phantoms") {
+        return "Ложные пути";
+      }
+
+      if (worldId === "world-11-switches") {
+        return "Переключатели";
+      }
+
+      return fallbackName;
+    },
+    worldCurrent: "Текущий мир",
+    worldCompleted: "Мир завершен",
+    worldPerfected: "Мир пройден идеально",
     successBody: "Все цели зажжены. Можно переиграть уровень или перейти к следующей головоломке.",
     replayTutorial: "Повторить обучение",
     worldLabel: (index, name) => `МИР ${String(index).padStart(2, "0")}: ${name}`,
-    worldProgressSummary: (completed, total, stars, totalStars) =>
-      `${completed} / ${total} завершено • ${stars} / ${totalStars} звезд`,
+    worldProgressSummary: (completed, total, perfected, stars, totalStars) =>
+      `${completed} / ${total} завершено • ${perfected} идеально • ${stars} / ${totalStars} звезд`,
     worldTheme: (label) => `Тема: ${label}`,
     failureBodies: {
       SUCCESS: "Запуск уже завершился успешно.",
@@ -560,11 +668,61 @@ const messages: Record<Locale, Messages> = {
     showingLevelCommands: "מוצגות רק הפקודות המותרות לשלב.",
     skipToEnd: "דלג לסוף",
     starsProgress: (earned, total) => `${earned} / ${total} כוכבים`,
+    bestSize: (value) => `הטוב ביותר ${value}`,
+    idealShort: (value) => `אידיאלי ${value}`,
+    currentLabel: "נוכחי",
+    perfectLabel: "מושלם",
+    worldDisplayName: (worldId, fallbackName) => {
+      if (worldId === "world-01-basics") {
+        return "יסודות";
+      }
+
+      if (worldId === "world-03-height") {
+        return "גובה";
+      }
+
+      if (worldId === "world-04-procedures") {
+        return "פרוצדורות";
+      }
+
+      if (worldId === "world-05-recursion") {
+        return "רקורסיה";
+      }
+
+      if (worldId === "world-06-hard") {
+        return "דפוסים רקורסיביים";
+      }
+
+      if (worldId === "world-07-very-hard") {
+        return "קומפוזיציה מתקדמת";
+      }
+
+      if (worldId === "world-08-mastery") {
+        return "שליטה";
+      }
+
+      if (worldId === "world-09-trickery") {
+        return "הטעיה";
+      }
+
+      if (worldId === "world-10-phantoms") {
+        return "נתיבי שווא";
+      }
+
+      if (worldId === "world-11-switches") {
+        return "מתגים";
+      }
+
+      return fallbackName;
+    },
+    worldCurrent: "העולם הנוכחי",
+    worldCompleted: "העולם הושלם",
+    worldPerfected: "העולם הושלם בשלמות",
     successBody: "כל היעדים מוארים. אפשר להפעיל שוב את השלב או לעבור לחידה הבאה.",
     replayTutorial: "הפעל שוב את ההדרכה",
     worldLabel: (index, name) => `עולם ${String(index).padStart(2, "0")}: ${name}`,
-    worldProgressSummary: (completed, total, stars, totalStars) =>
-      `${completed} / ${total} הושלמו • ${stars} / ${totalStars} כוכבים`,
+    worldProgressSummary: (completed, total, perfected, stars, totalStars) =>
+      `${completed} / ${total} הושלמו • ${perfected} מושלמים • ${stars} / ${totalStars} כוכבים`,
     worldTheme: (label) => `נושא: ${label}`,
     failureBodies: {
       SUCCESS: "ההרצה כבר הסתיימה בהצלחה.",
@@ -826,6 +984,11 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       concept: "Процедура может упаковать повторяющуюся пару действий, а не только движение",
       designerNotes: "Упакуйте повторяющуюся пару действий, а не только повторяющееся движение.",
     },
+    "world-04-level-07": {
+      name: "Эхо поворота",
+      concept: "Один и тот же помощник можно использовать снова после поворота, если фраза маршрута повторяется",
+      designerNotes: "Соберите короткую фразу «дойти и зажечь», а затем повторите ее еще раз после смены направления робота.",
+    },
     "world-04-level-04": {
       name: "Ступенчатая пара",
       concept: "Вложенные процедуры могут переиспользовать блок движения после смены ориентации",
@@ -1036,13 +1199,33 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       concept: "Плотные ложные коридоры скрывают макро-разбиение, даже когда те же два помощника по-прежнему решают все поле",
       designerNotes: "Центральная сетка нужна только для того, чтобы украсть ваше внимание. Правильное разбиение все равно хранит расстояние в одном процессе, а фразу «лампа-поворот» - в другом.",
     },
+    "world-11-level-toggle-intro": {
+      name: "Открой путь",
+      concept: "TOGGLE может изменить поле еще до того, как начинается движение",
+      designerNotes: "Сначала используйте переключатель. Он создает недостающую плитку пути еще до того, как робот сможет пойти вперед.",
+    },
+    "world-11-level-toggle-stretch": {
+      name: "Растянутый переключатель",
+      concept: "Сначала используется TOGGLE, а затем весь маршрут превращается в одну чистую последовательность",
+      designerNotes: "Сначала переключите плитку. Как только путь откроется, думайте о маршруте как об одном прямом забеге с двумя лампами.",
+    },
+    "world-11-level-toggle-turn": {
+      name: "Открой и поверни",
+      concept: "Время для TOGGLE важно, когда после нового пути еще нужен поворот",
+      designerNotes: "Сначала дойдите до переключателя, затем включите его, а уже потом думайте о маршруте, который он открыл. Поворот имеет смысл только после изменения поля.",
+    },
+    "world-11-level-toggle-chain": {
+      name: "Два переключателя",
+      concept: "Два переключателя могут открывать маршрут по фазам еще до того, как понадобятся вспомогательные процедуры",
+      designerNotes: "Считайте каждый переключатель границей фазы. Откройте первый участок, завершите его, а потом повторите ту же логику у второго переключателя.",
+    },
     "world-11-level-01": {
-      name: "Первый переключатель",
-      concept: "TOGGLE меняет поле еще до того, как начинается движение",
-      designerNotes: "Переключатель ничего не делает роботу напрямую. Он меняет то, какая плитка существует впереди.",
+      name: "Эстафета переключателя",
+      concept: "После переключателя вспомогательная процедура может повторять открывшийся фрагмент маршрута",
+      designerNotes: "Переключатель сам по себе не решает задачу. Используйте его один раз, а затем отдайте повторяющийся фрагмент движения и активации помощнику.",
     },
     "world-11-level-02": {
-      name: "Открой и поверни",
+      name: "Поворотная эстафета",
       concept: "Переключатель может открыть путь в другой части поля",
       designerNotes: "Сначала доберитесь до переключателя, а потом думайте о том маршруте, который он открывает, а не о том, который вы уже прошли.",
     },
@@ -1157,6 +1340,11 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       name: "קו אותות",
       concept: "פרוצדורה יכולה לארוז זוג פעולות חוזר, לא רק תנועה",
       designerNotes: "ארזו את זוג הפעולות שחוזר על עצמו, לא רק את התנועה שחוזרת על עצמה.",
+    },
+    "world-04-level-07": {
+      name: "הד פנייה",
+      concept: "אפשר להשתמש שוב באותו תהליך עזר אחרי פנייה כשהמשפט של המסלול חוזר על עצמו",
+      designerNotes: "בנו משפט קצר של 'להגיע ולהדליק', ואז השתמשו בו שוב אחרי שמכוונים מחדש את הרובוט.",
     },
     "world-04-level-04": {
       name: "זוג מדרגות",
@@ -1368,13 +1556,33 @@ const levelCopy: Partial<Record<Exclude<Locale, "en">, Record<string, LocalizedL
       concept: "מסדרונות שווא צפופים מסתירים את הפירוק המאקרו, גם כשהם עדיין נפתרים בדיוק עם אותם שני תהליכי עזר",
       designerNotes: "הרשת שבמרכז קיימת רק כדי לגנוב לכם קשב. הפיצול הנכון עדיין שומר מרחק בתהליך אחד ואת משפט 'פנס-פנייה' בתהליך השני.",
     },
+    "world-11-level-toggle-intro": {
+      name: "פתח את הנתיב",
+      concept: "TOGGLE יכול לשנות את הלוח עוד לפני שהתנועה מתחילה",
+      designerNotes: "השתמשו קודם במתג. הוא יוצר את אריח הנתיב החסר לפני שהרובוט בכלל יכול לצעוד קדימה.",
+    },
+    "world-11-level-toggle-stretch": {
+      name: "מתג מתמשך",
+      concept: "קודם מפעילים TOGGLE, ואז כל המסלול הופך לרצף נקי אחד",
+      designerNotes: "הפעילו קודם את המתג. ברגע שהאריח מופיע, חשבו על המסלול כריצה ישרה אחת עם שתי מנורות.",
+    },
+    "world-11-level-toggle-turn": {
+      name: "פתח ואז פנה",
+      concept: "התזמון של TOGGLE חשוב כשאחרי הנתיב החדש עוד צריך פנייה",
+      designerNotes: "קודם מגיעים למתג, אחר כך מפעילים אותו, ורק אז חושבים על הנתיב שהוא פתח. לפנייה יש משמעות רק אחרי שהלוח השתנה.",
+    },
+    "world-11-level-toggle-chain": {
+      name: "שני מתגים",
+      concept: "שני מתגים יכולים לפתוח את המסלול בשלבים עוד לפני שצריך תהליכי עזר",
+      designerNotes: "התייחסו לכל מתג כאל גבול של פאזה. פתחו את המקטע הראשון, סיימו אותו, ואז חזרו על אותו היגיון ליד המתג השני.",
+    },
     "world-11-level-01": {
-      name: "המתג הראשון",
-      concept: "TOGGLE משנה את הלוח עוד לפני שהתנועה מתחילה",
-      designerNotes: "המתג לא עושה שום דבר ישירות לרובוט. הוא משנה איזו משבצת בכלל קיימת לפניו.",
+      name: "ממסר מתג",
+      concept: "אחרי שהמתג פותח את המסלול, תהליך עזר יכול לחזור על הקטע שנפתח",
+      designerNotes: "המתג לבדו לא פותר את השלב. מפעילים אותו פעם אחת, ואז נותנים לתהליך עזר להחזיק את מקטע ההתקדמות וההפעלה שחוזר על עצמו.",
     },
     "world-11-level-02": {
-      name: "פתח ואז פנה",
+      name: "ממסר פנייה",
       concept: "מתג יכול לפתוח מסלול בחלק אחר של הלוח",
       designerNotes: "קודם מגיעים למתג, ורק אחר כך חושבים על הנתיב שהוא פתח, לא על הנתיב שכבר הלכתם בו.",
     },

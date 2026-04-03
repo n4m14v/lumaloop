@@ -2,8 +2,90 @@ import type { LevelDefinition } from "@lumaloop/level-schema";
 
 export const world11Switches: LevelDefinition[] = [
   {
+    id: "world-11-level-toggle-intro",
+    name: "Open The Path",
+    world: "world-11-switches",
+    board: [
+      { x: 0, y: 0, z: 0, kind: "SWITCH", toggleGroup: "amber" },
+      { x: 0, y: 1, z: 0, kind: "NORMAL", toggleGroup: "amber", moveTo: { x: 1, y: 0, z: 0 } },
+      { id: "goal-1", x: 2, y: 0, z: 0, kind: "TARGET" },
+    ],
+    start: { x: 0, y: 0, z: 0, facing: "E" },
+    allowedCommands: ["TOGGLE", "FORWARD", "ACTIVATE"],
+    slotLimits: { main: 4 },
+    stars: { one: 6, two: 5, three: 4 },
+    metadata: {
+      concept: "Toggle can change the board before movement begins",
+      designerNotes: "Use the switch first. It creates the missing path tile before the robot can walk forward.",
+      idealSolutionLength: 4,
+    },
+  },
+  {
+    id: "world-11-level-toggle-stretch",
+    name: "Switch Stretch",
+    world: "world-11-switches",
+    board: [
+      { x: 0, y: 0, z: 0, kind: "SWITCH", toggleGroup: "amber" },
+      { x: 0, y: 1, z: 0, kind: "NORMAL", toggleGroup: "amber", moveTo: { x: 1, y: 0, z: 0 } },
+      { id: "goal-1", x: 2, y: 0, z: 0, kind: "TARGET" },
+      { x: 3, y: 0, z: 0, kind: "NORMAL" },
+      { id: "goal-2", x: 4, y: 0, z: 0, kind: "TARGET" },
+    ],
+    start: { x: 0, y: 0, z: 0, facing: "E" },
+    allowedCommands: ["TOGGLE", "FORWARD", "ACTIVATE"],
+    slotLimits: { main: 7 },
+    stars: { one: 9, two: 8, three: 7 },
+    metadata: {
+      concept: "Toggle comes first. After the path opens, the rest is one clean sequence.",
+      designerNotes: "Flip the switch before the first move. Once the tile appears, think of the route as one straight run with two lamps.",
+      idealSolutionLength: 7,
+    },
+  },
+  {
+    id: "world-11-level-toggle-turn",
+    name: "Open Then Turn",
+    world: "world-11-switches",
+    board: [
+      { x: 0, y: 0, z: 0, kind: "NORMAL" },
+      { x: 1, y: 0, z: 0, kind: "SWITCH", toggleGroup: "amber" },
+      { x: 1, y: 1, z: 0, kind: "NORMAL", toggleGroup: "amber", moveTo: { x: 2, y: 0, z: 0 } },
+      { id: "goal-1", x: 2, y: 1, z: 0, kind: "TARGET" },
+    ],
+    start: { x: 0, y: 0, z: 0, facing: "E" },
+    allowedCommands: ["FORWARD", "TURN_RIGHT", "TOGGLE", "ACTIVATE"],
+    slotLimits: { main: 6 },
+    stars: { one: 8, two: 7, three: 6 },
+    metadata: {
+      concept: "Toggle timing matters when the new path still needs a turn afterward",
+      designerNotes: "First reach the switch, then flip it, then think about the path it opened. The turn only matters after the board changes.",
+      idealSolutionLength: 6,
+    },
+  },
+  {
+    id: "world-11-level-toggle-chain",
+    name: "Double Switch",
+    world: "world-11-switches",
+    board: [
+      { x: 0, y: 0, z: 0, kind: "SWITCH", toggleGroup: "amber" },
+      { x: 0, y: 1, z: 0, kind: "NORMAL", toggleGroup: "amber", moveTo: { x: 1, y: 0, z: 0 } },
+      { id: "goal-1", x: 2, y: 0, z: 0, kind: "TARGET" },
+      { x: 3, y: 0, z: 0, kind: "SWITCH", toggleGroup: "violet" },
+      { x: 3, y: 1, z: 0, kind: "NORMAL", toggleGroup: "violet", moveTo: { x: 4, y: 0, z: 0 } },
+      { id: "goal-2", x: 5, y: 0, z: 0, kind: "TARGET" },
+    ],
+    start: { x: 0, y: 0, z: 0, facing: "E" },
+    allowedCommands: ["TOGGLE", "FORWARD", "ACTIVATE"],
+    slotLimits: { main: 9 },
+    stars: { one: 11, two: 10, three: 9 },
+    metadata: {
+      concept: "Two switches can unlock the route in separate phases before any helper routines are needed",
+      designerNotes: "Treat each switch as its own phase boundary. Open the first path, finish that segment, then repeat the same logic at the second switch.",
+      idealSolutionLength: 9,
+    },
+  },
+  {
     id: "world-11-level-01",
-    name: "First Switch",
+    name: "Switch Relay",
     world: "world-11-switches",
     board: [
       { x: 0, y: 0, z: 0, kind: "SWITCH", toggleGroup: "amber" },
@@ -17,14 +99,14 @@ export const world11Switches: LevelDefinition[] = [
     slotLimits: { main: 3, p1: 3 },
     stars: { one: 8, two: 7, three: 6 },
     metadata: {
-      concept: "A switch changes the board, then a helper routine repeats the unlocked work",
+      concept: "After a switch opens the route, a helper routine can repeat the unlocked work",
       designerNotes: "The toggle is not the whole solution. Use the switch once, then let a helper own the repeated advance-and-activate chunk.",
       idealSolutionLength: 6,
     },
   },
   {
     id: "world-11-level-02",
-    name: "Open Then Turn",
+    name: "Turned Relay",
     world: "world-11-switches",
     board: [
       { x: 0, y: 0, z: 0, kind: "NORMAL" },

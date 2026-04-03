@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { ArrowLeft, LockKeyhole, Sparkles, Star } from "lucide-react";
+import { ArrowLeft, CheckCircle2, LockKeyhole, Sparkles, Star, Target, Trophy } from "lucide-react";
 
 import type { Command, LevelDefinition } from "@lumaloop/engine";
 
 import { useI18n } from "../../i18n/I18nProvider";
-import type { LevelStarProgress } from "../../screens/game-screen/levelProgressStorage";
+import type { LevelBestSizeProgress, LevelStarProgress } from "../../screens/game-screen/levelProgressStorage";
 
 interface LevelMapBackdropProps {
+  bestSizeByLevelId: LevelBestSizeProgress;
   currentLevelId: string;
   isOpen: boolean;
   localizedLevels: LevelDefinition[];
@@ -45,6 +46,7 @@ function renderStars(count: number, activeClassName: string, idleClassName: stri
 }
 
 export function LevelMapBackdrop({
+  bestSizeByLevelId,
   currentLevelId,
   isOpen,
   localizedLevels,
@@ -53,12 +55,12 @@ export function LevelMapBackdrop({
   progressByLevelId,
   unlockedLevels,
 }: LevelMapBackdropProps) {
-  const { t } = useI18n();
-  const currentLevelRef = useRef<HTMLButtonElement>(null);
+  const { isRtl, t } = useI18n();
+  const currentWorldRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (isOpen && currentLevelRef.current) {
-      currentLevelRef.current.scrollIntoView({ behavior: "instant", block: "center" });
+    if (isOpen && currentWorldRef.current) {
+      currentWorldRef.current.scrollIntoView({ behavior: "instant", block: "start" });
     }
   }, [isOpen]);
 
@@ -68,6 +70,8 @@ export function LevelMapBackdrop({
       focusLabels: string[];
       levels: Array<{
         badgeLabel: string | null;
+        bestProgramLength?: number;
+        idealSolutionLength?: number;
         index: number;
         isCurrent: boolean;
         isLocked: boolean;
@@ -79,6 +83,7 @@ export function LevelMapBackdrop({
 
     localizedLevels.forEach((level, index) => {
       const levelStars = progressByLevelId[level.id] ?? 0;
+      const bestProgramLength = bestSizeByLevelId[level.id];
       const newCommands = level.allowedCommands.filter((command) => !seenCommands.has(command));
 
       for (const command of level.allowedCommands) {
@@ -98,35 +103,60 @@ export function LevelMapBackdrop({
         }
       }
 
-      group.levels.push({
+      const nextLevelEntry: {
+        badgeLabel: string | null;
+        bestProgramLength?: number;
+        idealSolutionLength?: number;
+        index: number;
+        isCurrent: boolean;
+        isLocked: boolean;
+        level: LevelDefinition;
+        stars: number;
+      } = {
         badgeLabel: newCommandLabels[0] ? t.newMechanic(newCommandLabels[0]) : null,
         index,
         isCurrent: level.id === currentLevelId,
         isLocked: !unlockedLevels[index],
         level,
         stars: levelStars,
-      });
+      };
+
+      if (bestProgramLength !== undefined) {
+        nextLevelEntry.bestProgramLength = bestProgramLength;
+      }
+
+      if (level.metadata?.idealSolutionLength !== undefined) {
+        nextLevelEntry.idealSolutionLength = level.metadata.idealSolutionLength;
+      }
+
+      group.levels.push(nextLevelEntry);
       group.totalStars += levelStars;
       groups.set(level.world, group);
     });
 
     return Array.from(groups.entries()).map(([worldId, group], worldOrderIndex) => {
-      const worldName = parseWorldName(worldId);
+      const worldName = t.worldDisplayName(worldId, parseWorldName(worldId));
+      const completedCount = group.levels.filter((levelEntry) => levelEntry.stars > 0).length;
+      const perfectedCount = group.levels.filter((levelEntry) => levelEntry.stars === 3).length;
 
       return {
-        completedCount: group.levels.filter((levelEntry) => levelEntry.stars > 0).length,
+        completedCount,
         focusLine:
           group.focusLabels.length > 0
             ? group.focusLabels.join(" · ")
             : group.levels[0]?.level.metadata?.concept ?? group.levels[0]?.level.name ?? "",
         id: worldId,
+        isCurrentWorld: group.levels.some((levelEntry) => levelEntry.isCurrent),
+        isPerfectedWorld: perfectedCount === group.levels.length,
+        isWorldComplete: completedCount === group.levels.length,
         levels: group.levels,
         maxStars: group.levels.length * 3,
+        perfectedCount,
         title: t.worldLabel(worldOrderIndex + 1, worldName),
         totalStars: group.totalStars,
       };
     });
-  }, [currentLevelId, localizedLevels, progressByLevelId, t, unlockedLevels]);
+  }, [bestSizeByLevelId, currentLevelId, localizedLevels, progressByLevelId, t, unlockedLevels]);
 
   return createPortal(
     <div
@@ -160,21 +190,60 @@ export function LevelMapBackdrop({
             <div className="space-y-7">
               {worldGroups.map((world) => {
                 const isWorldReached = world.levels.some(level => !level.isLocked);
+                const worldStatusLabel = world.isPerfectedWorld
+                  ? t.worldPerfected
+                  : world.isWorldComplete
+                    ? t.worldCompleted
+                    : world.isCurrentWorld
+                      ? t.worldCurrent
+                      : null;
+                const worldStatusIcon = world.isPerfectedWorld
+                  ? Trophy
+                  : world.isWorldComplete
+                    ? CheckCircle2
+                    : world.isCurrentWorld
+                      ? Target
+                      : null;
+                const WorldStatusIcon = worldStatusIcon;
 
                 return (
                   <section
                     className={[
-                      "relative overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
+                      "relative overflow-hidden rounded-[24px] border px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] scroll-mt-[50px]",
+                      world.isPerfectedWorld
+                        ? "border-[#ffd76a]/35 bg-[linear-gradient(180deg,rgba(255,215,106,0.08)_0%,rgba(255,255,255,0.02)_100%)]"
+                        : world.isCurrentWorld
+                          ? "border-[#00f2ff]/18 bg-[linear-gradient(180deg,rgba(0,242,255,0.05)_0%,rgba(255,255,255,0.02)_100%)]"
+                          : "border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)]",
                       !isWorldReached ? "grayscale" : ""
                     ].join(" ")}
                     key={world.id}
+                    ref={world.isCurrentWorld ? currentWorldRef : null}
                   >
+                    <div className="pointer-events-none absolute inset-x-5 top-[4.8rem] hidden h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.16),transparent)] lg:block" />
                     <div className="relative">
                       <div className={["flex flex-col gap-2 md:flex-row md:items-end md:justify-between", !isWorldReached ? "opacity-40" : ""].join(" ")}>
                         <div>
-                          <h2 className="font-display text-[clamp(1.15rem,1.35vw,1.5rem)] font-semibold tracking-[0.01em] text-[var(--text-primary)]">
-                            {world.title}
-                          </h2>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <h2 className="font-display text-[clamp(1.15rem,1.35vw,1.5rem)] font-semibold tracking-[0.01em] text-[var(--text-primary)]">
+                              {world.title}
+                            </h2>
+                            {worldStatusLabel && WorldStatusIcon ? (
+                              <div
+                                className={[
+                                  "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                                  world.isPerfectedWorld
+                                    ? "border-[#ffd76a]/45 bg-[#ffd76a]/10 text-[#ffe28f]"
+                                    : world.isWorldComplete
+                                      ? "border-emerald-300/35 bg-emerald-300/10 text-emerald-200"
+                                      : "border-[#00f2ff]/30 bg-[#00f2ff]/10 text-[#7ef7ff]",
+                                ].join(" ")}
+                              >
+                                <WorldStatusIcon className="h-3.5 w-3.5" />
+                                {worldStatusLabel}
+                              </div>
+                            ) : null}
+                          </div>
                           <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
                             {t.worldTheme(world.focusLine)}
                           </p>
@@ -183,6 +252,7 @@ export function LevelMapBackdrop({
                           {t.worldProgressSummary(
                             world.completedCount,
                             world.levels.length,
+                            world.perfectedCount,
                             world.totalStars,
                             world.maxStars,
                           )}
@@ -193,19 +263,34 @@ export function LevelMapBackdrop({
                         {world.levels.map((levelEntry) => {
                           const isCurrent = levelEntry.isCurrent;
                           const isCompleted = levelEntry.stars > 0;
+                          const isPerfect = levelEntry.stars === 3;
+                          const bestSizeLabel = levelEntry.bestProgramLength
+                            ? t.bestSize(levelEntry.bestProgramLength)
+                            : null;
+                          const idealSizeLabel = levelEntry.idealSolutionLength
+                            ? t.idealShort(levelEntry.idealSolutionLength)
+                            : null;
+                          const progressMetaLabel = isCompleted
+                            ? bestSizeLabel && idealSizeLabel
+                              ? `${bestSizeLabel} • ${idealSizeLabel}`
+                              : bestSizeLabel ?? idealSizeLabel ?? t.starsProgress(levelEntry.stars, 3)
+                            : isCurrent && idealSizeLabel
+                              ? idealSizeLabel
+                              : t.starsProgress(levelEntry.stars, 3);
 
                           return (
                             <button
-                              ref={isCurrent ? currentLevelRef : null}
                               className={[
-                                "group relative flex h-[11rem] w-full max-w-[10.25rem] flex-col overflow-hidden rounded-[24px] p-4 text-left transition-all duration-300 ease-out will-change-transform",
+                                "group relative flex h-[11rem] w-full max-w-[10.25rem] flex-col overflow-hidden rounded-[24px] p-4 text-start transition-all duration-300 ease-out will-change-transform",
                                 "before:absolute before:inset-0 before:bg-[linear-gradient(180deg,rgba(255,255,255,0.12),transparent_40%)] before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 before:content-['']",
                                 "after:absolute after:inset-0 after:bg-[linear-gradient(180deg,rgba(255,255,255,0.06),transparent_50%)] after:content-['']",
                                 isCurrent
-                                  ? "border-2 border-[#00f2ff] bg-[rgba(0,242,255,0.05)] text-[#00f2ff] scale-[1.02] -translate-y-1 shadow-[0_0_15px_rgba(0,242,255,0.2)]"
+                                  ? "border-2 border-[#00f2ff] bg-[linear-gradient(180deg,rgba(0,242,255,0.12)_0%,rgba(0,242,255,0.04)_100%)] text-[#00f2ff] scale-[1.03] -translate-y-1.5 shadow-[0_0_22px_rgba(0,242,255,0.22)]"
                                   : levelEntry.isLocked
                                     ? "pointer-events-none border border-white/5 bg-[rgba(255,255,255,0.03)] text-white/50"
-                                    : isCompleted
+                                    : isPerfect
+                                      ? "border border-[#ffd76a]/55 bg-[linear-gradient(180deg,rgba(255,215,106,0.18)_0%,rgba(30,24,8,0.45)_100%)] text-[var(--text-primary)] shadow-[0_0_18px_rgba(255,215,106,0.2)] hover:-translate-y-1.5 hover:shadow-[0_0_22px_rgba(255,215,106,0.28)]"
+                                      : isCompleted
                                       ? "border border-[#ffd700] bg-[linear-gradient(180deg,rgba(40,50,65,0.6)_0%,rgba(15,20,30,0.7)_100%)] text-[var(--text-primary)] shadow-[0_0_10px_#ffd70044] hover:-translate-y-1.5 hover:shadow-[0_0_15px_#ffd70066]"
                                       : "border border-[#444] bg-[linear-gradient(180deg,rgba(45,52,65,0.5)_0%,rgba(18,22,32,0.6)_100%)] text-[var(--text-secondary)] opacity-100 hover:-translate-y-1.5 hover:border-[#666]",
                               ].join(" ")}
@@ -218,8 +303,20 @@ export function LevelMapBackdrop({
                               type="button"
                             >
                               <div className="relative z-10 flex h-full flex-col">
-                                <div className="text-[0.72rem] uppercase tracking-[0.08em] opacity-80">
-                                  {t.level} {String(levelEntry.index + 1).padStart(2, "0")}
+                                <div
+                                  className={[
+                                    "flex min-h-[1.5rem] items-start gap-2",
+                                    isRtl ? "flex-row-reverse justify-between" : "justify-between",
+                                  ].join(" ")}
+                                >
+                                  <div className="text-[0.72rem] uppercase tracking-[0.08em] opacity-80">
+                                    {t.level} {String(levelEntry.index + 1).padStart(2, "0")}
+                                  </div>
+                                  {isCurrent ? (
+                                    <div className="shrink-0 rounded-full border border-[#00f2ff]/45 bg-[#00f2ff]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#7ef7ff]">
+                                      {t.currentLabel}
+                                    </div>
+                                  ) : null}
                                 </div>
                                 <h3 className="mt-2 line-clamp-3 text-[0.92rem] font-semibold leading-5">
                                   {levelEntry.level.name}
@@ -238,6 +335,11 @@ export function LevelMapBackdrop({
                                       <Sparkles className="h-3 w-3" />
                                       {levelEntry.badgeLabel}
                                     </div>
+                                  ) : isPerfect ? (
+                                    <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-[#ffd76a]/45 bg-[#ffd76a]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#ffe28f]">
+                                      <Trophy className="h-3 w-3" />
+                                      {t.perfectLabel}
+                                    </div>
                                   ) : (
                                     <div className="mb-2.5 h-[22px]" />
                                   )}
@@ -250,7 +352,7 @@ export function LevelMapBackdrop({
                                   ) : (
                                     <>
                                       <p className={["text-[0.72rem]", isCurrent ? "text-[#00f2ff]/80" : "text-[var(--text-muted)]"].join(" ")}>
-                                        {t.starsProgress(levelEntry.stars, 3)}
+                                        {progressMetaLabel}
                                       </p>
                                       <div className={["mt-1.5 flex gap-1", isCurrent ? "text-[#00f2ff]" : ""].join(" ")}>
                                         {renderStars(
