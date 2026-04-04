@@ -1,15 +1,39 @@
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type ComponentProps } from "react";
 
 import { DarkBackdropNebula } from "../components/DarkBackdropNebula";
-import { GameCanvas } from "../components/GameCanvas";
 import { ProgramWorkspace } from "../components/ProgramWorkspace";
 import { useI18n } from "../i18n/I18nProvider";
 import { GameHeaderBar } from "../components/game-screen/GameHeaderBar";
-import { GameOnboardingOverlay } from "../components/game-screen/GameOnboardingOverlay";
-import { GameSuccessDialog } from "../components/game-screen/GameSuccessDialog";
 import { clearOnboardingProgress } from "./game-screen/onboardingStorage";
 import { useGameOnboarding } from "./game-screen/useGameOnboarding";
 import { useGameScreenController } from "./game-screen/useGameScreenController";
+
+const GameOnboardingOverlay = lazy(async () => {
+  const module = await import("../components/game-screen/GameOnboardingOverlay");
+  return { default: module.GameOnboardingOverlay };
+});
+
+const GameSuccessDialog = lazy(async () => {
+  const module = await import("../components/game-screen/GameSuccessDialog");
+  return { default: module.GameSuccessDialog };
+});
+
+const GameCanvas = lazy(async () => {
+  const module = await import("../components/GameCanvas");
+  return { default: module.GameCanvas };
+});
+
+function GameCanvasLoadingLayer({ className }: { className: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={className}
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(97,129,180,0.14),transparent_26%),radial-gradient(circle_at_50%_72%,rgba(255,214,113,0.04),transparent_18%)]" />
+      <div className="absolute inset-x-[12%] top-[14%] h-[56%] rounded-[48px] border border-white/5 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] shadow-[0_30px_120px_rgba(0,0,0,0.24)]" />
+    </div>
+  );
+}
 
 export function GameScreen() {
   const { t } = useI18n();
@@ -80,6 +104,10 @@ export function GameScreen() {
     controller.result === visibleFeedbackResult &&
     controller.result !== (controller.result ? dismissedResult : null),
   );
+  const canvasClassName = [
+    "fixed inset-0 h-screen w-screen overflow-hidden xl:-translate-x-[182px]",
+    isLevelMapOpen ? "invisible opacity-0" : "visible opacity-100",
+  ].join(" ");
   let runFeedback: ComponentProps<typeof GameHeaderBar>["runFeedback"] = null;
 
   if (showRunFeedback && controller.result) {
@@ -114,13 +142,12 @@ export function GameScreen() {
           showAllActions={controller.workspace.showAllActions}
           scene={
             <>
-              <GameCanvas
-                className={[
-                  "fixed inset-0 h-screen w-screen overflow-hidden xl:-translate-x-[182px]",
-                  isLevelMapOpen ? "invisible opacity-0" : "visible opacity-100",
-                ].join(" ")}
-                {...controller.canvas}
-              />
+              <Suspense fallback={<GameCanvasLoadingLayer className={canvasClassName} />}>
+                <GameCanvas
+                  className={canvasClassName}
+                  {...controller.canvas}
+                />
+              </Suspense>
 
               <GameHeaderBar
                 {...controller.header}
@@ -137,11 +164,17 @@ export function GameScreen() {
               />
 
               {controller.successDialog ? (
-                <GameSuccessDialog
-                  {...controller.successDialog}
-                />
+                <Suspense fallback={null}>
+                  <GameSuccessDialog
+                    {...controller.successDialog}
+                  />
+                </Suspense>
               ) : null}
-              {onboarding ? <GameOnboardingOverlay {...onboarding} /> : null}
+              {onboarding ? (
+                <Suspense fallback={null}>
+                  <GameOnboardingOverlay {...onboarding} />
+                </Suspense>
+              ) : null}
             </>
           }
         />

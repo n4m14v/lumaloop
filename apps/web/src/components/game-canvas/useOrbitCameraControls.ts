@@ -28,6 +28,8 @@ interface OrbitCameraControlsOptions {
   quarterTurns: number;
 }
 
+const DRAG_START_THRESHOLD_PX = 4;
+
 export function useOrbitCameraControls({
   isRotationLocked,
   levelId,
@@ -38,6 +40,7 @@ export function useOrbitCameraControls({
   const [orbitElevation, setOrbitElevation] = useState(CAMERA_BASE_ELEVATION);
   const [zoom, setZoom] = useState(1);
   const dragStateRef = useRef<{
+    hasCaptured: boolean;
     pointerId: number;
     startAzimuth: number;
     startElevation: number;
@@ -146,13 +149,13 @@ export function useOrbitCameraControls({
 
     azimuthTweenRef.current?.kill();
     dragStateRef.current = {
+      hasCaptured: false,
       pointerId: event.pointerId,
       startAzimuth: orbitAzimuthRef.current,
       startElevation: orbitElevationRef.current,
       startX: event.clientX,
       startY: event.clientY,
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
@@ -161,9 +164,22 @@ export function useOrbitCameraControls({
       return;
     }
 
-    const nextAzimuth = dragState.startAzimuth + (event.clientX - dragState.startX) * DRAG_AZIMUTH_RADIANS_PER_PIXEL;
+    const deltaX = event.clientX - dragState.startX;
+    const deltaY = event.clientY - dragState.startY;
+    const dragDistance = Math.hypot(deltaX, deltaY);
+
+    if (!dragState.hasCaptured) {
+      if (dragDistance < DRAG_START_THRESHOLD_PX) {
+        return;
+      }
+
+      dragState.hasCaptured = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
+    const nextAzimuth = dragState.startAzimuth + deltaX * DRAG_AZIMUTH_RADIANS_PER_PIXEL;
     const nextElevation =
-      dragState.startElevation + (event.clientY - dragState.startY) * DRAG_ELEVATION_RADIANS_PER_PIXEL;
+      dragState.startElevation + deltaY * DRAG_ELEVATION_RADIANS_PER_PIXEL;
     setAzimuth(nextAzimuth);
     setElevation(nextElevation);
   }
@@ -175,7 +191,7 @@ export function useOrbitCameraControls({
     }
 
     dragStateRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    if (dragState.hasCaptured && event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
   }

@@ -21,8 +21,8 @@ const FORWARD_RUN_TIME_SCALE = 1.45;
 const ROBOT_METAL_ENV_INTENSITY = 0.24;
 const ROBOT_RIM_LIGHT_INTENSITY = 0.18;
 export const ROBOT_VICTORY_EMOTE_DELAY_MS = 900;
-export const ROBOT_VICTORY_BEAM_EXIT_START_SECONDS = 1.46;
-export const ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS = 1.2;
+export const ROBOT_VICTORY_BEAM_EXIT_START_SECONDS = 0.72;
+export const ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS = 0.6;
 export const ROBOT_VICTORY_BEAM_FADE_PORTION = 0.72;
 export const ROBOT_VICTORY_BOT_FLOAT_START_SECONDS = 0.12;
 export const ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS = 1;
@@ -228,10 +228,12 @@ export function Robot({
   const failureLightRef = useRef<PointLight>(null);
   const activeActionRef = useRef<AnimationAction | null>(null);
   const mixerRef = useRef<AnimationMixer | null>(null);
+  const clickTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const actionCacheRef = useRef<Map<string, AnimationAction>>(new Map());
   const emissiveMaterialsRef = useRef<Material[]>([]);
   const fadeMaterialsRef = useRef<Array<Material & { opacity: number; transparent: boolean }>>([]);
   const standardSurfaceBindingsRef = useRef<StandardSurfaceBinding[]>([]);
+  const angryMorphsRef = useRef<MorphBinding[]>([]);
   const surpriseMorphsRef = useRef<MorphBinding[]>([]);
   const onFrameCompleteRef = useRef(onFrameComplete);
   const onVictorySequenceCompleteRef = useRef(onVictorySequenceComplete);
@@ -247,6 +249,7 @@ export function Robot({
       idle: findClip(animations, ["idle", "standing", "stand"]),
       jump: findClip(animations, ["jump"]),
       no: findClip(animations, ["no"]),
+      punch: findClip(animations, ["punch"]),
       run: findClip(animations, ["running", "run"]),
       sit: findClip(animations, ["sitting", "sit"]),
       walk: findClip(animations, ["walking", "walk"]),
@@ -280,6 +283,7 @@ export function Robot({
     activeActionRef.current = null;
 
     return () => {
+      clickTimelineRef.current?.kill();
       mixer.stopAllAction();
       actionCacheRef.current.clear();
       activeActionRef.current = null;
@@ -314,13 +318,24 @@ export function Robot({
     const emissiveMaterials: Material[] = [];
     const fadeMaterials: Array<Material & { opacity: number; transparent: boolean }> = [];
     const standardSurfaceBindings: StandardSurfaceBinding[] = [];
+    const angryMorphs: MorphBinding[] = [];
     const surpriseMorphs: MorphBinding[] = [];
 
     clonedScene.traverse((child: any) => {
       if (isMorphCapableObject(child) && child.morphTargetDictionary && child.morphTargetInfluences) {
+        const angryIndex = Object.entries(child.morphTargetDictionary).find(([name]) =>
+          name.toLowerCase().includes("angry"),
+        )?.[1];
         const surpriseIndex = Object.entries(child.morphTargetDictionary).find(([name]) =>
           name.toLowerCase().includes("surpris"),
         )?.[1];
+
+        if (typeof angryIndex === "number") {
+          angryMorphs.push({
+            index: angryIndex,
+            influences: child.morphTargetInfluences,
+          });
+        }
 
         if (typeof surpriseIndex === "number") {
           surpriseMorphs.push({
@@ -382,6 +397,7 @@ export function Robot({
     emissiveMaterialsRef.current = emissiveMaterials;
     fadeMaterialsRef.current = fadeMaterials;
     standardSurfaceBindingsRef.current = standardSurfaceBindings;
+    angryMorphsRef.current = angryMorphs;
     surpriseMorphsRef.current = surpriseMorphs;
   }, [clonedScene]);
 
@@ -454,6 +470,7 @@ export function Robot({
   }, [isMetallicPalette, palette]);
 
   useEffect(() => {
+    setMorphInfluence(angryMorphsRef.current, 0);
     setMorphInfluence(surpriseMorphsRef.current, DEFAULT_SURPRISE_INFLUENCE);
   }, [clonedScene]);
 
@@ -860,6 +877,7 @@ export function Robot({
   useEffect(() => {
     const root = rootRef.current;
     const model = modelRef.current;
+    const angryMorphs = angryMorphsRef.current;
     const surpriseMorphs = surpriseMorphsRef.current;
 
     if (!root || !model) {
@@ -871,11 +889,13 @@ export function Robot({
       gsap.set(root.rotation, { x: 0, y: toFacingRotation(robot.facing), z: 0 });
       gsap.set(model.scale, { x: MODEL_SCALE, y: MODEL_SCALE, z: MODEL_SCALE });
       gsap.set(fadeMaterialsRef.current, { opacity: 1 });
+      setMorphInfluence(angryMorphs, 0);
       setMorphInfluence(surpriseMorphs, DEFAULT_SURPRISE_INFLUENCE);
       return;
     }
 
     if (!victorySequenceActive) {
+      setMorphInfluence(angryMorphs, 0);
       setMorphInfluence(surpriseMorphs, 1);
       return;
     }
@@ -932,20 +952,9 @@ export function Robot({
     timeline.to(
       root.position,
       {
-        duration: ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS,
-        ease: "power2.in",
-        y: root.position.y + 13.5,
-      },
-      ROBOT_VICTORY_EMOTE_DELAY_MS / 1000 + ROBOT_VICTORY_BOT_FLOAT_START_SECONDS,
-    );
-    timeline.to(
-      root.scale,
-      {
-        duration: ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS,
-        ease: "power2.inOut",
-        x: 0.7,
-        y: 0.7,
-        z: 0.7,
+        duration: ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.06,
+        ease: "power1.out",
+        y: root.position.y + 0.42,
       },
       ROBOT_VICTORY_EMOTE_DELAY_MS / 1000 + ROBOT_VICTORY_BOT_FLOAT_START_SECONDS,
     );
@@ -959,6 +968,37 @@ export function Robot({
         z: 0,
       },
       ROBOT_VICTORY_EMOTE_DELAY_MS / 1000 + ROBOT_VICTORY_BOT_FLOAT_START_SECONDS,
+    );
+    timeline.to(
+      root.scale,
+      {
+        duration: ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.12,
+        ease: "power2.out",
+        x: 0.9,
+        y: 1.12,
+        z: 0.9,
+      },
+      ROBOT_VICTORY_EMOTE_DELAY_MS / 1000 + ROBOT_VICTORY_BOT_FLOAT_START_SECONDS + ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.03,
+    );
+    timeline.to(
+      root.position,
+      {
+        duration: ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.33,
+        ease: "expo.in",
+        y: root.position.y + 13.5,
+      },
+      ROBOT_VICTORY_EMOTE_DELAY_MS / 1000 + ROBOT_VICTORY_BOT_FLOAT_START_SECONDS + ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.06,
+    );
+    timeline.to(
+      root.scale,
+      {
+        duration: ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.72,
+        ease: "power2.in",
+        x: 0.72,
+        y: 1.16,
+        z: 0.72,
+      },
+      ROBOT_VICTORY_EMOTE_DELAY_MS / 1000 + ROBOT_VICTORY_BOT_FLOAT_START_SECONDS + ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS * 0.28,
     );
     timeline.to(
       fadeMaterialsRef.current,
@@ -990,12 +1030,89 @@ export function Robot({
 
     return () => {
       timeline.kill();
+      setMorphInfluence(angryMorphs, 0);
       setMorphInfluence(surpriseMorphs, DEFAULT_SURPRISE_INFLUENCE);
     };
   }, [animationSet.idle, animations, robot.facing, victoryExpressionActive, victorySequenceActive]);
 
+  function handleRobotDoubleClick(event: { stopPropagation: () => void }) {
+    event.stopPropagation();
+
+    if (activeFrame || failurePulse || victorySequenceActive || isAutoRunning) {
+      return;
+    }
+
+    const punchAction = getAction(animationSet.punch);
+    const idleAction = getAction(animationSet.idle);
+    const previousAction = activeActionRef.current;
+
+    clickTimelineRef.current?.kill();
+
+    if (previousAction && previousAction !== punchAction) {
+      previousAction.fadeOut(0.18);
+    }
+
+    const punchDurationSeconds = punchAction ? punchAction.getClip().duration : 0.54;
+    const returnToIdleAtSeconds = Math.max(0.18, punchDurationSeconds - 0.18);
+
+    if (punchAction) {
+      punchAction.enabled = true;
+      punchAction.reset();
+      punchAction.setLoop(LoopOnce, 1);
+      punchAction.clampWhenFinished = true;
+      punchAction.timeScale = 1;
+      punchAction.fadeIn(0.14).play();
+      activeActionRef.current = punchAction;
+    }
+
+    const angryState = { value: 0 };
+    const timeline = gsap.timeline({
+      onComplete: () => {
+        clickTimelineRef.current = null;
+        setMorphInfluence(angryMorphsRef.current, 0);
+
+        if (activeActionRef.current === punchAction) {
+          punchAction?.stop();
+          activeActionRef.current = null;
+        }
+      },
+    });
+
+    timeline.to(angryState, {
+      duration: 0.12,
+      ease: "power2.out",
+      onUpdate: () => {
+        setMorphInfluence(angryMorphsRef.current, angryState.value);
+      },
+      value: 0.5,
+    });
+    timeline.call(() => {
+      if (idleAction && !activeFrame && !failurePulse && !victorySequenceActive && !isAutoRunning) {
+        idleAction.enabled = true;
+        idleAction.reset();
+        idleAction.setLoop(LoopRepeat, Infinity);
+        idleAction.fadeIn(0.22).play();
+        activeActionRef.current = idleAction;
+      }
+
+      if (punchAction) {
+        punchAction.fadeOut(0.22);
+      }
+    }, [], returnToIdleAtSeconds);
+    timeline.to(angryState, {
+      duration: 0.26,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        setMorphInfluence(angryMorphsRef.current, angryState.value);
+      },
+      value: 0,
+    }, Math.max(0.24, returnToIdleAtSeconds - 0.04));
+
+    clickTimelineRef.current = timeline;
+  }
+
   return (
-    <group ref={rootRef}>
+    <group onDoubleClick={handleRobotDoubleClick} ref={rootRef}>
       <pointLight color="#d7f0ff" distance={7.5} intensity={ROBOT_RIM_LIGHT_INTENSITY} position={[-1.6, 2.2, -1.8]} />
       <pointLight color="#5bc8ff" distance={5.5} intensity={0.7} position={[0, 1.8, 0.6]} ref={statusLightRef} />
       <pointLight color="#ff5656" distance={4} intensity={0} position={[0, 1.4, 0]} ref={failureLightRef} />

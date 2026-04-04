@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 
 import { ChevronDown, Pause, Play, SkipForward } from "lucide-react";
 
@@ -10,8 +10,16 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
 import { GameStatusSnackbar, type GameStatusFeedback } from "./GameStatusSnackbar";
-import { LevelMapBackdrop } from "./LevelMapBackdrop";
-import { GameWalkthroughDialog } from "./GameWalkthroughDialog";
+
+const LevelMapBackdrop = lazy(async () => {
+  const module = await import("./LevelMapBackdrop");
+  return { default: module.LevelMapBackdrop };
+});
+
+const GameWalkthroughDialog = lazy(async () => {
+  const module = await import("./GameWalkthroughDialog");
+  return { default: module.GameWalkthroughDialog };
+});
 
 interface GameHeaderBarProps {
   canStartRun: boolean;
@@ -84,6 +92,8 @@ export function GameHeaderBar({
   const { t } = useI18n();
   const [isRunMenuOpen, setIsRunMenuOpen] = useState(false);
   const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
+  const [hasOpenedLevelMap, setHasOpenedLevelMap] = useState(false);
+  const [hasOpenedWalkthrough, setHasOpenedWalkthrough] = useState(false);
   const runMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -148,7 +158,10 @@ export function GameHeaderBar({
             <button
               aria-label={t.walkthroughOpen}
               className="ui-button h-8 w-8 justify-center rounded-full px-0 font-display text-sm font-semibold text-[var(--text-primary)]"
-              onClick={() => setIsWalkthroughOpen(true)}
+              onClick={() => {
+                setHasOpenedWalkthrough(true);
+                setIsWalkthroughOpen(true);
+              }}
               title={t.walkthroughOpen}
               type="button"
             >
@@ -165,6 +178,7 @@ export function GameHeaderBar({
               className="ui-button pointer-events-auto flex h-9 items-center gap-2 rounded-[12px] px-3 text-left"
               onClick={() => {
                 setIsRunMenuOpen(false);
+                setHasOpenedLevelMap(true);
                 onOpenLevelMap();
               }}
               type="button"
@@ -272,16 +286,24 @@ export function GameHeaderBar({
         />
       </div>
 
-      <LevelMapBackdrop
-        currentLevelId={level.id}
-        isOpen={isLevelMapOpen}
-        localizedLevels={localizedLevels}
-        onClose={onCloseLevelMap}
-        onSelectLevel={onSetLevelIndex}
-        levelProgress={levelProgress}
-        unlockedLevels={unlockedLevels}
-      />
-      <GameWalkthroughDialog onClose={() => setIsWalkthroughOpen(false)} open={isWalkthroughOpen} />
+      {hasOpenedLevelMap ? (
+        <Suspense fallback={null}>
+          <LevelMapBackdrop
+            currentLevelId={level.id}
+            isOpen={isLevelMapOpen}
+            localizedLevels={localizedLevels}
+            onClose={onCloseLevelMap}
+            onSelectLevel={onSetLevelIndex}
+            levelProgress={levelProgress}
+            unlockedLevels={unlockedLevels}
+          />
+        </Suspense>
+      ) : null}
+      {hasOpenedWalkthrough ? (
+        <Suspense fallback={null}>
+          <GameWalkthroughDialog onClose={() => setIsWalkthroughOpen(false)} open={isWalkthroughOpen} />
+        </Suspense>
+      ) : null}
 
       <div className="flex-1" />
     </div>

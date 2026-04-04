@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from "react";
 
 import { PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Bloom, EffectComposer } from "@react-three/postprocessing";
 
 import type { LevelDefinition, RobotState, TraceFrame } from "@lumaloop/engine";
 
@@ -122,9 +121,6 @@ export function GameCanvas({
           robotModelRef={robotModelRef}
           isAutoRunning={isAutoRunning}
         />
-        <EffectComposer>
-          <Bloom intensity={0.08} luminanceThreshold={0.96} />
-        </EffectComposer>
       </Canvas>
     </div>
   );

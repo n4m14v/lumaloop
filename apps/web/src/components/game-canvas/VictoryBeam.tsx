@@ -86,28 +86,29 @@ export function VictoryBeam({
     timeline.to(flareMaterial, { duration: 0.56, opacity: 0.2 }, 0.56);
 
     timeline.to(
+      beamGroup.scale,
+      {
+        duration: ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS,
+        ease: "power2.in",
+        x: 0.08,
+        y: 1.02,
+        z: 0.08,
+      },
+      ROBOT_VICTORY_BEAM_EXIT_START_SECONDS,
+    );
+    timeline.to(
       beamMaterial,
-      { duration: ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS * ROBOT_VICTORY_BEAM_FADE_PORTION, opacity: 0 },
+      { duration: ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS, opacity: 0 },
       ROBOT_VICTORY_BEAM_EXIT_START_SECONDS,
     );
     timeline.to(
       flareMaterial,
-      { duration: 0.48, opacity: 0 },
+      { duration: ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS * 0.9, opacity: 0 },
       ROBOT_VICTORY_BEAM_EXIT_START_SECONDS,
     );
     timeline.to(
       light,
       { duration: ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS, intensity: 0 },
-      ROBOT_VICTORY_BEAM_EXIT_START_SECONDS,
-    );
-    timeline.to(
-      beamGroup.scale,
-      { duration: ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS, x: 0, y: 0, z: 0 },
-      ROBOT_VICTORY_BEAM_EXIT_START_SECONDS,
-    );
-    timeline.to(
-      beamGroup.position,
-      { duration: ROBOT_VICTORY_BEAM_EXIT_DURATION_SECONDS, y: baseY + 8.4 },
       ROBOT_VICTORY_BEAM_EXIT_START_SECONDS,
     );
     timeline.set(

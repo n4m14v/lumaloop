@@ -12,7 +12,6 @@ import {
   useGameStore,
 } from "../../features/game/store";
 import { useI18n } from "../../i18n/I18nProvider";
-import { localizeLevel } from "../../i18n/translations";
 import {
   createEmptyLevelProgressState,
   readLevelProgress,
@@ -36,7 +35,7 @@ function countFilledSlots(slots: ReturnType<typeof createSlotsForLevel>) {
 }
 
 export function useGameScreenController() {
-  const { locale } = useI18n();
+  const { localizeLevel } = useI18n();
   const [unlockedLevelIndex, setUnlockedLevelIndex] = useState(0);
   const [hasHydratedLevelIndex, setHasHydratedLevelIndex] = useState(false);
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
@@ -71,7 +70,7 @@ export function useGameScreenController() {
   const startAutoRun = useGameStore((state) => state.startAutoRun);
   const stopRun = useGameStore((state) => state.stopRun);
   const toggleAutoRunning = useGameStore((state) => state.toggleAutoRunning);
-  const localizedLevels = campaignLevels.map((campaignLevel) => localizeLevel(campaignLevel, locale));
+  const localizedLevels = campaignLevels.map(localizeLevel);
   const level = localizedLevels[levelIndex] ?? localizedLevels[0]!;
   const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
   const unlockedLevels = localizedLevels.map((_, index) => {

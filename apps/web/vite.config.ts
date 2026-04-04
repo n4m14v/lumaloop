@@ -3,6 +3,41 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("/node_modules/react/") || id.includes("/node_modules/react-dom/")) {
+            return "react-vendor";
+          }
+
+          if (
+            id.includes("/node_modules/three/") ||
+            id.includes("/node_modules/@react-three/fiber/") ||
+            id.includes("/node_modules/@react-three/drei/")
+          ) {
+            return "render-vendor";
+          }
+
+          if (
+            id.includes("/node_modules/gsap/") ||
+            id.includes("/node_modules/lucide-react/") ||
+            id.includes("/node_modules/@dnd-kit/")
+          ) {
+            return "ui-vendor";
+          }
+
+          if (
+            id.includes("/packages/engine/src/") ||
+            id.includes("/packages/level-data/src/") ||
+            id.includes("/packages/level-schema/src/")
+          ) {
+            return "game-data";
+          }
+        },
+      },
+    },
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

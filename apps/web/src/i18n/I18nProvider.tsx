@@ -1,19 +1,29 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
-import { getMessages, isRtlLocale, type Locale } from "./translations";
+import type { LevelDefinition } from "@lumaloop/engine";
+
+import {
+  isRtlLocale,
+  loadLocaleData,
+  localizeLevel as applyLevelLocalization,
+  type Locale,
+  type LocaleData,
+  type Messages,
+} from "./translations";
 
 const STORAGE_KEY = "lumaloop.locale";
 
 type I18nContextValue = {
   isRtl: boolean;
+  localizeLevel: (level: LevelDefinition) => LevelDefinition;
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: ReturnType<typeof getMessages>;
+  t: Messages;
 };
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-function detectPreferredLocale(): Locale {
+export function detectPreferredLocale(): Locale {
   if (typeof window === "undefined") {
     return "en";
   }
@@ -41,8 +51,36 @@ function detectPreferredLocale(): Locale {
   return "en";
 }
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() => detectPreferredLocale());
+export function I18nProvider({
+  children,
+  initialLocale,
+  initialLocaleData,
+}: {
+  children: ReactNode;
+  initialLocale: Locale;
+  initialLocaleData: LocaleData;
+}) {
+  const [locale, setLocaleState] = useState(initialLocale);
+  const [localeData, setLocaleData] = useState(initialLocaleData);
+  const latestRequestIdRef = useRef(0);
+
+  const setLocale = useCallback((nextLocale: Locale) => {
+    if (nextLocale === locale) {
+      return;
+    }
+
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
+
+    void loadLocaleData(nextLocale).then((nextLocaleData) => {
+      if (latestRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setLocaleData(nextLocaleData);
+      setLocaleState(nextLocale);
+    });
+  }, [locale]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -56,17 +94,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
   }, [locale]);
 
+  const contextValue = useMemo<I18nContextValue>(() => {
+    return {
+      isRtl: isRtlLocale(locale),
+      localizeLevel: (level) => applyLevelLocalization(level, localeData.levelCopy),
+      locale,
+      setLocale,
+      t: localeData.messages,
+    };
+  }, [locale, localeData, setLocale]);
+
   return (
-    <I18nContext.Provider
-      value={{
-        isRtl: isRtlLocale(locale),
-        locale,
-        setLocale,
-        t: getMessages(locale),
-      }}
-    >
-      {children}
-    </I18nContext.Provider>
+    <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>
   );
 }
 

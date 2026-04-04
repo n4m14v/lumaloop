@@ -4,7 +4,6 @@ import type { Command, RoutineName } from "@lumaloop/engine";
 
 import type { RoutineSlots } from "../features/game/store";
 import { useI18n } from "../i18n/I18nProvider";
-import { getRoutineLabel } from "../i18n/translations";
 import { ActionPalette } from "./program-workspace/ActionPalette";
 import { RoutineSection } from "./program-workspace/RoutineSection";
 
@@ -33,7 +32,7 @@ export function ProgramWorkspace({
   scene: ReactNode;
   showAllActions: boolean;
 }) {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
   const p1Enabled = showAllActions || allowedCommands.includes("CALL_P1");
   const p2Enabled = showAllActions || allowedCommands.includes("CALL_P2");
 
@@ -58,7 +57,7 @@ export function ProgramWorkspace({
             currentPointer={currentPointer}
             isActive={activeRoutine === "main"}
             isLocked={false}
-            label={getRoutineLabel(locale, "main")}
+            label={t.mainRoutine}
             onboardingId="routine-main"
             onClear={() => onClearRoutine("main")}
             onRemove={(index) => onRemoveCommand("main", index)}
@@ -71,7 +70,7 @@ export function ProgramWorkspace({
             currentPointer={currentPointer}
             isActive={activeRoutine === "p1"}
             isLocked={!p1Enabled}
-            label={getRoutineLabel(locale, "p1")}
+            label={t.proc1Routine}
             onClear={() => onClearRoutine("p1")}
             onRemove={(index) => onRemoveCommand("p1", index)}
             onSelect={() => onSelectRoutine("p1")}
@@ -83,7 +82,7 @@ export function ProgramWorkspace({
             currentPointer={currentPointer}
             isActive={activeRoutine === "p2"}
             isLocked={!p2Enabled}
-            label={getRoutineLabel(locale, "p2")}
+            label={t.proc2Routine}
             onClear={() => onClearRoutine("p2")}
             onRemove={(index) => onRemoveCommand("p2", index)}
             onSelect={() => onSelectRoutine("p2")}
