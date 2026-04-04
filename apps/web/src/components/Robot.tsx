@@ -29,6 +29,8 @@ export const ROBOT_VICTORY_BOT_FLOAT_DURATION_SECONDS = 1;
 export const ROBOT_VICTORY_POPUP_DELAY_MS = 200;
 const ROBOT_TURN_LEAN_RADIANS = 0.18;
 const ROBOT_INTERACT_DIP_DISTANCE = 0.12;
+const ROBOT_SECRET_CLICK_TARGET = 10;
+const ROBOT_SECRET_CLICK_WINDOW_MS = 3200;
 
 interface RobotProps {
   activeFrame: TraceFrame | null;
@@ -229,6 +231,8 @@ export function Robot({
   const activeActionRef = useRef<AnimationAction | null>(null);
   const mixerRef = useRef<AnimationMixer | null>(null);
   const clickTimelineRef = useRef<gsap.core.Timeline | null>(null);
+  const clickHistoryRef = useRef<number[]>([]);
+  const secretInteractionActiveRef = useRef(false);
   const actionCacheRef = useRef<Map<string, AnimationAction>>(new Map());
   const emissiveMaterialsRef = useRef<Material[]>([]);
   const fadeMaterialsRef = useRef<Array<Material & { opacity: number; transparent: boolean }>>([]);
@@ -246,6 +250,7 @@ export function Robot({
   const animationSet = useMemo(
     () => ({
       celebrate: findClip(animations, ["dance", "celebrate"]),
+      death: findClip(animations, ["death"]),
       idle: findClip(animations, ["idle", "standing", "stand"]),
       jump: findClip(animations, ["jump"]),
       no: findClip(animations, ["no"]),
@@ -1038,7 +1043,7 @@ export function Robot({
   function handleRobotDoubleClick(event: { stopPropagation: () => void }) {
     event.stopPropagation();
 
-    if (activeFrame || failurePulse || victorySequenceActive || isAutoRunning) {
+    if (activeFrame || failurePulse || victorySequenceActive || isAutoRunning || secretInteractionActiveRef.current) {
       return;
     }
 
@@ -1111,8 +1116,95 @@ export function Robot({
     clickTimelineRef.current = timeline;
   }
 
+  function handleRobotClick(event: { stopPropagation: () => void }) {
+    event.stopPropagation();
+
+    if (activeFrame || failurePulse || victorySequenceActive || isAutoRunning || secretInteractionActiveRef.current) {
+      clickHistoryRef.current = [];
+      return;
+    }
+
+    const now = performance.now();
+    clickHistoryRef.current = [...clickHistoryRef.current, now].filter(
+      (timestamp) => now - timestamp <= ROBOT_SECRET_CLICK_WINDOW_MS,
+    );
+
+    if (clickHistoryRef.current.length < ROBOT_SECRET_CLICK_TARGET) {
+      return;
+    }
+
+    clickHistoryRef.current = [];
+    secretInteractionActiveRef.current = true;
+    clickTimelineRef.current?.kill();
+
+    const deathAction = getAction(animationSet.death);
+    const idleAction = getAction(animationSet.idle);
+    const previousAction = activeActionRef.current;
+
+    if (previousAction && previousAction !== deathAction) {
+      previousAction.fadeOut(0.14);
+    }
+
+    if (deathAction) {
+      deathAction.enabled = true;
+      deathAction.reset();
+      deathAction.setLoop(LoopOnce, 1);
+      deathAction.clampWhenFinished = true;
+      deathAction.timeScale = 1;
+      deathAction.fadeIn(0.12).play();
+      activeActionRef.current = deathAction;
+    }
+
+    const angryState = { value: 0 };
+    const deathDurationSeconds = deathAction ? deathAction.getClip().duration : 1.3;
+    const timeline = gsap.timeline({
+      onComplete: () => {
+        clickTimelineRef.current = null;
+        secretInteractionActiveRef.current = false;
+        setMorphInfluence(angryMorphsRef.current, 0);
+
+        if (activeActionRef.current === deathAction) {
+          deathAction?.stop();
+          activeActionRef.current = null;
+        }
+      },
+    });
+
+    timeline.to(angryState, {
+      duration: 0.12,
+      ease: "power2.out",
+      onUpdate: () => {
+        setMorphInfluence(angryMorphsRef.current, angryState.value);
+      },
+      value: 0.8,
+    });
+    timeline.call(() => {
+      if (idleAction && !activeFrame && !failurePulse && !victorySequenceActive && !isAutoRunning) {
+        idleAction.enabled = true;
+        idleAction.reset();
+        idleAction.setLoop(LoopRepeat, Infinity);
+        idleAction.fadeIn(0.24).play();
+        activeActionRef.current = idleAction;
+      }
+
+      if (deathAction) {
+        deathAction.fadeOut(0.24);
+      }
+    }, [], Math.max(0.55, deathDurationSeconds + 0.08));
+    timeline.to(angryState, {
+      duration: 0.32,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        setMorphInfluence(angryMorphsRef.current, angryState.value);
+      },
+      value: 0,
+    }, Math.max(0.48, deathDurationSeconds - 0.04));
+
+    clickTimelineRef.current = timeline;
+  }
+
   return (
-    <group onDoubleClick={handleRobotDoubleClick} ref={rootRef}>
+    <group onClick={handleRobotClick} onDoubleClick={handleRobotDoubleClick} ref={rootRef}>
       <pointLight color="#d7f0ff" distance={7.5} intensity={ROBOT_RIM_LIGHT_INTENSITY} position={[-1.6, 2.2, -1.8]} />
       <pointLight color="#5bc8ff" distance={5.5} intensity={0.7} position={[0, 1.8, 0.6]} ref={statusLightRef} />
       <pointLight color="#ff5656" distance={4} intensity={0} position={[0, 1.4, 0]} ref={failureLightRef} />

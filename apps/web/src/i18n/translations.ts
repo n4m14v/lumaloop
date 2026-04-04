@@ -39,12 +39,15 @@ export type Messages = {
   noSlots: string;
   pause: string;
   play: string;
+  povMode: string;
+  povPlay: string;
   proc1Routine: string;
   proc2Routine: string;
   proceduralHierarchy: string;
   programSize: (value: number) => string;
   puzzleMenu: string;
   puzzleSolved: string;
+  dismiss: string;
   removeCommandFromSlot: (routineLabel: string, index: number) => string;
   replay: string;
   continuePlaying: string;
@@ -55,6 +58,9 @@ export type Messages = {
   showingFullCommandSet: string;
   showingLevelCommands: string;
   skipToEnd: string;
+  splashStart: string;
+  splashLoading: string;
+  splashTagline: string;
   starsProgress: (earned: number, total: number) => string;
   bestSize: (value: number) => string;
   idealShort: (value: number) => string;

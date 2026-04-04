@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { AlertTriangle, Info, TriangleAlert, X } from "lucide-react";
+import { useI18n } from "../../i18n/I18nProvider";
 
 const EXIT_DURATION_MS = 195;
 
@@ -26,6 +27,7 @@ export function GameStatusSnackbar({
   className?: string;
   feedback: GameStatusFeedback | null;
 }) {
+  const { t } = useI18n();
   const [renderedFeedback, setRenderedFeedback] = useState<GameStatusFeedback | null>(null);
   const [animationState, setAnimationState] = useState<"entering" | "exiting" | "idle">("idle");
   const renderedFeedbackRef = useRef<GameStatusFeedback | null>(null);
@@ -193,7 +195,7 @@ export function GameStatusSnackbar({
           </p>
         </div>
         <button
-          aria-label="Dismiss"
+          aria-label={t.dismiss}
           className="ui-button h-8 w-8 shrink-0 justify-center rounded-full px-0"
           onClick={handleDismiss}
           type="button"

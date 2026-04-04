@@ -1,8 +1,12 @@
-import { useI18n } from "../i18n/I18nProvider";
+import { BrandLogo } from "../components/BrandLogo";
 
-export function GameScreenLoadingShell({ isVisible = true }: { isVisible?: boolean }) {
-  const { t } = useI18n();
-
+export function GameScreenLoadingShell({
+  isVisible = true,
+  subtitle = "Loading the puzzle grid...",
+}: {
+  isVisible?: boolean;
+  subtitle?: string;
+}) {
   return (
     <main
       className={[
@@ -50,11 +54,11 @@ export function GameScreenLoadingShell({ isVisible = true }: { isVisible?: boole
           <div className="loader" />
         </div>
 
-        <h1 className="font-display text-[clamp(1.2rem,1.8vw,1.5rem)] font-semibold tracking-[0.12em]">
-          {t.loaderTitle}
+        <h1>
+          <BrandLogo className="text-[clamp(1.2rem,1.8vw,1.5rem)] font-semibold tracking-[0.12em]" strokeWidth={0.9} />
         </h1>
         <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">
-          {t.loaderSubtitle}
+          {subtitle}
         </p>
       </div>
     </main>

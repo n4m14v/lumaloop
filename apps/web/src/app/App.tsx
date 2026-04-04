@@ -1,7 +1,16 @@
-import { Suspense, lazy, useEffect, useState } from "react";
-import { I18nProvider, detectPreferredLocale } from "../i18n/I18nProvider";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+
+import { I18nProvider, detectPreferredLocale, useI18n } from "../i18n/I18nProvider";
 import { loadLocaleData, type Locale, type LocaleData } from "../i18n/translations";
 import { GameScreenLoadingShell } from "./GameScreenLoadingShell";
+import { GameSplashScreen } from "./GameSplashScreen";
+
+const MIN_LOADER_VISIBLE_MS = 1500;
+const POST_SCENE_READY_DELAY_MS = 500;
+const LOADER_FADE_OUT_MS = 500;
+const SPLASH_FADE_OUT_MS = 420;
+
+type AppRoute = "/" | "/play";
 
 const loadGameScreen = async () => {
   const module = await import("../screens/GameScreen");
@@ -9,23 +18,31 @@ const loadGameScreen = async () => {
 };
 
 const GameScreen = lazy(loadGameScreen);
-const MIN_LOADER_VISIBLE_MS = 1500;
-const POST_SCENE_READY_DELAY_MS = 500;
-const LOADER_FADE_OUT_MS = 500;
 
-export function App() {
-  const [bootstrap, setBootstrap] = useState<{ locale: Locale; localeData: LocaleData } | null>(null);
+function normalizeRoute(pathname: string): AppRoute {
+  return pathname === "/play" ? "/play" : "/";
+}
+
+function PlayRoute({
+  hideLoader = false,
+  onReady,
+}: {
+  hideLoader?: boolean;
+  onReady?: (() => void) | undefined;
+}) {
+  const { t } = useI18n();
+  const [isBootstrapReady, setIsBootstrapReady] = useState(false);
   const [isSceneReady, setIsSceneReady] = useState(false);
   const [isLoaderVisible, setIsLoaderVisible] = useState(true);
   const [shouldRenderLoader, setShouldRenderLoader] = useState(true);
+  const [hasReportedReady, setHasReportedReady] = useState(false);
 
   useEffect(() => {
     let isActive = true;
-    const initialLocale = detectPreferredLocale();
     const startedAt = performance.now();
-    let settleTimeoutId: number | null = null;
+    let bootstrapTimeoutId: number | null = null;
 
-    void Promise.all([loadLocaleData(initialLocale), loadGameScreen()]).then(([localeData]) => {
+    void loadGameScreen().then(() => {
       if (!isActive) {
         return;
       }
@@ -33,25 +50,26 @@ export function App() {
       const elapsedMs = performance.now() - startedAt;
       const remainingDelayMs = Math.max(0, MIN_LOADER_VISIBLE_MS - elapsedMs);
 
-      settleTimeoutId = window.setTimeout(() => {
+      bootstrapTimeoutId = window.setTimeout(() => {
         if (!isActive) {
           return;
         }
 
-        setBootstrap({ locale: initialLocale, localeData });
+        setIsBootstrapReady(true);
       }, remainingDelayMs);
     });
 
     return () => {
       isActive = false;
-      if (settleTimeoutId !== null) {
-        window.clearTimeout(settleTimeoutId);
+
+      if (bootstrapTimeoutId !== null) {
+        window.clearTimeout(bootstrapTimeoutId);
       }
     };
   }, []);
 
   useEffect(() => {
-    if (!bootstrap || !isSceneReady) {
+    if (!isBootstrapReady || !isSceneReady) {
       return;
     }
 
@@ -62,7 +80,22 @@ export function App() {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [bootstrap, isSceneReady]);
+  }, [isBootstrapReady, isSceneReady]);
+
+  useEffect(() => {
+    if (!hideLoader || !isBootstrapReady || !isSceneReady || hasReportedReady) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setHasReportedReady(true);
+      onReady?.();
+    }, POST_SCENE_READY_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [hasReportedReady, hideLoader, isBootstrapReady, isSceneReady, onReady]);
 
   useEffect(() => {
     if (isLoaderVisible) {
@@ -78,16 +111,144 @@ export function App() {
     };
   }, [isLoaderVisible]);
 
-  if (!bootstrap) {
+  if (!isBootstrapReady) {
+    if (hideLoader) {
+      return null;
+    }
+
+    return <GameScreenLoadingShell subtitle={t.loaderSubtitle} />;
+  }
+
+  return (
+    <>
+      {!hideLoader && shouldRenderLoader ? (
+        <GameScreenLoadingShell
+          isVisible={isLoaderVisible}
+          subtitle={t.loaderSubtitle}
+        />
+      ) : null}
+      <Suspense fallback={hideLoader ? null : <GameScreenLoadingShell subtitle={t.loaderSubtitle} />}>
+        <GameScreen onSceneReady={() => setIsSceneReady(true)} />
+      </Suspense>
+    </>
+  );
+}
+
+function RoutedApp({
+  navigate,
+  route,
+}: {
+  navigate: (nextRoute: AppRoute) => void;
+  route: AppRoute;
+}) {
+  const [isSplashVisible, setIsSplashVisible] = useState(route === "/");
+  const [isStarting, setIsStarting] = useState(false);
+
+  useEffect(() => {
+    if (route === "/") {
+      setIsSplashVisible(true);
+      setIsStarting(false);
+    }
+  }, [route]);
+
+  useEffect(() => {
+    if (!isStarting || isSplashVisible) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsStarting(false);
+    }, SPLASH_FADE_OUT_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isSplashVisible, isStarting]);
+
+  const handleStart = useCallback(() => {
+    if (isStarting) {
+      return;
+    }
+
+    setIsStarting(true);
+    void loadGameScreen();
+    navigate("/play");
+  }, [isStarting, navigate]);
+
+  if (route === "/") {
+    return <GameSplashScreen isLoading={isStarting} isVisible={isSplashVisible} onStart={handleStart} />;
+  }
+
+  return (
+    <>
+      <PlayRoute
+        hideLoader={isStarting}
+        onReady={isStarting ? () => setIsSplashVisible(false) : undefined}
+      />
+      {isStarting || isSplashVisible ? (
+        <GameSplashScreen
+          isLoading={isStarting}
+          isVisible={isSplashVisible}
+          onStart={handleStart}
+        />
+      ) : null}
+    </>
+  );
+}
+
+export function App() {
+  const [route, setRoute] = useState<AppRoute>(() =>
+    typeof window === "undefined" ? "/" : normalizeRoute(window.location.pathname),
+  );
+  const [localeBootstrap, setLocaleBootstrap] = useState<{ locale: Locale; localeData: LocaleData } | null>(null);
+
+  useEffect(() => {
+    function handlePopState() {
+      setRoute(normalizeRoute(window.location.pathname));
+    }
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+    const initialLocale = detectPreferredLocale();
+
+    void loadLocaleData(initialLocale).then((localeData) => {
+      if (!isActive) {
+        return;
+      }
+
+      setLocaleBootstrap({ locale: initialLocale, localeData });
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const navigate = useCallback((nextRoute: AppRoute) => {
+    const normalizedRoute = normalizeRoute(nextRoute);
+
+    if (normalizedRoute === route) {
+      return;
+    }
+
+    window.history.pushState(null, "", normalizedRoute);
+    setRoute(normalizedRoute);
+  }, [route]);
+
+  if (!localeBootstrap) {
     return <GameScreenLoadingShell />;
   }
 
   return (
-    <I18nProvider initialLocale={bootstrap.locale} initialLocaleData={bootstrap.localeData}>
-      {shouldRenderLoader ? <GameScreenLoadingShell isVisible={isLoaderVisible} /> : null}
-      <Suspense fallback={<GameScreenLoadingShell />}>
-        <GameScreen onSceneReady={() => setIsSceneReady(true)} />
-      </Suspense>
+    <I18nProvider initialLocale={localeBootstrap.locale} initialLocaleData={localeBootstrap.localeData}>
+      <RoutedApp navigate={navigate} route={route} />
     </I18nProvider>
   );
 }

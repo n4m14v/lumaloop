@@ -7,14 +7,11 @@ import type { LevelDefinition } from "@lumaloop/engine";
 import type { RobotColorId } from "../../features/game/robotColors";
 import type { LevelProgressState } from "../../screens/game-screen/levelProgressStorage";
 import { useI18n } from "../../i18n/I18nProvider";
+import { BrandLogo } from "../BrandLogo";
 import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
 import { GameStatusSnackbar, type GameStatusFeedback } from "./GameStatusSnackbar";
-
-const LevelMapBackdrop = lazy(async () => {
-  const module = await import("./LevelMapBackdrop");
-  return { default: module.LevelMapBackdrop };
-});
+import { LevelMapBackdrop } from "./LevelMapBackdrop";
 
 const GameWalkthroughDialog = lazy(async () => {
   const module = await import("./GameWalkthroughDialog");
@@ -115,6 +112,24 @@ export function GameHeaderBar({
   }, [isRunMenuOpen]);
 
   useEffect(() => {
+    if (!isRunMenuOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsRunMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isRunMenuOpen]);
+
+  useEffect(() => {
     if (!isLevelMapOpen) {
       return;
     }
@@ -135,8 +150,22 @@ export function GameHeaderBar({
     };
   }, [isLevelMapOpen, onCloseLevelMap]);
 
+  useEffect(() => {
+    if (!isAutoRunning) {
+      return;
+    }
+
+    setIsRunMenuOpen(false);
+  }, [isAutoRunning]);
+
   const selectedRunLabel =
-    selectedRunMode === "fast" ? t.fastPlay : selectedRunMode === "instant" ? t.skipToEnd : selectedRunMode === "pov" ? "POV Play" : t.play;
+    selectedRunMode === "fast"
+      ? t.fastPlay
+      : selectedRunMode === "instant"
+        ? t.skipToEnd
+        : selectedRunMode === "pov"
+          ? t.povPlay
+          : t.play;
 
   return (
     <div className="pointer-events-none relative z-10 flex min-h-[calc(100vh-3rem)] flex-col">
@@ -170,8 +199,8 @@ export function GameHeaderBar({
           </div>
 
           <div className="flex items-center justify-center gap-3 text-center md:justify-self-center">
-            <h1 className="font-display text-[clamp(1.15rem,1.35vw,1.5rem)] font-semibold tracking-[0.08em] text-[var(--text-primary)]">
-              LUMALOOP
+            <h1>
+              <BrandLogo className="text-[clamp(1.15rem,1.35vw,1.5rem)] font-semibold tracking-[0.08em]" strokeWidth={0.85} />
             </h1>
             <button
               aria-expanded={isLevelMapOpen}
@@ -245,7 +274,7 @@ export function GameHeaderBar({
                     {[
                       { label: t.play, mode: "normal" as const },
                       { label: t.fastPlay, mode: "fast" as const },
-                      { label: "POV Mode", mode: "pov" as const },
+                      { label: t.povMode, mode: "pov" as const },
                       { label: t.skipToEnd, mode: "instant" as const },
                     ].map((option) => (
                       <button
@@ -287,17 +316,15 @@ export function GameHeaderBar({
       </div>
 
       {hasOpenedLevelMap ? (
-        <Suspense fallback={null}>
-          <LevelMapBackdrop
-            currentLevelId={level.id}
-            isOpen={isLevelMapOpen}
-            localizedLevels={localizedLevels}
-            onClose={onCloseLevelMap}
-            onSelectLevel={onSetLevelIndex}
-            levelProgress={levelProgress}
-            unlockedLevels={unlockedLevels}
-          />
-        </Suspense>
+        <LevelMapBackdrop
+          currentLevelId={level.id}
+          isOpen={isLevelMapOpen}
+          localizedLevels={localizedLevels}
+          onClose={onCloseLevelMap}
+          onSelectLevel={onSetLevelIndex}
+          levelProgress={levelProgress}
+          unlockedLevels={unlockedLevels}
+        />
       ) : null}
       {hasOpenedWalkthrough ? (
         <Suspense fallback={null}>
