@@ -35,7 +35,7 @@ function GameCanvasLoadingLayer({ className }: { className: string }) {
   );
 }
 
-export function GameScreen() {
+export function GameScreen({ onSceneReady }: { onSceneReady?: () => void }) {
   const { t } = useI18n();
   const controller = useGameScreenController();
   const [isLevelMapOpen, setIsLevelMapOpen] = useState(false);
@@ -145,6 +145,7 @@ export function GameScreen() {
               <Suspense fallback={<GameCanvasLoadingLayer className={canvasClassName} />}>
                 <GameCanvas
                   className={canvasClassName}
+                  {...(onSceneReady ? { onSceneReady } : {})}
                   {...controller.canvas}
                 />
               </Suspense>

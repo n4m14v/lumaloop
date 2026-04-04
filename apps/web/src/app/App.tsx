@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { I18nProvider, detectPreferredLocale } from "../i18n/I18nProvider";
 import { loadLocaleData, type Locale, type LocaleData } from "../i18n/translations";
+import { GameScreenLoadingShell } from "./GameScreenLoadingShell";
 
 const loadGameScreen = async () => {
   const module = await import("../screens/GameScreen");
@@ -8,43 +9,74 @@ const loadGameScreen = async () => {
 };
 
 const GameScreen = lazy(loadGameScreen);
-
-function GameScreenLoadingShell() {
-  return (
-    <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[#040b12] px-4 text-[var(--text-primary)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(31,229,239,0.12),transparent_28%),radial-gradient(circle_at_84%_24%,rgba(255,156,84,0.08),transparent_24%),radial-gradient(circle_at_50%_78%,rgba(108,147,255,0.08),transparent_26%)]" />
-      <div className="relative flex w-full max-w-[22rem] flex-col items-center rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] px-8 py-7 text-center shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-[12px]">
-        <div className="h-12 w-12 rounded-full border border-[var(--accent)] border-t-transparent animate-spin shadow-[0_0_20px_var(--accent-shadow)]" />
-        <h1 className="mt-5 font-display text-[clamp(1.2rem,1.8vw,1.5rem)] font-semibold tracking-[0.08em]">
-          LUMALOOP
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-          Loading the puzzle grid...
-        </p>
-      </div>
-    </main>
-  );
-}
+const MIN_LOADER_VISIBLE_MS = 1500;
+const POST_SCENE_READY_DELAY_MS = 500;
+const LOADER_FADE_OUT_MS = 500;
 
 export function App() {
   const [bootstrap, setBootstrap] = useState<{ locale: Locale; localeData: LocaleData } | null>(null);
+  const [isSceneReady, setIsSceneReady] = useState(false);
+  const [isLoaderVisible, setIsLoaderVisible] = useState(true);
+  const [shouldRenderLoader, setShouldRenderLoader] = useState(true);
 
   useEffect(() => {
     let isActive = true;
     const initialLocale = detectPreferredLocale();
+    const startedAt = performance.now();
+    let settleTimeoutId: number | null = null;
 
     void Promise.all([loadLocaleData(initialLocale), loadGameScreen()]).then(([localeData]) => {
       if (!isActive) {
         return;
       }
 
-      setBootstrap({ locale: initialLocale, localeData });
+      const elapsedMs = performance.now() - startedAt;
+      const remainingDelayMs = Math.max(0, MIN_LOADER_VISIBLE_MS - elapsedMs);
+
+      settleTimeoutId = window.setTimeout(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setBootstrap({ locale: initialLocale, localeData });
+      }, remainingDelayMs);
     });
 
     return () => {
       isActive = false;
+      if (settleTimeoutId !== null) {
+        window.clearTimeout(settleTimeoutId);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!bootstrap || !isSceneReady) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsLoaderVisible(false);
+    }, POST_SCENE_READY_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [bootstrap, isSceneReady]);
+
+  useEffect(() => {
+    if (isLoaderVisible) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShouldRenderLoader(false);
+    }, LOADER_FADE_OUT_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isLoaderVisible]);
 
   if (!bootstrap) {
     return <GameScreenLoadingShell />;
@@ -52,8 +84,9 @@ export function App() {
 
   return (
     <I18nProvider initialLocale={bootstrap.locale} initialLocaleData={bootstrap.localeData}>
+      {shouldRenderLoader ? <GameScreenLoadingShell isVisible={isLoaderVisible} /> : null}
       <Suspense fallback={<GameScreenLoadingShell />}>
-        <GameScreen />
+        <GameScreen onSceneReady={() => setIsSceneReady(true)} />
       </Suspense>
     </I18nProvider>
   );

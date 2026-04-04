@@ -30,6 +30,8 @@ export type Messages = {
   levelOptionLabel: (index: number, name: string) => string;
   locked: string;
   lockedForLevel: string;
+  loaderTitle: string;
+  loaderSubtitle: string;
   mainRoutine: string;
   menu: string;
   next: string;

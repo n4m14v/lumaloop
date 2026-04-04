@@ -27,6 +27,8 @@ export const localeData: LocaleData = {
     levelOptionLabel: (index, name) => `שלב ${index} - ${name}`,
     locked: "נעול",
     lockedForLevel: "נעול בשלב הזה",
+    loaderTitle: "LUMALOOP",
+    loaderSubtitle: "טוען את לוח הפאזל...",
     mainRoutine: "תהליך ראשי",
     menu: "תפריט",
     next: "הבא",

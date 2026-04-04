@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
+import { useProgress } from "@react-three/drei";
 
 import type { LevelDefinition, RobotState, TraceFrame } from "@lumaloop/engine";
 
@@ -31,6 +32,41 @@ interface GameCanvasProps {
   showVictorySequence: boolean;
   isPovActive: boolean;
   isAutoRunning: boolean;
+  onSceneReady?: (() => void) | undefined;
+}
+
+function SceneReadySignal({
+  canvasCreated,
+  onSceneReady,
+}: {
+  canvasCreated: boolean;
+  onSceneReady?: (() => void) | undefined;
+}) {
+  const { active } = useProgress();
+  const hasReportedReadyRef = useRef(false);
+
+  useEffect(() => {
+    if (!canvasCreated || active || hasReportedReadyRef.current || !onSceneReady) {
+      return;
+    }
+
+    let frameOneId = 0;
+    let frameTwoId = 0;
+
+    frameOneId = window.requestAnimationFrame(() => {
+      frameTwoId = window.requestAnimationFrame(() => {
+        hasReportedReadyRef.current = true;
+        onSceneReady();
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameOneId);
+      window.cancelAnimationFrame(frameTwoId);
+    };
+  }, [active, canvasCreated, onSceneReady]);
+
+  return null;
 }
 
 export function GameCanvas({
@@ -52,8 +88,10 @@ export function GameCanvas({
   showVictorySequence,
   isPovActive,
   isAutoRunning,
+  onSceneReady,
 }: GameCanvasProps) {
   const [victoryBeamActive, setVictoryBeamActive] = useState(showVictorySequence);
+  const [canvasCreated, setCanvasCreated] = useState(false);
   const { canvasContainerRef, canvasInteractionProps, cursorClassName, orbitAzimuth, orbitElevation, zoom } =
     useOrbitCameraControls({
       isRotationLocked,
@@ -88,7 +126,12 @@ export function GameCanvas({
       style={{ touchAction: "none" }}
       {...canvasInteractionProps}
     >
-      <Canvas gl={{ alpha: true, powerPreference: "high-performance" }} dpr={[1, 1.25]}>
+      <Canvas
+        dpr={[1, 1.25]}
+        gl={{ alpha: true, powerPreference: "high-performance" }}
+        onCreated={() => setCanvasCreated(true)}
+      >
+        <SceneReadySignal canvasCreated={canvasCreated} onSceneReady={onSceneReady} />
         {!isPovActive && <PerspectiveCamera makeDefault far={100} fov={28} near={0.1} position={[14, 12, 14]} />}
         {!isPovActive && <CameraRig elevation={orbitElevation} level={level} orbitAngle={orbitAzimuth} zoom={zoom} />}
         <POVCamera isActive={isPovActive} robotRef={robotRootRef} modelRef={robotModelRef} activeCommand={activeFrame?.command ?? null} />

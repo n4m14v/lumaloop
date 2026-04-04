@@ -27,6 +27,8 @@ export const localeData: LocaleData = {
     levelOptionLabel: (index, name) => `Уровень ${index} - ${name}`,
     locked: "Закрыто",
     lockedForLevel: "Недоступно на этом уровне",
+    loaderTitle: "LUMALOOP",
+    loaderSubtitle: "Загрузка игрового поля...",
     mainRoutine: "Главный процесс",
     menu: "Меню",
     next: "Дальше",

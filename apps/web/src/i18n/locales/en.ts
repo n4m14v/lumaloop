@@ -27,6 +27,8 @@ export const localeData: LocaleData = {
     levelOptionLabel: (index, name) => `Level ${index} - ${name}`,
     locked: "Locked",
     lockedForLevel: "Locked for this level",
+    loaderTitle: "LUMALOOP",
+    loaderSubtitle: "Loading the puzzle grid...",
     mainRoutine: "Main Process",
     menu: "Menu",
     next: "Next",
