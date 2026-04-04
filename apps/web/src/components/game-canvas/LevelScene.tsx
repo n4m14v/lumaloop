@@ -6,14 +6,12 @@
 
 import { useMemo, useRef } from "react";
 
-import { RoundedBox } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { getResolvedBoardTiles, type LevelDefinition, type RobotState, type TraceFrame } from "@lumaloop/engine";
-import type { Group, Material, MeshBasicMaterial } from "three";
+import type { Group, Material } from "three";
 
 import type { RobotColorId } from "../../features/game/robotColors";
 import { Robot } from "../Robot";
-import { BLOCK_HEIGHT, TILE_SIZE } from "./constants";
 import { getBoardMetrics, getTileKey } from "./sceneMath";
 import { GridFloor } from "./GridFloor";
 import { TileBlock } from "./TileBlock";

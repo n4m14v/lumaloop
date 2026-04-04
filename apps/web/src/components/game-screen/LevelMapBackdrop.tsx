@@ -7,11 +7,9 @@ import type { Command, LevelDefinition } from "@lumaloop/engine";
 
 import { useI18n } from "../../i18n/I18nProvider";
 import {
+  getLevelProgressEntry,
   getLevelBestProgramSize,
-  getLevelStars,
   getWorldProgressSummary,
-  isLevelCompleted,
-  isLevelPerfected,
   type LevelProgressState,
 } from "../../screens/game-screen/levelProgressStorage";
 
@@ -87,11 +85,11 @@ export function LevelMapBackdrop({
     const groups = new Map<string, {
       focusLabels: string[];
       levels: LevelMapEntry[];
-      totalStars: number;
     }>();
 
     localizedLevels.forEach((level, index) => {
-      const levelStars = getLevelStars(levelProgress, level.id);
+      const levelProgressEntry = getLevelProgressEntry(levelProgress, level.id);
+      const levelStars = levelProgressEntry.bestStars;
       const bestProgramLength = getLevelBestProgramSize(levelProgress, level.id);
       const newCommands = level.allowedCommands.filter((command) => !seenCommands.has(command));
 
@@ -102,7 +100,6 @@ export function LevelMapBackdrop({
       const group = groups.get(level.world) ?? {
         focusLabels: [],
         levels: [],
-        totalStars: 0,
       };
 
       const newCommandLabels = newCommands.map((command) => t.commandLabels[command]);
@@ -115,10 +112,10 @@ export function LevelMapBackdrop({
       const nextLevelEntry: LevelMapEntry = {
         badgeLabel: newCommandLabels[0] ? t.newMechanic(newCommandLabels[0]) : null,
         index,
-        isCompleted: isLevelCompleted(levelProgress, level.id),
+        isCompleted: levelProgressEntry.completed,
         isCurrent: level.id === currentLevelId,
         isLocked: !unlockedLevels[index],
-        isPerfected: isLevelPerfected(levelProgress, level.id),
+        isPerfected: levelProgressEntry.perfected,
         level,
         stars: levelStars,
       };
@@ -132,7 +129,6 @@ export function LevelMapBackdrop({
       }
 
       group.levels.push(nextLevelEntry);
-      group.totalStars += levelStars;
       groups.set(level.world, group);
     });
 

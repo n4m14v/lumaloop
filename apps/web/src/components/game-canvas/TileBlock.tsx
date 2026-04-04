@@ -201,7 +201,6 @@ function TileBlockInner({
       ? tileStyle.targetShellEmissiveIntensityLit
       : tileStyle.targetShellEmissiveIntensity
     : tileStyle.frostedShellEmissiveIntensity;
-  const isTransparentShell = shellOpacity < 1 || shellTransmission > 0;
   const surfaceOpacity = isTarget ? tileStyle.targetSurfaceOpacity : tileStyle.frostedSurfaceOpacity;
   const innerFillColor = isTarget
     ? isLit

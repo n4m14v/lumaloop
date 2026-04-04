@@ -72,7 +72,6 @@ export function GameOnboardingOverlay({
   skipLabel,
   target,
   title,
-  type,
 }: {
   body: string;
   continueLabel: string;
