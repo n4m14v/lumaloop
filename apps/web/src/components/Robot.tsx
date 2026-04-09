@@ -481,14 +481,14 @@ export function Robot({
 
   useLayoutEffect(() => {
     const root = rootRef.current;
-    if (!root) {
+    if (!root || activeFrame) {
       return;
     }
 
     const [x, y, z] = toWorldPosition(robot);
     root.position.set(x, y, z);
     root.rotation.y = toFacingRotation(robot.facing);
-  }, [robot]);
+  }, [activeFrame, robot]);
 
   useEffect(() => {
     const model = modelRef.current;

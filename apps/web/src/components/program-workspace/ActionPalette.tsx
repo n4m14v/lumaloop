@@ -2,7 +2,7 @@ import type { Command } from "@lumaloop/engine";
 
 import { ALL_COMMANDS } from "../../features/game/store";
 import { useI18n } from "../../i18n/I18nProvider";
-import { ProgramActionGlyph } from "./ProgramCommandTile";
+import { PaletteActionButton, ProgramActionGlyph } from "./ProgramCommandTile";
 
 interface ActionPaletteProps {
   allowedCommands: Command[];
@@ -25,22 +25,15 @@ function ActionButton({
   const onboardingId = `palette-${command.toLowerCase().replaceAll("_", "-")}`;
 
   return (
-    <button
-      aria-label={label}
-      className={[
-        "group ui-deboss-surface relative aspect-square rounded-[12px] border transition",
-        disabled
-          ? "border-[var(--panel-border)] text-[var(--text-muted)] opacity-70"
-          : "border-[var(--panel-border)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:shadow-[0_0_18px_var(--accent-shadow)]",
-      ].join(" ")}
-      data-onboarding={onboardingId}
+    <PaletteActionButton
+      ariaLabel={label}
       disabled={disabled}
+      onboardingId={onboardingId}
       onClick={onClick}
       title={label}
-      type="button"
     >
       <ProgramActionGlyph command={command} />
-    </button>
+    </PaletteActionButton>
   );
 }
 

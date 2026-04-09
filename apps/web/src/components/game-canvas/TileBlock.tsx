@@ -59,6 +59,7 @@ const DARK_TILE_STYLE = {
 
 interface TileBlockProps {
   activeCommand?: string | null;
+  dimmed?: boolean;
   failureBlink: boolean;
   failurePulseToken: object | null;
   isActive: boolean;
@@ -162,6 +163,7 @@ function ToggleGlyph({ isActive, activeCommand }: { isActive: boolean; activeCom
 
 function TileBlockInner({
   activeCommand,
+  dimmed = false,
   failureBlink,
   failurePulseToken,
   isActive,
@@ -213,6 +215,37 @@ function TileBlockInner({
       ? tileStyle.targetEdgeColorLit
       : tileStyle.targetEdgeColor
     : tileStyle.edgeColor;
+  const shellColorValue = useMemo(() => {
+    const color = new Color(shellColor);
+
+    if (dimmed && !isTarget) {
+      color.lerp(new Color("#0a1018"), 0.44);
+    }
+
+    return color;
+  }, [dimmed, isTarget, shellColor]);
+  const innerFillColorValue = useMemo(() => {
+    const color = new Color(innerFillColor);
+
+    if (dimmed && !isTarget) {
+      color.lerp(new Color("#090d14"), 0.52);
+    }
+
+    return color;
+  }, [dimmed, innerFillColor, isTarget]);
+  const edgeColorValue = useMemo(() => {
+    const color = new Color(edgeColor);
+
+    if (dimmed && !isTarget) {
+      color.lerp(new Color("#617083"), 0.4);
+    }
+
+    return color;
+  }, [dimmed, edgeColor, isTarget]);
+  const shellOpacityValue = dimmed && !isTarget ? Math.max(0.84, shellOpacity * 0.96) : shellOpacity;
+  const shellEmissiveIntensityValue = dimmed && !isTarget ? shellEmissiveIntensity * 0.16 : shellEmissiveIntensity;
+  const innerFillOpacityValue = dimmed && !isTarget ? innerFillOpacity * 0.34 : innerFillOpacity;
+  const surfaceOpacityValue = dimmed && !isTarget ? surfaceOpacity * 0.42 : surfaceOpacity;
 
   useEffect(() => {
     const topMaterial = topMaterialRef.current;
@@ -317,7 +350,7 @@ function TileBlockInner({
       topMaterial.emissive.copy(baseEmissive);
       topMaterial.emissiveIntensity = shellEmissiveIntensity;
     };
-  }, [failureBlink, failurePulseToken, shellEmissiveIntensity]);
+  }, [failureBlink, failurePulseToken, shellEmissiveIntensityValue]);
 
   useEffect(() => {
     if (!isTarget || !targetCoreMaterialRef.current || !targetLightRef.current) {
@@ -554,23 +587,24 @@ function TileBlockInner({
             <>
               <RoundedBox args={[1.92, BLOCK_HEIGHT - 0.06, 1.92]} radius={0.22} smoothness={8}>
                 <meshPhysicalMaterial
-                  color={shellColor}
+                  color={shellColorValue}
                   depthTest
                   emissive={shellEmissive}
-                  emissiveIntensity={shellEmissiveIntensity}
-                  opacity={shellOpacity}
+                  emissiveIntensity={shellEmissiveIntensityValue}
+                  opacity={shellOpacityValue}
                   roughness={tileStyle.frostedShellRoughness}
+                  {...(layer === stackCount - 1 ? { ref: topMaterialRef } : {})}
                   thickness={tileStyle.frostedShellThickness}
                   transmission={shellTransmission}
                   transparent
                 />
               </RoundedBox>
               <RoundedBox args={[1.7, BLOCK_HEIGHT - 0.24, 1.7]} radius={0.16} smoothness={4}>
-                <meshBasicMaterial color={innerFillColor} depthTest opacity={innerFillOpacity} transparent />
+                <meshBasicMaterial color={innerFillColorValue} depthTest opacity={innerFillOpacityValue} transparent />
               </RoundedBox>
               <RoundedBox args={[2.08, BLOCK_HEIGHT + 0.08, 2.08]} radius={0.18} smoothness={8}>
-                <meshBasicMaterial color="#f9fcff" depthWrite={false} opacity={surfaceOpacity} toneMapped={false} transparent />
-                <Edges color={edgeColor} scale={1} threshold={30} />
+                <meshBasicMaterial color="#f9fcff" depthWrite={false} opacity={surfaceOpacityValue} toneMapped={false} transparent />
+                <Edges color={edgeColorValue} scale={1} threshold={30} />
               </RoundedBox>
               {isSwitch && layer === stackCount - 1 ? <ToggleGlyph isActive={isActive} activeCommand={activeCommand ?? null} /> : null}
             </>

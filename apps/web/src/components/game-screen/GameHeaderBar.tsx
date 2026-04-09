@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
 
-import { ChevronDown, Pause, Play, SkipForward } from "lucide-react";
+import { CircleHelp, ChevronDown } from "lucide-react";
 
 import type { LevelDefinition } from "@lumaloop/engine";
 
@@ -11,57 +11,81 @@ import { BrandLogo } from "../BrandLogo";
 import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
 import { GameStatusSnackbar, type GameStatusFeedback } from "./GameStatusSnackbar";
-import { LevelMapBackdrop } from "./LevelMapBackdrop";
+import { LevelMapBackdrop, type LevelMapSection } from "./LevelMapBackdrop";
+import { RunModeSplitButton } from "./RunModeSplitButton";
 
 const GameWalkthroughDialog = lazy(async () => {
   const module = await import("./GameWalkthroughDialog");
   return { default: module.GameWalkthroughDialog };
 });
 
+type HeaderHelpTone = "info" | "success" | "warning" | "error" | "invalid";
+
+interface HeaderHelpPopover {
+  controlsBody?: string;
+  feedback?: { body: string; title: string; tone: HeaderHelpTone } | null;
+  goalLabel: string;
+  guideBody: string;
+  guideHint: string;
+  guideTitle: string;
+}
+
+interface HeaderObjectivePopover {
+  objectiveBody: string;
+  objectiveLabel: string;
+  objectiveTitle: string;
+}
+
+interface HeaderMenuConfig {
+  extraActions?: Array<{ label: string; onSelect: () => void }>;
+  onReplayTutorial?: () => void;
+  onSetRobotColorId?: (value: RobotColorId) => void;
+  onSetShowAllActions?: (value: boolean) => void;
+  robotColorId?: RobotColorId;
+  showAllActions?: boolean;
+  titleEyebrow?: string;
+}
+
 interface GameHeaderBarProps {
   canStartRun: boolean;
   currentLevelIndex: number;
   isAutoRunning: boolean;
   isLevelMapOpen: boolean;
-  level: LevelDefinition;
+  levelId: string;
+  levelName: string;
   levelProgress: LevelProgressState;
-  localizedLevels: LevelDefinition[];
+  localizedLevels?: LevelDefinition[];
+  levelMapSections?: LevelMapSection[];
+  menu?: HeaderMenuConfig;
+  objectivePopover?: HeaderObjectivePopover;
   onCloseLevelMap: () => void;
   onOpenLevelMap: () => void;
   onRunWithMode: (mode: "normal" | "fast" | "instant" | "pov") => void;
-  onReplayTutorial: () => void;
   runFeedback?: GameStatusFeedback | null;
   onSetLevelIndex: (index: number) => void;
-  onSetRobotColorId: (value: RobotColorId) => void;
-  onSetShowAllActions: (value: boolean) => void;
   onToggleRun: () => void;
-  robotColorId: RobotColorId;
   selectedRunMode: "normal" | "fast" | "instant" | "pov";
-  showAllActions: boolean;
   unlockedLevels: boolean[];
+  helpPopover?: HeaderHelpPopover;
 }
 
-function RunModeIcon({ mode }: { mode: "normal" | "fast" | "instant" | "pov" }) {
-  if (mode === "pov") {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
-    );
-  }
+function cx(...classNames: Array<string | false | null | undefined>) {
+  return classNames.filter(Boolean).join(" ");
+}
 
-  if (mode === "instant") {
-    return <SkipForward className="h-4 w-4" />;
+function getHelpToneClass(tone: HeaderHelpTone) {
+  switch (tone) {
+    case "success":
+      return "border-emerald-300/55 bg-emerald-300/12 text-emerald-50";
+    case "warning":
+      return "border-amber-300/55 bg-amber-300/12 text-amber-50";
+    case "error":
+      return "border-rose-300/55 bg-rose-300/12 text-rose-50";
+    case "invalid":
+      return "border-rose-300/65 bg-rose-300/14 text-rose-50";
+    default:
+      return "border-sky-200/45 bg-sky-200/10 text-slate-100";
   }
-
-  if (mode === "fast") {
-    return (
-      <span className="relative inline-flex h-4 w-5 items-center justify-start">
-        <Play className="h-4 w-4 fill-current" />
-        <span className="absolute -right-0.5 -bottom-1 text-[8px] font-black leading-none tracking-[-0.04em]">x2</span>
-      </span>
-    );
-  }
-
-  return <Play className="h-4 w-4 fill-current" />;
 }
 
 export function GameHeaderBar({
@@ -69,65 +93,51 @@ export function GameHeaderBar({
   currentLevelIndex,
   isAutoRunning,
   isLevelMapOpen,
-  level,
+  levelId,
+  levelName,
   levelProgress,
   localizedLevels,
+  levelMapSections,
+  menu,
+  objectivePopover,
   onCloseLevelMap,
   onOpenLevelMap,
   onRunWithMode,
-  onReplayTutorial,
   runFeedback,
   onSetLevelIndex,
-  onSetRobotColorId,
-  onSetShowAllActions,
   onToggleRun,
-  robotColorId,
   selectedRunMode,
-  showAllActions,
   unlockedLevels,
+  helpPopover,
 }: GameHeaderBarProps) {
   const { t } = useI18n();
-  const [isRunMenuOpen, setIsRunMenuOpen] = useState(false);
   const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isObjectiveOpen, setIsObjectiveOpen] = useState(false);
   const [hasOpenedLevelMap, setHasOpenedLevelMap] = useState(false);
   const [hasOpenedWalkthrough, setHasOpenedWalkthrough] = useState(false);
-  const runMenuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isRunMenuOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!runMenuRef.current?.contains(event.target as Node)) {
-        setIsRunMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isRunMenuOpen]);
-
-  useEffect(() => {
-    if (!isRunMenuOpen) {
-      return;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsRunMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isRunMenuOpen]);
+  const helpRef = useRef<HTMLDivElement | null>(null);
+  const objectiveRef = useRef<HTMLDivElement | null>(null);
+  const menuProps = {
+    title: levelName,
+    ...(menu?.extraActions !== undefined ? { extraActions: menu.extraActions } : {}),
+    ...(menu?.onReplayTutorial !== undefined ? { onReplayTutorial: menu.onReplayTutorial } : {}),
+    ...(menu?.onSetRobotColorId !== undefined ? { onSetRobotColorId: menu.onSetRobotColorId } : {}),
+    ...(menu?.onSetShowAllActions !== undefined ? { onSetShowAllActions: menu.onSetShowAllActions } : {}),
+    ...(menu?.robotColorId !== undefined ? { robotColorId: menu.robotColorId } : {}),
+    ...(menu?.showAllActions !== undefined ? { showAllActions: menu.showAllActions } : {}),
+    ...(menu?.titleEyebrow !== undefined ? { titleEyebrow: menu.titleEyebrow } : {}),
+  };
+  const levelMapProps = {
+    currentLevelId: levelId,
+    isOpen: isLevelMapOpen,
+    levelProgress,
+    onClose: onCloseLevelMap,
+    onSelectLevel: onSetLevelIndex,
+    unlockedLevels,
+    ...(localizedLevels !== undefined ? { localizedLevels } : {}),
+    ...(levelMapSections !== undefined ? { sections: levelMapSections } : {}),
+  };
 
   useEffect(() => {
     if (!isLevelMapOpen) {
@@ -151,21 +161,62 @@ export function GameHeaderBar({
   }, [isLevelMapOpen, onCloseLevelMap]);
 
   useEffect(() => {
-    if (!isAutoRunning) {
+    if (!helpPopover || !isHelpOpen) {
       return;
     }
 
-    setIsRunMenuOpen(false);
-  }, [isAutoRunning]);
+    function handlePointerDown(event: PointerEvent) {
+      if (!helpRef.current?.contains(event.target as Node)) {
+        setIsHelpOpen(false);
+      }
+    }
 
-  const selectedRunLabel =
-    selectedRunMode === "fast"
-      ? t.fastPlay
-      : selectedRunMode === "instant"
-        ? t.skipToEnd
-        : selectedRunMode === "pov"
-          ? t.povPlay
-          : t.play;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsHelpOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [helpPopover, isHelpOpen]);
+
+  useEffect(() => {
+    if (!objectivePopover || !isObjectiveOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!objectiveRef.current?.contains(event.target as Node)) {
+        setIsObjectiveOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsObjectiveOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isObjectiveOpen, objectivePopover]);
+
+  useEffect(() => {
+    setIsHelpOpen(false);
+    setIsObjectiveOpen(false);
+    setIsWalkthroughOpen(false);
+  }, [currentLevelIndex, isAutoRunning]);
 
   return (
     <div className="pointer-events-none relative z-10 flex min-h-[calc(100vh-3rem)] flex-col">
@@ -175,158 +226,144 @@ export function GameHeaderBar({
           dir="ltr"
         >
           <div className="flex items-center gap-2 md:justify-self-start">
-            <GameMenu
-              level={level}
-              onSetRobotColorId={onSetRobotColorId}
-              onReplayTutorial={onReplayTutorial}
-              onSetShowAllActions={onSetShowAllActions}
-              robotColorId={robotColorId}
-              showAllActions={showAllActions}
-            />
+            <GameMenu {...menuProps} />
             <LanguageSelect />
-            <button
-              aria-label={t.walkthroughOpen}
-              className="ui-button h-8 w-8 justify-center rounded-full px-0 font-display text-sm font-semibold text-[var(--text-primary)]"
-              onClick={() => {
-                setHasOpenedWalkthrough(true);
-                setIsWalkthroughOpen(true);
-              }}
-              title={t.walkthroughOpen}
-              type="button"
-            >
-              ?
-            </button>
+            <div className="relative" ref={helpRef}>
+              <button
+                aria-label={helpPopover ? "Help" : t.walkthroughOpen}
+                className="ui-button h-8 w-8 justify-center rounded-full px-0 font-display text-sm font-semibold text-[var(--text-primary)]"
+                onClick={() => {
+                  if (helpPopover) {
+                    setIsHelpOpen((value) => !value);
+                    return;
+                  }
+
+                  setHasOpenedWalkthrough(true);
+                  setIsWalkthroughOpen(true);
+                }}
+                title={helpPopover ? "Help" : t.walkthroughOpen}
+                type="button"
+              >
+                ?
+              </button>
+
+              {helpPopover && isHelpOpen ? (
+                <div className="ui-panel absolute left-0 top-[calc(100%+10px)] z-30 w-[min(24rem,calc(100vw-2rem))] rounded-[16px] p-3.5 text-[var(--text-primary)]">
+                  {helpPopover.feedback ? (
+                    <div className={cx("rounded-[12px] border px-3 py-3", getHelpToneClass(helpPopover.feedback.tone))}>
+                      <p className="text-[10px] uppercase tracking-[0.16em] opacity-75">Latest feedback</p>
+                      <p className="mt-1 text-sm font-semibold">{helpPopover.feedback.title}</p>
+                      <p className="mt-1 text-sm leading-6 opacity-90">{helpPopover.feedback.body}</p>
+                    </div>
+                  ) : null}
+                  <div className={cx("rounded-[12px] border border-white/8 bg-white/4 px-3 py-3", helpPopover.feedback && "mt-3")}>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Goal</p>
+                    <p className="mt-1 text-sm text-[var(--text-primary)]">{helpPopover.goalLabel}</p>
+                  </div>
+                  <div className="mt-3 rounded-[12px] border border-white/8 bg-white/4 px-3 py-3">
+                    <h2 className="font-display text-lg text-white">{helpPopover.guideTitle}</h2>
+                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{helpPopover.guideBody}</p>
+                    <p className="mt-3 rounded-[10px] border border-[var(--accent-soft)] bg-[var(--accent-soft)] px-3 py-2 text-sm leading-6 text-white/90">
+                      {helpPopover.guideHint}
+                    </p>
+                  </div>
+                  <div className="mt-3 rounded-[12px] border border-white/8 bg-white/4 px-3 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Controls</p>
+                    <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                      {helpPopover.controlsBody ?? "Enter toggles the run button. Drag the scene to orbit the camera."}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex items-center justify-center gap-3 text-center md:justify-self-center">
             <h1>
               <BrandLogo className="text-[clamp(1.15rem,1.35vw,1.5rem)] font-semibold tracking-[0.08em]" strokeWidth={0.85} />
             </h1>
-            <button
-              aria-expanded={isLevelMapOpen}
-              className="ui-button pointer-events-auto flex h-9 items-center gap-2 rounded-[12px] px-3 text-left"
-              onClick={() => {
-                setIsRunMenuOpen(false);
-                setHasOpenedLevelMap(true);
-                onOpenLevelMap();
-              }}
-              type="button"
-            >
-              <span className="max-w-[min(42vw,19rem)] truncate text-[0.72rem] font-medium text-[var(--text-primary)] md:text-[0.78rem]">
-                {t.level} {currentLevelIndex + 1}: {level.name}
-              </span>
-              <ChevronDown
-                className={[
-                  "h-3.5 w-3.5 shrink-0 text-[var(--text-muted)] transition",
-                  isLevelMapOpen ? "rotate-180" : "",
-                ].join(" ")}
-              />
-            </button>
+            <div className="pointer-events-auto relative flex items-center gap-2" ref={objectiveRef}>
+              <button
+                aria-expanded={isLevelMapOpen}
+                className="ui-button flex h-9 items-center gap-2 rounded-[12px] px-3 text-left"
+                onClick={() => {
+                  setHasOpenedLevelMap(true);
+                  onOpenLevelMap();
+                }}
+                type="button"
+              >
+                <span className="max-w-[min(42vw,19rem)] truncate text-[0.72rem] font-medium text-[var(--text-primary)] md:text-[0.78rem]">
+                  {t.level} {currentLevelIndex + 1}: {levelName}
+                </span>
+                <ChevronDown
+                  className={[
+                    "h-3.5 w-3.5 shrink-0 text-[var(--text-muted)] transition",
+                    isLevelMapOpen ? "rotate-180" : "",
+                  ].join(" ")}
+                />
+              </button>
+              {objectivePopover ? (
+                <>
+                  <button
+                    aria-expanded={isObjectiveOpen}
+                    aria-label={objectivePopover.objectiveTitle}
+                    className="ui-button flex h-9 w-9 items-center justify-center rounded-[12px] px-0"
+                    onClick={() => {
+                      setIsObjectiveOpen((value) => !value);
+                    }}
+                    title={objectivePopover.objectiveTitle}
+                    type="button"
+                  >
+                    <CircleHelp className="h-4 w-4" />
+                  </button>
+                  {isObjectiveOpen ? (
+                    <div className="ui-panel absolute left-1/2 top-[calc(100%+10px)] z-30 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 rounded-[16px] p-3.5 text-left text-[var(--text-primary)]">
+                      <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{objectivePopover.objectiveTitle}</p>
+                      <div className="mt-3 rounded-[12px] border border-white/8 bg-white/4 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Objective</p>
+                        <p className="mt-1 text-sm text-[var(--text-primary)]">{objectivePopover.objectiveLabel}</p>
+                      </div>
+                      <div className="mt-3 rounded-[12px] border border-white/8 bg-white/4 px-3 py-3">
+                        <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Mission Brief</p>
+                        <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">{objectivePopover.objectiveBody}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
           </div>
 
           <div className="pointer-events-auto relative z-20 flex items-center justify-end gap-2 md:justify-self-end">
-            <div className="relative" ref={runMenuRef}>
-              <div
-                className={[
-                  "flex overflow-hidden border bg-[linear-gradient(180deg,var(--accent)_0%,var(--accent-strong)_100%)] shadow-[0_0_24px_var(--accent-shadow)]",
-                  "border-[color-mix(in_srgb,var(--accent-strong)_58%,rgba(255,255,255,0.2))]",
-                  isRunMenuOpen ? "rounded-t-[12px] rounded-b-none" : "rounded-[12px]",
-                ].join(" ")}
-              >
-                <button
-                  aria-label={isAutoRunning ? t.pause : selectedRunLabel}
-                  className={[
-                    "inline-flex h-9 min-w-[164px] items-center justify-center gap-2 border-r px-4 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--accent-foreground)] disabled:cursor-not-allowed disabled:opacity-50",
-                    "border-r-white/28",
-                    "max-[980px]:min-w-[52px] max-[980px]:px-3",
-                    isRunMenuOpen ? "rounded-tl-[12px]" : "rounded-l-[12px]",
-                  ].join(" ")}
-                  data-onboarding="run-button"
-                  disabled={!isAutoRunning && !canStartRun}
-                  onClick={onToggleRun}
-                  type="button"
-                >
-                  {isAutoRunning ? <Pause className="h-4 w-4" /> : <RunModeIcon mode={selectedRunMode} />}
-                  <span className="max-[980px]:hidden">{isAutoRunning ? t.pause : selectedRunLabel}</span>
-                </button>
-                <button
-                  aria-expanded={isRunMenuOpen}
-                  aria-label={t.runOptions}
-                  className={[
-                    "inline-flex h-9 w-10 items-center justify-center px-0 text-[var(--accent-foreground)] disabled:cursor-not-allowed disabled:opacity-50",
-                    isRunMenuOpen ? "rounded-tr-[12px]" : "rounded-r-[12px]",
-                  ].join(" ")}
-                  onClick={() => setIsRunMenuOpen((value) => !value)}
-                  type="button"
-                >
-                  <ChevronDown
-                    className={[
-                      "h-3.5 w-3.5 transition",
-                      isRunMenuOpen ? "rotate-180" : "",
-                    ].join(" ")}
-                  />
-                </button>
-              </div>
-
-              {isRunMenuOpen ? (
-                <div className="absolute right-0 top-[calc(100%-1px)] z-30 w-full overflow-hidden rounded-b-[16px] border border-t-0 border-[var(--panel-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--accent)_18%,var(--panel-bg-strong))_0%,var(--panel-bg-strong)_100%)] p-2 text-[var(--text-primary)] shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-[14px] max-[980px]:w-[56px] max-[980px]:p-1.5">
-                  <div className="space-y-1">
-                    {[
-                      { label: t.play, mode: "normal" as const },
-                      { label: t.fastPlay, mode: "fast" as const },
-                      { label: t.povMode, mode: "pov" as const },
-                      { label: t.skipToEnd, mode: "instant" as const },
-                    ].map((option) => (
-                      <button
-                        aria-label={option.label}
-                        className={[
-                          "flex w-full items-center justify-between rounded-[10px] px-3 py-2.5 text-left text-[12px] transition",
-                          "max-[980px]:justify-center max-[980px]:px-2 max-[980px]:py-2",
-                          option.mode === selectedRunMode
-                            ? "bg-[var(--accent-soft)] text-[var(--text-primary)]"
-                            : "text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]",
-                        ].join(" ")}
-                        key={option.mode}
-                        onClick={() => {
-                          onRunWithMode(option.mode);
-                          setIsRunMenuOpen(false);
-                        }}
-                        type="button"
-                      >
-                        <span className="flex items-center gap-2.5">
-                          <RunModeIcon mode={option.mode} />
-                          <span className="max-[980px]:hidden">{option.label}</span>
-                        </span>
-                        {option.mode === selectedRunMode ? (
-                          <span className="text-sm font-semibold text-[var(--text-primary)] max-[980px]:hidden">✓</span>
-                        ) : null}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+            <div data-onboarding="run-button">
+              <RunModeSplitButton
+                canStartRun={canStartRun}
+                isRunning={isAutoRunning}
+                labels={{ pause: t.pause, runOptions: t.runOptions }}
+                onRunWithMode={onRunWithMode}
+                onToggleRun={onToggleRun}
+                options={[
+                  { label: t.play, mode: "normal" },
+                  { label: t.fastPlay, mode: "fast" },
+                  { label: t.povMode, mode: "pov" },
+                  { label: t.skipToEnd, mode: "instant" },
+                ]}
+                selectedRunMode={selectedRunMode}
+              />
             </div>
           </div>
         </div>
 
         <GameStatusSnackbar
-          className="absolute right-4 xl:right-[380px] top-[calc(100%+20px)] w-[min(24rem,calc(100vw-2rem))] z-10"
+          className="absolute right-4 top-[calc(100%+20px)] z-10 w-[min(24rem,calc(100vw-2rem))] xl:right-[380px]"
           feedback={runFeedback ?? null}
         />
       </div>
 
       {hasOpenedLevelMap ? (
-        <LevelMapBackdrop
-          currentLevelId={level.id}
-          isOpen={isLevelMapOpen}
-          localizedLevels={localizedLevels}
-          onClose={onCloseLevelMap}
-          onSelectLevel={onSetLevelIndex}
-          levelProgress={levelProgress}
-          unlockedLevels={unlockedLevels}
-        />
+        <LevelMapBackdrop {...levelMapProps} />
       ) : null}
-      {hasOpenedWalkthrough ? (
+      {!helpPopover && hasOpenedWalkthrough ? (
         <Suspense fallback={null}>
           <GameWalkthroughDialog onClose={() => setIsWalkthroughOpen(false)} open={isWalkthroughOpen} />
         </Suspense>

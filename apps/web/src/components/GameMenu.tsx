@@ -2,29 +2,40 @@ import { useEffect, useRef, useState } from "react";
 
 import { Settings, X } from "lucide-react";
 
-import type { LevelDefinition } from "@lumaloop/engine";
-
 import { ROBOT_COLOR_IDS, ROBOT_PALETTES, type RobotColorId } from "../features/game/robotColors";
 import { useI18n } from "../i18n/I18nProvider";
 
+interface GameMenuAction {
+  label: string;
+  onSelect: () => void;
+}
+
 export function GameMenu({
-  level,
+  title,
+  extraActions = [],
   onSetRobotColorId,
   onReplayTutorial,
   onSetShowAllActions,
   robotColorId,
   showAllActions,
+  titleEyebrow,
 }: {
-  level: LevelDefinition;
-  onSetRobotColorId: (value: RobotColorId) => void;
-  onReplayTutorial: () => void;
-  onSetShowAllActions: (value: boolean) => void;
-  robotColorId: RobotColorId;
-  showAllActions: boolean;
+  title: string;
+  extraActions?: GameMenuAction[];
+  onSetRobotColorId?: (value: RobotColorId) => void;
+  onReplayTutorial?: () => void;
+  onSetShowAllActions?: (value: boolean) => void;
+  robotColorId?: RobotColorId;
+  showAllActions?: boolean;
+  titleEyebrow?: string;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const canToggleActions = showAllActions !== undefined && onSetShowAllActions !== undefined;
+  const canPickRobotColor = robotColorId !== undefined && onSetRobotColorId !== undefined;
+  const hasReplayTutorial = onReplayTutorial !== undefined;
+  const hasAnyActions = canToggleActions || canPickRobotColor || hasReplayTutorial || extraActions.length > 0;
 
   useEffect(() => {
     if (!open) {
@@ -82,8 +93,8 @@ export function GameMenu({
         >
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{t.puzzleMenu}</p>
-              <h2 className="mt-1 text-lg font-semibold tracking-tight">{level.name}</h2>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{titleEyebrow ?? t.puzzleMenu}</p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight">{title}</h2>
             </div>
             <button className="ui-button h-8 w-8 justify-center" onClick={() => setOpen(false)} type="button">
               <X className="h-4 w-4" />
@@ -91,73 +102,99 @@ export function GameMenu({
           </div>
 
           <div className="space-y-2">
-            <button
-              aria-pressed={showAllActions}
-              className="ui-button flex w-full items-center justify-between rounded-[14px] px-4 py-3 text-left"
-              onClick={() => onSetShowAllActions(!showAllActions)}
-              type="button"
-            >
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">
-                  {showAllActions ? t.allActions : t.levelOnly}
-                </p>
-                <p className="mt-1 text-[11px] text-[var(--text-muted)]">
-                  {showAllActions ? t.showingFullCommandSet : t.showingLevelCommands}
-                </p>
-              </div>
-              <span
-                className={[
-                  "relative ml-3 inline-flex h-6 w-11 shrink-0 rounded-full border transition-[background-color,border-color] duration-200 ease-out",
-                  showAllActions
-                    ? "border-[var(--accent)] bg-[var(--accent-soft)]"
-                    : "border-[var(--panel-border)] bg-black/15",
-                ].join(" ")}
+            {canToggleActions ? (
+              <button
+                aria-pressed={showAllActions}
+                className="ui-button flex w-full items-center justify-between rounded-[14px] px-4 py-3 text-left"
+                onClick={() => onSetShowAllActions(!showAllActions)}
+                type="button"
               >
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">
+                    {showAllActions ? t.allActions : t.levelOnly}
+                  </p>
+                  <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                    {showAllActions ? t.showingFullCommandSet : t.showingLevelCommands}
+                  </p>
+                </div>
                 <span
                   className={[
-                    "absolute top-0.5 left-0.5 h-4.5 w-4.5 rounded-full bg-[var(--text-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.28)] transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                    showAllActions ? "translate-x-[22px]" : "translate-x-0",
+                    "relative ml-3 inline-flex h-6 w-11 shrink-0 rounded-full border transition-[background-color,border-color] duration-200 ease-out",
+                    showAllActions
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                      : "border-[var(--panel-border)] bg-black/15",
                   ].join(" ")}
-                />
-              </span>
-            </button>
+                >
+                  <span
+                    className={[
+                      "absolute top-0.5 left-0.5 h-4.5 w-4.5 rounded-full bg-[var(--text-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.28)] transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                      showAllActions ? "translate-x-[22px]" : "translate-x-0",
+                    ].join(" ")}
+                  />
+                </span>
+              </button>
+            ) : null}
 
-            <div className="ui-button w-full rounded-[14px] px-4 py-3">
-              <div className="flex w-full items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.robotColor}</p>
-                  <p className="mt-1 text-[11px] text-[var(--text-muted)]">{robotColorId}</p>
-                </div>
-                <div className="ml-auto flex max-w-[136px] flex-wrap justify-end gap-1.5">
-                  {ROBOT_COLOR_IDS.map((colorId) => (
-                    <button
-                      aria-label={colorId}
-                      className={[
-                        "h-7 w-7 rounded-full border transition",
-                        robotColorId === colorId
-                          ? "border-[var(--accent)] shadow-[0_0_0_1px_var(--accent),0_0_10px_var(--accent-shadow)]"
-                          : "border-[var(--panel-border)]",
-                      ].join(" ")}
-                      key={colorId}
-                      onClick={() => onSetRobotColorId(colorId)}
-                      style={{ backgroundColor: ROBOT_PALETTES[colorId].swatch }}
-                      type="button"
-                    />
-                  ))}
+            {canPickRobotColor ? (
+              <div className="ui-button w-full rounded-[14px] px-4 py-3">
+                <div className="flex w-full items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.robotColor}</p>
+                    <p className="mt-1 text-[11px] text-[var(--text-muted)]">{robotColorId}</p>
+                  </div>
+                  <div className="ml-auto flex max-w-[136px] flex-wrap justify-end gap-1.5">
+                    {ROBOT_COLOR_IDS.map((colorId) => (
+                      <button
+                        aria-label={colorId}
+                        className={[
+                          "h-7 w-7 rounded-full border transition",
+                          robotColorId === colorId
+                            ? "border-[var(--accent)] shadow-[0_0_0_1px_var(--accent),0_0_10px_var(--accent-shadow)]"
+                            : "border-[var(--panel-border)]",
+                        ].join(" ")}
+                        key={colorId}
+                        onClick={() => onSetRobotColorId(colorId)}
+                        style={{ backgroundColor: ROBOT_PALETTES[colorId].swatch }}
+                        type="button"
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
 
-            <button
-              className="ui-button flex w-full items-center justify-between rounded-[14px] px-4 py-3 text-left"
-              onClick={() => {
-                setOpen(false);
-                onReplayTutorial();
-              }}
-              type="button"
-            >
-              <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.replayTutorial}</span>
-            </button>
+            {extraActions.map((action) => (
+              <button
+                className="ui-button flex w-full items-center justify-between rounded-[14px] px-4 py-3 text-left"
+                key={action.label}
+                onClick={() => {
+                  setOpen(false);
+                  action.onSelect();
+                }}
+                type="button"
+              >
+                <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{action.label}</span>
+              </button>
+            ))}
+
+            {hasReplayTutorial ? (
+              <button
+                className="ui-button flex w-full items-center justify-between rounded-[14px] px-4 py-3 text-left"
+                onClick={() => {
+                  setOpen(false);
+                  onReplayTutorial();
+                }}
+                type="button"
+              >
+                <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{t.replayTutorial}</span>
+              </button>
+            ) : null}
+
+            {!hasAnyActions ? (
+              <div className="rounded-[14px] border border-white/8 bg-white/[0.03] px-4 py-3 text-[11px] leading-5 text-[var(--text-muted)]">
+                No extra settings on this screen yet.
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

@@ -16,11 +16,12 @@ import {
 interface LevelMapBackdropProps {
   currentLevelId: string;
   isOpen: boolean;
-  levelProgress: LevelProgressState;
-  localizedLevels: LevelDefinition[];
   onClose: () => void;
   onSelectLevel: (index: number) => void;
-  unlockedLevels: boolean[];
+  levelProgress?: LevelProgressState;
+  localizedLevels?: LevelDefinition[];
+  sections?: LevelMapSection[];
+  unlockedLevels?: boolean[];
 }
 
 function titleCase(value: string) {
@@ -49,7 +50,7 @@ function renderStars(count: number, activeClassName: string, idleClassName: stri
   ));
 }
 
-interface LevelMapEntry {
+export interface LevelMapEntry {
   badgeLabel: string | null;
   bestProgramLength?: number;
   idealSolutionLength?: number;
@@ -58,17 +59,33 @@ interface LevelMapEntry {
   isCurrent: boolean;
   isLocked: boolean;
   isPerfected: boolean;
-  level: LevelDefinition;
+  levelId: string;
+  levelName: string;
   stars: number;
+}
+
+export interface LevelMapSection {
+  completedCount: number;
+  focusLine: string;
+  id: string;
+  isCurrentWorld: boolean;
+  isPerfectedWorld: boolean;
+  isWorldComplete: boolean;
+  levels: LevelMapEntry[];
+  maxStars: number;
+  perfectedCount: number;
+  title: string;
+  totalStars: number;
 }
 
 export function LevelMapBackdrop({
   currentLevelId,
   isOpen,
-  levelProgress,
-  localizedLevels,
   onClose,
   onSelectLevel,
+  levelProgress,
+  localizedLevels,
+  sections,
   unlockedLevels,
 }: LevelMapBackdropProps) {
   const { isRtl, t } = useI18n();
@@ -80,7 +97,15 @@ export function LevelMapBackdrop({
     }
   }, [isOpen]);
 
-  const worldGroups = useMemo(() => {
+  const worldGroups = useMemo<LevelMapSection[]>(() => {
+    if (sections) {
+      return sections;
+    }
+
+    if (!localizedLevels || !levelProgress || !unlockedLevels) {
+      return [];
+    }
+
     const seenCommands = new Set<Command>();
     const groups = new Map<string, {
       focusLabels: string[];
@@ -116,7 +141,8 @@ export function LevelMapBackdrop({
         isCurrent: level.id === currentLevelId,
         isLocked: !unlockedLevels[index],
         isPerfected: levelProgressEntry.perfected,
-        level,
+        levelId: level.id,
+        levelName: level.name,
         stars: levelStars,
       };
 
@@ -136,7 +162,7 @@ export function LevelMapBackdrop({
       const worldName = t.worldDisplayName(worldId, parseWorldName(worldId));
       const worldProgress = getWorldProgressSummary(
         levelProgress,
-        group.levels.map((levelEntry) => levelEntry.level.id),
+        group.levels.map((levelEntry) => levelEntry.levelId),
       );
 
       return {
@@ -144,7 +170,7 @@ export function LevelMapBackdrop({
         focusLine:
           group.focusLabels.length > 0
             ? group.focusLabels.join(" · ")
-            : group.levels[0]?.level.metadata?.concept ?? group.levels[0]?.level.name ?? "",
+            : group.levels[0]?.levelName ?? "",
         id: worldId,
         isCurrentWorld: group.levels.some((levelEntry) => levelEntry.isCurrent),
         isPerfectedWorld: worldProgress.perfectedCount === group.levels.length,
@@ -156,7 +182,7 @@ export function LevelMapBackdrop({
         totalStars: worldProgress.totalStars,
       };
     });
-  }, [currentLevelId, levelProgress, localizedLevels, t, unlockedLevels]);
+  }, [currentLevelId, levelProgress, localizedLevels, sections, t, unlockedLevels]);
 
   return createPortal(
     <div
@@ -295,7 +321,7 @@ export function LevelMapBackdrop({
                                       : "border border-[#444] bg-[linear-gradient(180deg,rgba(45,52,65,0.5)_0%,rgba(18,22,32,0.6)_100%)] text-[var(--text-secondary)] opacity-100 hover:-translate-y-1.5 hover:border-[#666]",
                               ].join(" ")}
                               disabled={levelEntry.isLocked}
-                              key={levelEntry.level.id}
+                              key={levelEntry.levelId}
                               onClick={() => {
                                 onSelectLevel(levelEntry.index);
                                 onClose();
@@ -312,14 +338,9 @@ export function LevelMapBackdrop({
                                   <div className="text-[0.72rem] uppercase tracking-[0.08em] opacity-80">
                                     {t.level} {String(levelEntry.index + 1).padStart(2, "0")}
                                   </div>
-                                  {isCurrent ? (
-                                    <div className="shrink-0 rounded-full border border-[#00f2ff]/45 bg-[#00f2ff]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#7ef7ff]">
-                                      {t.currentLabel}
-                                    </div>
-                                  ) : null}
                                 </div>
                                 <h3 className="mt-2 line-clamp-3 text-[0.92rem] font-semibold leading-5">
-                                  {levelEntry.level.name}
+                                  {levelEntry.levelName}
                                 </h3>
 
                                 <div className="mt-auto">

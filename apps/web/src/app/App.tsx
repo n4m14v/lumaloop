@@ -20,7 +20,11 @@ const loadGameScreen = async () => {
 const GameScreen = lazy(loadGameScreen);
 
 function normalizeRoute(pathname: string): AppRoute {
-  return pathname === "/play" ? "/play" : "/";
+  if (pathname === "/play") {
+    return "/play";
+  }
+
+  return "/";
 }
 
 function PlayRoute({

@@ -4,6 +4,7 @@ import { DarkBackdropNebula } from "../components/DarkBackdropNebula";
 import { ProgramWorkspace } from "../components/ProgramWorkspace";
 import { useI18n } from "../i18n/I18nProvider";
 import { GameHeaderBar } from "../components/game-screen/GameHeaderBar";
+import { FULL_BLEED_GAME_SCENE_CLASS_NAME } from "../components/game-screen/sceneLayout";
 import { clearOnboardingProgress } from "./game-screen/onboardingStorage";
 import { useGameOnboarding } from "./game-screen/useGameOnboarding";
 import { useGameScreenController } from "./game-screen/useGameScreenController";
@@ -105,7 +106,7 @@ export function GameScreen({ onSceneReady }: { onSceneReady?: () => void }) {
     controller.result !== (controller.result ? dismissedResult : null),
   );
   const canvasClassName = [
-    "fixed inset-0 h-screen w-screen overflow-hidden xl:-translate-x-[182px]",
+    FULL_BLEED_GAME_SCENE_CLASS_NAME,
     isLevelMapOpen ? "invisible opacity-0" : "visible opacity-100",
   ].join(" ");
   let runFeedback: ComponentProps<typeof GameHeaderBar>["runFeedback"] = null;
@@ -155,13 +156,16 @@ export function GameScreen({ onSceneReady }: { onSceneReady?: () => void }) {
                 isLevelMapOpen={isLevelMapOpen}
                 onCloseLevelMap={() => setIsLevelMapOpen(false)}
                 onOpenLevelMap={() => setIsLevelMapOpen(true)}
-                runFeedback={runFeedback}
-                onReplayTutorial={() => {
-                  clearOnboardingProgress();
-                  controller.stopRun();
-                  controller.setLevelIndex(0);
-                  setOnboardingRefreshToken((current) => current + 1);
+                menu={{
+                  ...controller.header.menu,
+                  onReplayTutorial: () => {
+                    clearOnboardingProgress();
+                    controller.stopRun();
+                    controller.setLevelIndex(0);
+                    setOnboardingRefreshToken((current) => current + 1);
+                  },
                 }}
+                runFeedback={runFeedback}
               />
 
               {controller.successDialog ? (

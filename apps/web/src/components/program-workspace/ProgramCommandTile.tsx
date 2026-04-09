@@ -8,6 +8,7 @@ import {
   RefreshCcwDot
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 import type { Command } from "@lumaloop/engine";
 
@@ -87,11 +88,13 @@ function CommandGlyph({
   );
 }
 
-export function ProgramCommandTile({
-  command,
+export function DebossedTileSurface({
+  children,
+  className,
   isActive = false,
 }: {
-  command: Command;
+  children: ReactNode;
+  className?: string;
   isActive?: boolean;
 }) {
   return (
@@ -101,14 +104,65 @@ export function ProgramCommandTile({
         isActive
           ? "ui-deboss-surface-active border-[var(--accent)] text-[var(--text-primary)] shadow-[0_0_0_1px_var(--accent),0_0_20px_var(--accent-shadow)]"
           : "border-[var(--panel-border)] text-[var(--text-secondary)]",
+        className ?? "",
       ].join(" ")}
     >
+      {children}
+    </div>
+  );
+}
+
+export function PaletteActionButton({
+  ariaLabel,
+  children,
+  disabled = false,
+  onboardingId,
+  onClick,
+  title,
+}: {
+  ariaLabel: string;
+  children: ReactNode;
+  disabled?: boolean;
+  onboardingId?: string;
+  onClick: () => void;
+  title?: string;
+}) {
+  return (
+    <button
+      aria-label={ariaLabel}
+      className={[
+        "group relative aspect-square rounded-[12px] border transition",
+        "ui-deboss-surface",
+        disabled
+          ? "border-[var(--panel-border)] text-[var(--text-muted)] opacity-70"
+          : "border-[var(--panel-border)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:shadow-[0_0_18px_var(--accent-shadow)]",
+      ].join(" ")}
+      data-onboarding={onboardingId}
+      disabled={disabled}
+      onClick={onClick}
+      title={title}
+      type="button"
+    >
+      {children}
+    </button>
+  );
+}
+
+export function ProgramCommandTile({
+  command,
+  isActive = false,
+}: {
+  command: Command;
+  isActive?: boolean;
+}) {
+  return (
+    <DebossedTileSurface isActive={isActive}>
       <CommandGlyph
         badgeClassName="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-[4px] border border-[var(--panel-border)] bg-[var(--panel-bg-strong)] text-[8px] font-bold text-[var(--text-secondary)]"
         command={command}
         iconClassName="h-[52%] w-[52%]"
       />
-    </div>
+    </DebossedTileSurface>
   );
 }
 
