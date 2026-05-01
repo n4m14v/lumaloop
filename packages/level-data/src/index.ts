@@ -1,3 +1,5 @@
+export * from "./campaign";
+export * from "./monetization";
 export * from "./worlds/world-01-basics/levels";
 export * from "./worlds/world-03-height/levels";
 export * from "./worlds/world-04-procedures/levels";
@@ -8,3 +10,5 @@ export * from "./worlds/world-08-mastery/levels";
 export * from "./worlds/world-09-trickery/levels";
 export * from "./worlds/world-10-phantoms/levels";
 export * from "./worlds/world-11-switches/levels";
+export * from "./worlds/world-12-switchbacks/levels";
+export * from "./worlds/world-13-landscapes/levels";

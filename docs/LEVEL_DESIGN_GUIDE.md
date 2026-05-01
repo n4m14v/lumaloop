@@ -31,15 +31,24 @@ Each level must include:
 - Challenges based only on long input strings
 - Boards solvable through blind brute force
 
-## World Progression
+## Current Campaign Progression
 
-1. Basics: sequence and execution order
-2. Orientation: turns and path planning
-3. Height: topology and jump legality
-4. Repetition: repeated patterns and slot pressure
-5. Procedures: abstraction and nested calls
-6. Optimization: stars and shorter solutions
-7. Advanced: new mechanics only after prior contract updates
+1. Basics: sequence, turns, route planning, complete-target planning, early process reuse, and one switch-state teaser
+2. Height: topology, jump legality, and height rhythm
+3. Procedures: reusable phrases, nested helpers, and slot pressure
+4. Switches: board-state changes, phase planning, and toggled paths
+5. Recursion: self-calling procedures and repeated motion sentences
+6. Hard / Very Hard / Mastery: harder recursive composition and optimization
+7. Misdirection / False Paths: decoys that test whether the player can identify the real repeated phrase
+8. Switchbacks: advanced movable-tile switches, complementary paths, backtracking, recursion, and height
+9. Landscapes: larger boards that use functions and recursion to compress long visual paths
+
+## Revision Target
+
+The next campaign pass should compress worlds 6-10. Keep the strongest recursive
+and mastery levels, but cut or redesign levels where difficulty comes mainly from visual
+noise. A level should add a new decision, not merely hide the same decision behind more
+walkable tiles.
 
 ## Author Checklist
 

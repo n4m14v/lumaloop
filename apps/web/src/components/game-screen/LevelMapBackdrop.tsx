@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import { ArrowLeft, CheckCircle2, LockKeyhole, Sparkles, Star, Target, Trophy } from "lucide-react";
 
 import type { Command, LevelDefinition } from "@lumaloop/engine";
 
+import type { LevelAccessState } from "../../features/monetization/access";
 import { useI18n } from "../../i18n/I18nProvider";
 import {
   getLevelProgressEntry,
@@ -21,7 +22,16 @@ interface LevelMapBackdropProps {
   levelProgress?: LevelProgressState;
   localizedLevels?: LevelDefinition[];
   sections?: LevelMapSection[];
+  levelAccessStates?: LevelAccessState[];
   unlockedLevels?: boolean[];
+}
+
+interface LevelMapOverlayBackdropProps {
+  children: ReactNode;
+  contentClassName?: string;
+  isOpen: boolean;
+  onClick?: () => void;
+  overlayClassName?: string;
 }
 
 function titleCase(value: string) {
@@ -58,6 +68,8 @@ export interface LevelMapEntry {
   isCompleted: boolean;
   isCurrent: boolean;
   isLocked: boolean;
+  isPremium: boolean;
+  lockReason?: LevelAccessState["reason"];
   isPerfected: boolean;
   levelId: string;
   levelName: string;
@@ -78,6 +90,30 @@ export interface LevelMapSection {
   totalStars: number;
 }
 
+export function LevelMapOverlayBackdrop({
+  children,
+  contentClassName,
+  isOpen,
+  onClick,
+  overlayClassName = "z-[90]",
+}: LevelMapOverlayBackdropProps) {
+  return (
+    <div
+      aria-hidden={!isOpen}
+      className={[
+        "fixed inset-0 overflow-hidden bg-[rgba(3,7,13,0.7)] backdrop-blur-[18px] transition-all duration-300 ease-out",
+        overlayClassName,
+        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+      ].join(" ")}
+      onClick={onClick}
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(31,229,239,0.12),transparent_28%),radial-gradient(circle_at_84%_24%,rgba(255,156,84,0.08),transparent_24%),radial-gradient(circle_at_50%_78%,rgba(108,147,255,0.08),transparent_26%)]" />
+
+      <div className={contentClassName}>{children}</div>
+    </div>
+  );
+}
+
 export function LevelMapBackdrop({
   currentLevelId,
   isOpen,
@@ -86,6 +122,7 @@ export function LevelMapBackdrop({
   levelProgress,
   localizedLevels,
   sections,
+  levelAccessStates,
   unlockedLevels,
 }: LevelMapBackdropProps) {
   const { isRtl, t } = useI18n();
@@ -114,6 +151,7 @@ export function LevelMapBackdrop({
 
     localizedLevels.forEach((level, index) => {
       const levelProgressEntry = getLevelProgressEntry(levelProgress, level.id);
+      const accessState = levelAccessStates?.[index];
       const levelStars = levelProgressEntry.bestStars;
       const bestProgramLength = getLevelBestProgramSize(levelProgress, level.id);
       const newCommands = level.allowedCommands.filter((command) => !seenCommands.has(command));
@@ -139,12 +177,17 @@ export function LevelMapBackdrop({
         index,
         isCompleted: levelProgressEntry.completed,
         isCurrent: level.id === currentLevelId,
-        isLocked: !unlockedLevels[index],
+        isLocked: accessState ? !accessState.isAvailable : !unlockedLevels[index],
+        isPremium: accessState?.isPremium ?? false,
         isPerfected: levelProgressEntry.perfected,
         levelId: level.id,
         levelName: level.name,
         stars: levelStars,
       };
+
+      if (accessState?.reason !== undefined) {
+        nextLevelEntry.lockReason = accessState.reason;
+      }
 
       if (bestProgramLength !== undefined) {
         nextLevelEntry.bestProgramLength = bestProgramLength;
@@ -182,19 +225,13 @@ export function LevelMapBackdrop({
         totalStars: worldProgress.totalStars,
       };
     });
-  }, [currentLevelId, levelProgress, localizedLevels, sections, t, unlockedLevels]);
+  }, [currentLevelId, levelAccessStates, levelProgress, localizedLevels, sections, t, unlockedLevels]);
 
   return createPortal(
-    <div
-      aria-hidden={!isOpen}
-      className={[
-        "fixed inset-0 z-[90] overflow-hidden bg-[rgba(3,7,13,0.7)] backdrop-blur-[18px] transition-all duration-300 ease-out",
-        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
-      ].join(" ")}
+    <LevelMapOverlayBackdrop
+      contentClassName="relative flex h-full flex-col px-4 py-4 md:px-6 md:py-5"
+      isOpen={isOpen}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(31,229,239,0.12),transparent_28%),radial-gradient(circle_at_84%_24%,rgba(255,156,84,0.08),transparent_24%),radial-gradient(circle_at_50%_78%,rgba(108,147,255,0.08),transparent_26%)]" />
-
-      <div className="relative flex h-full flex-col px-4 py-4 md:px-6 md:py-5">
         <div
           className={[
             "relative mx-auto flex w-full max-w-[1920px] flex-1 flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
@@ -313,14 +350,14 @@ export function LevelMapBackdrop({
                                 isCurrent
                                   ? "border-2 border-[#00f2ff] bg-[linear-gradient(180deg,rgba(0,242,255,0.12)_0%,rgba(0,242,255,0.04)_100%)] text-[#00f2ff] scale-[1.03] -translate-y-1.5 shadow-[0_0_22px_rgba(0,242,255,0.22)]"
                                   : levelEntry.isLocked
-                                    ? "pointer-events-none border border-white/5 bg-[rgba(255,255,255,0.03)] text-white/50"
+                                    ? "border border-white/5 bg-[rgba(255,255,255,0.03)] text-white/50"
                                     : isPerfect
                                       ? "border border-[#ffd76a]/55 bg-[linear-gradient(180deg,rgba(255,215,106,0.18)_0%,rgba(30,24,8,0.45)_100%)] text-[var(--text-primary)] shadow-[0_0_18px_rgba(255,215,106,0.2)] hover:-translate-y-1.5 hover:shadow-[0_0_22px_rgba(255,215,106,0.28)]"
                                       : isCompleted
                                       ? "border border-[#ffd700] bg-[linear-gradient(180deg,rgba(40,50,65,0.6)_0%,rgba(15,20,30,0.7)_100%)] text-[var(--text-primary)] shadow-[0_0_10px_#ffd70044] hover:-translate-y-1.5 hover:shadow-[0_0_15px_#ffd70066]"
                                       : "border border-[#444] bg-[linear-gradient(180deg,rgba(45,52,65,0.5)_0%,rgba(18,22,32,0.6)_100%)] text-[var(--text-secondary)] opacity-100 hover:-translate-y-1.5 hover:border-[#666]",
                               ].join(" ")}
-                              disabled={levelEntry.isLocked}
+                              disabled={levelEntry.isLocked && levelEntry.lockReason !== "premium_locked"}
                               key={levelEntry.levelId}
                               onClick={() => {
                                 onSelectLevel(levelEntry.index);
@@ -368,7 +405,7 @@ export function LevelMapBackdrop({
                                   {levelEntry.isLocked ? (
                                     <div className="flex items-center gap-2 text-[0.72rem] uppercase tracking-[0.1em] text-white/45">
                                       <LockKeyhole className="h-3.5 w-3.5" />
-                                      {t.locked}
+                                      {levelEntry.lockReason === "premium_locked" ? "Premium" : t.locked}
                                     </div>
                                   ) : (
                                     <>
@@ -397,8 +434,7 @@ export function LevelMapBackdrop({
             </div>
           </div>
         </div>
-      </div>
-    </div>,
+    </LevelMapOverlayBackdrop>,
     document.body,
   );
 }

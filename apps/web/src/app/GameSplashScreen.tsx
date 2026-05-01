@@ -1,3 +1,5 @@
+import { withBasePath } from "./basePath";
+
 import { useEffect } from "react";
 
 import { useI18n } from "../i18n/I18nProvider";
@@ -82,7 +84,7 @@ export function GameSplashScreen({
         alt=""
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"
-        src="/splash.webp"
+        src={withBasePath("/splash.webp")}
       />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,9,19,0.58)_0%,rgba(4,9,19,0.3)_20%,rgba(4,9,19,0.22)_50%,rgba(4,9,19,0.68)_100%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_44%,rgba(98,177,255,0.2),transparent_16%),radial-gradient(circle_at_58%_42%,rgba(255,146,108,0.14),transparent_22%),radial-gradient(circle_at_50%_74%,rgba(31,229,239,0.08),transparent_28%)]" />

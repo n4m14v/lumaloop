@@ -2,29 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ProgramSlots } from "../src";
 import { runProgram, validateLevel } from "../src";
-import { world01Basics } from "../../level-data/src/worlds/world-01-basics/levels";
-import { world03Height } from "../../level-data/src/worlds/world-03-height/levels";
-import { world04Procedures } from "../../level-data/src/worlds/world-04-procedures/levels";
-import { world05Recursion } from "../../level-data/src/worlds/world-05-recursion/levels";
-import { world06Hard } from "../../level-data/src/worlds/world-06-hard/levels";
-import { world07VeryHard } from "../../level-data/src/worlds/world-07-very-hard/levels";
-import { world08Mastery } from "../../level-data/src/worlds/world-08-mastery/levels";
-import { world09Trickery } from "../../level-data/src/worlds/world-09-trickery/levels";
-import { world10Phantoms } from "../../level-data/src/worlds/world-10-phantoms/levels";
-import { world11Switches } from "../../level-data/src/worlds/world-11-switches/levels";
-
-const campaignLevels = [
-  ...world01Basics,
-  ...world03Height,
-  ...world04Procedures,
-  ...world11Switches,
-  ...world05Recursion,
-  ...world06Hard,
-  ...world07VeryHard,
-  ...world08Mastery,
-  ...world09Trickery,
-  ...world10Phantoms,
-];
+import { allHandcraftedLevels, campaignLevels } from "../../level-data/src/campaign";
 
 const referencePrograms: Record<string, ProgramSlots> = {
   "world-01-level-04": {
@@ -39,17 +17,33 @@ const referencePrograms: Record<string, ProgramSlots> = {
     ],
   },
   "world-01-level-05": {
-    main: [
-      "FORWARD",
-      "FORWARD",
-      "ACTIVATE",
-      "TURN_RIGHT",
-      "FORWARD",
-      "TURN_LEFT",
-      "FORWARD",
-      "FORWARD",
-      "ACTIVATE",
-    ],
+    main: ["CALL_P1", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+  },
+  "world-01-level-06": {
+    main: ["ACTIVATE", "CALL_P1", "CALL_P1", "CALL_P1"],
+    p1: ["FORWARD", "ACTIVATE"],
+  },
+  "world-01-level-07": {
+    main: ["CALL_P1", "TURN_RIGHT", "CALL_P1"],
+    p1: ["FORWARD", "FORWARD", "ACTIVATE"],
+  },
+  "world-01-level-08": {
+    main: ["CALL_P1", "CALL_P1"],
+    p1: ["JUMP", "ACTIVATE", "JUMP"],
+  },
+  "world-01-level-09": {
+    main: ["CALL_P1", "CALL_P2", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["TURN_RIGHT", "CALL_P1"],
+  },
+  "world-01-level-10": {
+    main: ["CALL_P2", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["CALL_P1", "ACTIVATE", "TURN_LEFT"],
+  },
+  "world-01-level-11": {
+    main: ["TOGGLE", "FORWARD", "FORWARD", "ACTIVATE"],
   },
   "world-03-level-05": {
     main: ["JUMP", "FORWARD", "TURN_LEFT", "JUMP", "FORWARD", "ACTIVATE"],
@@ -296,6 +290,125 @@ const referencePrograms: Record<string, ProgramSlots> = {
     p1: ["FORWARD", "FORWARD"],
     p2: ["ACTIVATE", "CALL_P1", "TURN_RIGHT", "CALL_P1"],
   },
+  "world-12-level-01": {
+    main: ["TOGGLE", "FORWARD", "FORWARD", "ACTIVATE"],
+  },
+  "world-12-level-02": {
+    main: ["CALL_P1", "FORWARD", "CALL_P1"],
+    p1: ["TOGGLE", "FORWARD", "FORWARD", "ACTIVATE"],
+  },
+  "world-12-level-03": {
+    main: ["TOGGLE", "CALL_P1", "ACTIVATE", "CALL_P2", "TOGGLE", "TURN_LEFT", "CALL_P1", "ACTIVATE"],
+    p1: ["FORWARD", "FORWARD"],
+    p2: ["TURN_LEFT", "TURN_LEFT", "CALL_P1"],
+  },
+  "world-12-level-04": {
+    main: ["CALL_P1"],
+    p1: [
+      "TOGGLE",
+      "CALL_P2",
+      "ACTIVATE",
+      "TURN_LEFT",
+      "TURN_LEFT",
+      "CALL_P2",
+      "TOGGLE",
+      "TURN_LEFT",
+      "CALL_P2",
+      "TURN_LEFT",
+      "CALL_P1",
+    ],
+    p2: ["FORWARD", "FORWARD"],
+  },
+  "world-12-level-05": {
+    main: ["TOGGLE", "CALL_P1", "CALL_P2", "TOGGLE", "TURN_LEFT", "CALL_P1"],
+    p1: ["FORWARD", "JUMP", "ACTIVATE"],
+    p2: ["TURN_LEFT", "TURN_LEFT", "JUMP", "FORWARD"],
+  },
+  "world-13-level-01": {
+    main: ["CALL_P1"],
+    p1: ["ACTIVATE", "FORWARD", "JUMP", "FORWARD", "TURN_RIGHT", "FORWARD", "JUMP", "TURN_LEFT", "CALL_P1"],
+  },
+  "world-13-level-02": {
+    main: ["CALL_P1", "ACTIVATE", "CALL_P2", "TURN_LEFT", "FORWARD", "ACTIVATE", "JUMP", "TURN_RIGHT", "FORWARD", "TURN_LEFT", "JUMP", "ACTIVATE"],
+    p1: ["JUMP", "FORWARD"],
+    p2: ["TURN_RIGHT", "FORWARD", "JUMP"],
+  },
+  "world-13-level-03": {
+    main: ["ACTIVATE", "CALL_P1", "CALL_P2", "FORWARD", "CALL_P2", "FORWARD", "JUMP", "ACTIVATE"],
+    p1: ["JUMP", "FORWARD"],
+    p2: ["TURN_RIGHT", "JUMP", "TURN_LEFT"],
+  },
+  "world-13-level-04": {
+    main: ["CALL_P2", "CALL_P2", "CALL_P2", "CALL_P1", "ACTIVATE"],
+    p1: ["ACTIVATE", "FORWARD", "FORWARD"],
+    p2: ["CALL_P1", "CALL_P1", "TURN_RIGHT"],
+  },
+  "world-13-level-05": {
+    main: [
+      "CALL_P1",
+      "ACTIVATE",
+      "FORWARD",
+      "TURN_RIGHT",
+      "JUMP",
+      "TURN_RIGHT",
+      "CALL_P2",
+      "ACTIVATE",
+      "TURN_LEFT",
+      "TURN_LEFT",
+      "CALL_P2",
+      "FORWARD",
+      "FORWARD",
+      "FORWARD",
+      "ACTIVATE",
+    ],
+    p1: ["FORWARD", "JUMP", "JUMP"],
+    p2: ["FORWARD", "FORWARD"],
+  },
+  "world-13-level-06": {
+    main: [
+      "CALL_P2",
+      "CALL_P2",
+      "CALL_P1",
+      "ACTIVATE",
+      "TURN_RIGHT",
+      "JUMP",
+      "TURN_RIGHT",
+      "CALL_P2",
+      "CALL_P2",
+      "ACTIVATE",
+      "TURN_LEFT",
+      "JUMP",
+      "TURN_LEFT",
+      "CALL_P2",
+      "CALL_P2",
+      "ACTIVATE",
+    ],
+    p1: ["ACTIVATE", "FORWARD"],
+    p2: ["CALL_P1", "CALL_P1", "CALL_P1"],
+  },
+  "world-13-level-07": {
+    main: [
+      "ACTIVATE",
+      "CALL_P2",
+      "CALL_P2",
+      "CALL_P2",
+      "FORWARD",
+      "ACTIVATE",
+      "CALL_P1",
+      "JUMP",
+      "ACTIVATE",
+      "CALL_P1",
+      "CALL_P1",
+      "CALL_P1",
+      "FORWARD",
+      "ACTIVATE",
+      "TURN_RIGHT",
+      "JUMP",
+      "ACTIVATE",
+    ],
+    p1: ["FORWARD", "ACTIVATE", "FORWARD", "ACTIVATE", "TURN_RIGHT"],
+    p2: ["FORWARD", "ACTIVATE", "FORWARD", "ACTIVATE", "CALL_P1"],
+  },
 };
 
 function getProgramLength(program: ProgramSlots) {
@@ -303,20 +416,25 @@ function getProgramLength(program: ProgramSlots) {
 }
 
 describe("campaign levels", () => {
-  it("contains 66 handcrafted levels with unique ids", () => {
-    expect(campaignLevels).toHaveLength(66);
+  it("contains 84 handcrafted levels with unique ids", () => {
+    expect(allHandcraftedLevels).toHaveLength(84);
+    expect(new Set(allHandcraftedLevels.map((level) => level.id)).size).toBe(allHandcraftedLevels.length);
+  });
+
+  it("publishes a curated 64-level campaign with unique ids", () => {
+    expect(campaignLevels).toHaveLength(64);
     expect(new Set(campaignLevels.map((level) => level.id)).size).toBe(campaignLevels.length);
   });
 
-  it("validates every level definition", () => {
-    for (const level of campaignLevels) {
+  it("validates every authored level definition", () => {
+    for (const level of allHandcraftedLevels) {
       const validation = validateLevel(level);
       expect(validation.success, `${level.id}: ${validation.issues.map((issue) => issue.message).join(", ")}`).toBe(true);
     }
   });
 
   it("keeps published ideal sizes aligned with 3-star thresholds", () => {
-    for (const level of campaignLevels) {
+    for (const level of allHandcraftedLevels) {
       if (!level.metadata?.idealSolutionLength || !level.stars) {
         continue;
       }
@@ -327,7 +445,7 @@ describe("campaign levels", () => {
 
   it("keeps new levels solvable at their published ideal size", () => {
     for (const [levelId, program] of Object.entries(referencePrograms)) {
-      const level = campaignLevels.find((entry) => entry.id === levelId);
+      const level = allHandcraftedLevels.find((entry) => entry.id === levelId);
 
       expect(level, `${levelId} should exist`).toBeTruthy();
 

@@ -274,7 +274,11 @@ function GridFloorInner({
 }) {
   const { gl } = useThree();
   const { minX, maxX, minY, maxY } = getBoardMetrics(level);
-  const padding = 2;
+  const boardWidth = maxX - minX + 1;
+  const boardDepth = maxY - minY + 1;
+  const boardArea = boardWidth * boardDepth;
+  const padding = boardArea > 80 ? 1 : 2;
+  const showDecorativeCircuits = boardArea <= 80;
   const maxAnisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
   const tiles = useMemo(() => {
     const floorTiles = [];
@@ -301,7 +305,7 @@ function GridFloorInner({
             animated={!occupiedTiles.has(key)}
             key={key}
             maxAnisotropy={maxAnisotropy}
-            showCircuit={!blankTiles.has(key)}
+            showCircuit={showDecorativeCircuits && !blankTiles.has(key)}
             x={x}
             y={y}
           />,
@@ -310,7 +314,7 @@ function GridFloorInner({
     }
 
     return floorTiles;
-  }, [level.board, maxAnisotropy, maxX, maxY, minX, minY]);
+  }, [level.board, maxAnisotropy, maxX, maxY, minX, minY, padding, showDecorativeCircuits]);
 
   return <group>{tiles}</group>;
 }

@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { withBasePath } from "../app/basePath";
 import { AnimationMixer, Color, LoopOnce, LoopRepeat } from "three";
 import type { AnimationAction, AnimationClip, Group, Material, Object3D, PointLight } from "three";
 
@@ -12,7 +13,7 @@ import { ROBOT_PALETTES, type RobotColorId } from "../features/game/robotColors"
 const TILE_SIZE = 2.4;
 const BLOCK_HEIGHT = 1.1;
 const MODEL_FOOT_OFFSET = 0.08;
-const MODEL_URL = "/models/RobotExpressive.glb";
+const MODEL_URL = withBasePath("/models/RobotExpressive.glb");
 const MODEL_SCALE = 0.42;
 const DEFAULT_SURPRISE_INFLUENCE = 0.2;
 const FORWARD_MOVE_DURATION = 1.08;

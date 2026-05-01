@@ -172,6 +172,17 @@ export function GameScreen({ onSceneReady }: { onSceneReady?: () => void }) {
                 <Suspense fallback={null}>
                   <GameSuccessDialog
                     {...controller.successDialog}
+                    body={t.successBody}
+                    idealSizeLabel={
+                      controller.successDialog.idealSolutionLength
+                        ? t.idealSize(controller.successDialog.idealSolutionLength)
+                        : undefined
+                    }
+                    idealSizeLevelOnlyNote={t.idealSizeLevelOnlyNote}
+                    nextLabel={t.next}
+                    programSizeLabel={t.programSize(controller.successDialog.programLength)}
+                    replayLabel={t.replay}
+                    title={t.puzzleSolved}
                   />
                 </Suspense>
               ) : null}

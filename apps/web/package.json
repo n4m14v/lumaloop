@@ -26,6 +26,8 @@
     "dev": "vite",
     "lint": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:hub": "VITE_BASE_PATH=/lumaloop/ pnpm run build",
+    "dev:hub": "VITE_BASE_PATH=/lumaloop/ pnpm run dev"
   }
 }

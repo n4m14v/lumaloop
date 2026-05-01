@@ -85,6 +85,40 @@ function mergeEntries(
   };
 }
 
+export function mergeLevelProgressStates(
+  currentProgress: LevelProgressState,
+  nextProgress: LevelProgressState,
+): LevelProgressState {
+  let didChange = false;
+  const mergedLevels: LevelProgress = { ...currentProgress.levels };
+
+  for (const [levelId, nextEntry] of Object.entries(nextProgress.levels)) {
+    const normalizedLevelId = normalizeLevelId(levelId);
+    const currentEntry = mergedLevels[normalizedLevelId];
+    const mergedEntry = mergeEntries(currentEntry, nextEntry);
+
+    if (
+      !currentEntry ||
+      currentEntry.bestStars !== mergedEntry.bestStars ||
+      currentEntry.bestProgramSize !== mergedEntry.bestProgramSize ||
+      currentEntry.completed !== mergedEntry.completed ||
+      currentEntry.perfected !== mergedEntry.perfected
+    ) {
+      didChange = true;
+      mergedLevels[normalizedLevelId] = mergedEntry;
+    }
+  }
+
+  if (!didChange) {
+    return currentProgress;
+  }
+
+  return {
+    levels: mergedLevels,
+    version: 2,
+  };
+}
+
 function normalizeParsedProgress(rawLevels: Record<string, unknown>): LevelProgressState {
   const normalizedLevels: LevelProgress = {};
 

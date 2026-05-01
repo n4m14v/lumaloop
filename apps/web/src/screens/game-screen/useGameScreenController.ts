@@ -6,17 +6,31 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { campaignLevels, freeLevelIds } from "@lumaloop/level-data";
+
+import { withBasePath, withoutBasePath } from "../../app/basePath";
+import { useAuth } from "../../features/auth/AuthProvider";
+import { CLOUD_PROGRESS_MERGED_EVENT } from "../../features/auth/cloudSync";
 import {
-  campaignLevels,
   createSlotsForLevel,
   useGameStore,
 } from "../../features/game/store";
+import {
+  getFirstPremiumLevelIndex,
+  getLevelAccessStates,
+} from "../../features/monetization/access";
+import {
+  enqueueSyncOperation,
+  readProgramFromIndexedDb,
+  readProgressFromIndexedDb,
+  writeProgramToIndexedDb,
+  writeProgressToIndexedDb,
+} from "../../features/offline/indexedDb";
 import { useI18n } from "../../i18n/I18nProvider";
 import {
   createEmptyLevelProgressState,
   readLevelProgress,
   recordLevelCompletion,
-  writeLevelProgress,
   type LevelProgressState,
 } from "./levelProgressStorage";
 
@@ -35,15 +49,19 @@ function countFilledSlots(slots: ReturnType<typeof createSlotsForLevel>) {
 }
 
 export function useGameScreenController() {
+  const auth = useAuth();
   const { localizeLevel } = useI18n();
   const [unlockedLevelIndex, setUnlockedLevelIndex] = useState(0);
   const [hasHydratedLevelIndex, setHasHydratedLevelIndex] = useState(false);
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
   const [levelProgress, setLevelProgress] = useState<LevelProgressState>(createEmptyLevelProgressState());
+  const [isPurchasePromptOpen, setIsPurchasePromptOpen] = useState(false);
+  const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
   const [selectedRunMode, setSelectedRunMode] = useState<RunMode>("normal");
   const isPovActive = selectedRunMode === "pov";
   const lastResolvedSuccessRef = useRef<object | null>(null);
   const lastPersistedSuccessRef = useRef<object | null>(null);
+  const lastPersistedProgramSnapshotRef = useRef<Record<string, string>>({});
   const activeRoutine = useGameStore((state) => state.activeRoutine);
   const activeFrameIndex = useGameStore((state) => state.activeFrameIndex);
   const appendCommand = useGameStore((state) => state.appendCommand);
@@ -61,6 +79,7 @@ export function useGameScreenController() {
   const robotColorId = useGameStore((state) => state.robotColorId);
   const setActiveRoutine = useGameStore((state) => state.setActiveRoutine);
   const setLevelIndex = useGameStore((state) => state.setLevelIndex);
+  const setLevelProgram = useGameStore((state) => state.setLevelProgram);
   const setRobotColorId = useGameStore((state) => state.setRobotColorId);
   const setShowAllActions = useGameStore((state) => state.setShowAllActions);
   const setSpeed = useGameStore((state) => state.setSpeed);
@@ -71,15 +90,68 @@ export function useGameScreenController() {
   const stopRun = useGameStore((state) => state.stopRun);
   const toggleAutoRunning = useGameStore((state) => state.toggleAutoRunning);
   const localizedLevels = campaignLevels.map(localizeLevel);
+
+  function closePurchasePrompt() {
+    setIsPurchasePromptOpen(false);
+    setPurchaseMessage(null);
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    const shouldCleanDialogRoute =
+      withoutBasePath(url.pathname) === "/unlock" ||
+      url.searchParams.get("account") === "1" ||
+      url.searchParams.get("unlock") === "1";
+
+    if (!shouldCleanDialogRoute) {
+      return;
+    }
+
+    url.pathname = withBasePath("/play");
+    url.searchParams.delete("account");
+    url.searchParams.delete("unlock");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    const shouldOpenPurchasePrompt =
+      withoutBasePath(url.pathname) === "/unlock" ||
+      url.searchParams.get("account") === "1" ||
+      url.searchParams.get("unlock") === "1";
+
+    if (!shouldOpenPurchasePrompt) {
+      return;
+    }
+
+    setPurchaseMessage(null);
+    setIsPurchasePromptOpen(true);
+  }, []);
   const level = localizedLevels[levelIndex] ?? localizedLevels[0]!;
   const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
-  const unlockedLevels = localizedLevels.map((_, index) => {
-    return isAdmin || index === 0 || index <= unlockedLevelIndex;
+  const levelAccessStates = getLevelAccessStates({
+    hasFullGame: auth.hasFullGame,
+    isAdmin,
+    levels: localizedLevels,
+    progress: levelProgress,
   });
+  const unlockedLevels = levelAccessStates.map((accessState) => accessState.isAvailable);
 
   useEffect(() => {
     ensureLevelProgram();
   }, [ensureLevelProgram, levelIndex]);
+
+  useEffect(() => {
+    if (!isAdmin && showAllActions) {
+      setShowAllActions(false);
+    }
+  }, [isAdmin, setShowAllActions, showAllActions]);
 
   useEffect(() => {
     const savedLevelIndex = window.localStorage.getItem(LEVEL_INDEX_STORAGE_KEY);
@@ -103,8 +175,69 @@ export function useGameScreenController() {
   }, [setLevelIndex]);
 
   useEffect(() => {
-    setLevelProgress(readLevelProgress());
+    let isActive = true;
+
+    async function hydrateProgress() {
+      const legacyProgress = readLevelProgress();
+      setLevelProgress(legacyProgress);
+
+      const indexedDbProgress = await readProgressFromIndexedDb().catch(() => null);
+      if (!isActive) {
+        return;
+      }
+
+      if (indexedDbProgress) {
+        setLevelProgress(indexedDbProgress);
+        return;
+      }
+
+      await writeProgressToIndexedDb(legacyProgress).catch(() => undefined);
+    }
+
+    void hydrateProgress();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
+
+  useEffect(() => {
+    async function handleCloudProgressMerged() {
+      const indexedDbProgress = await readProgressFromIndexedDb().catch(() => null);
+      if (indexedDbProgress) {
+        setLevelProgress(indexedDbProgress);
+      }
+    }
+
+    window.addEventListener(CLOUD_PROGRESS_MERGED_EVENT, handleCloudProgressMerged);
+
+    return () => {
+      window.removeEventListener(CLOUD_PROGRESS_MERGED_EVENT, handleCloudProgressMerged);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function hydrateProgram() {
+      if (!level) {
+        return;
+      }
+
+      const savedProgram = await readProgramFromIndexedDb(level.id).catch(() => null);
+      if (!isActive || !savedProgram) {
+        return;
+      }
+
+      setLevelProgram(level.id, savedProgram);
+    }
+
+    void hydrateProgram();
+
+    return () => {
+      isActive = false;
+    };
+  }, [level, setLevelProgram]);
 
   useEffect(() => {
     if (!isAutoRunning || activeFrameIndex !== null || !result || committedFrames >= result.trace.length) {
@@ -185,10 +318,41 @@ export function useGameScreenController() {
         return currentProgress;
       }
 
-      writeLevelProgress(nextProgress);
+      void writeProgressToIndexedDb(nextProgress);
+      void enqueueSyncOperation({
+        payload: {
+          levelId: level.id,
+          programLength: resultProgramLength,
+          starsEarned: result.score.starsEarned,
+        },
+        type: "progress_updated",
+      });
       return nextProgress;
     });
   }, [currentProgramLength, isSuccessResolved, level.id, result]);
+
+  useEffect(() => {
+    if (!level || !slots) {
+      return;
+    }
+
+    const programSnapshot = JSON.stringify(slots);
+    if (lastPersistedProgramSnapshotRef.current[level.id] === programSnapshot) {
+      return;
+    }
+
+    lastPersistedProgramSnapshotRef.current[level.id] = programSnapshot;
+    void writeProgramToIndexedDb(level.id, slots);
+    void enqueueSyncOperation({
+      payload: {
+        levelId: level.id,
+        main: slots.main,
+        p1: slots.p1,
+        p2: slots.p2,
+      },
+      type: "program_saved",
+    });
+  }, [level, slots]);
 
   useEffect(() => {
     if (!hasHydratedLevelIndex || !isSuccessResolved) {
@@ -207,6 +371,32 @@ export function useGameScreenController() {
     window.localStorage.setItem(LEVEL_INDEX_STORAGE_KEY, String(nextUnlockedLevelIndex));
   }, [hasHydratedLevelIndex, isSuccessResolved, levelIndex, unlockedLevelIndex]);
 
+  useEffect(() => {
+    if (auth.checkoutStatus !== "success" || !auth.hasFullGame) {
+      return;
+    }
+
+    const firstPremiumLevelIndex = getFirstPremiumLevelIndex(localizedLevels);
+    if (firstPremiumLevelIndex >= 0) {
+      setLevelIndex(firstPremiumLevelIndex);
+      window.localStorage.setItem(LEVEL_INDEX_STORAGE_KEY, String(firstPremiumLevelIndex));
+      setUnlockedLevelIndex(Math.max(unlockedLevelIndex, firstPremiumLevelIndex));
+    }
+
+    auth.clearCheckoutStatus();
+  }, [auth, localizedLevels, setLevelIndex, unlockedLevelIndex]);
+
+  useEffect(() => {
+    if (!hasHydratedLevelIndex || levelAccessStates[levelIndex]?.isAvailable) {
+      return;
+    }
+
+    const fallbackIndex = levelAccessStates.findIndex((accessState) => accessState.isAvailable);
+    if (fallbackIndex >= 0 && fallbackIndex !== levelIndex) {
+      setLevelIndex(fallbackIndex);
+    }
+  }, [hasHydratedLevelIndex, levelAccessStates, levelIndex, setLevelIndex]);
+
   const showVictorySequence = isSuccessResolved && !isVictorySequenceComplete;
   const showSuccessPopup = isSuccessResolved && isVictorySequenceComplete;
   const hasNextLevel = levelIndex < campaignLevels.length - 1;
@@ -214,11 +404,37 @@ export function useGameScreenController() {
   const canStartRun = currentProgramLength > 0;
 
   function handleSetLevelIndex(nextLevelIndex: number) {
-    if (!unlockedLevels[nextLevelIndex]) {
+    const accessState = levelAccessStates[nextLevelIndex];
+
+    if (!accessState?.isAvailable) {
+      if (accessState?.reason === "premium_locked") {
+        setPurchaseMessage("Unlock the full game to play this level.");
+        setIsPurchasePromptOpen(true);
+      }
       return;
     }
 
     setLevelIndex(nextLevelIndex);
+  }
+
+  async function handleSignIn(email: string, password: string) {
+    await auth.signIn(email, password);
+    await auth.refreshEntitlements();
+  }
+
+  async function handleSignUp(email: string, password: string) {
+    await auth.signUp(email, password);
+    await auth.refreshEntitlements();
+  }
+
+  async function handleUnlockFullGame() {
+    if (!auth.user) {
+      setPurchaseMessage("Sign in or create an account before checkout.");
+      setIsPurchasePromptOpen(true);
+      return;
+    }
+
+    await auth.startFullGameCheckout();
   }
 
   function executeRunMode(mode: RunMode) {
@@ -256,6 +472,24 @@ export function useGameScreenController() {
 
     stopRun();
     setSelectedRunMode("normal");
+
+    if (!auth.hasFullGame && !isAdmin) {
+      const currentFreeIndex = freeLevelIds.findIndex((freeLevelId) => freeLevelId === level.id);
+      const nextFreeLevelId = currentFreeIndex >= 0 ? freeLevelIds[currentFreeIndex + 1] : undefined;
+      const nextFreeLevelIndex = nextFreeLevelId
+        ? localizedLevels.findIndex((candidateLevel) => candidateLevel.id === nextFreeLevelId)
+        : -1;
+
+      if (nextFreeLevelIndex >= 0) {
+        handleSetLevelIndex(nextFreeLevelIndex);
+        return;
+      }
+
+      setPurchaseMessage("You finished the free preview. Unlock the full game to continue.");
+      setIsPurchasePromptOpen(true);
+      return;
+    }
+
     handleSetLevelIndex(levelIndex + 1);
   }
 
@@ -343,12 +577,40 @@ export function useGameScreenController() {
       onToggleRun: handleToggleRun,
       selectedRunMode,
       unlockedLevels,
+      levelAccessStates,
       menu: {
+        extraActions: [
+          ...(auth.hasFullGame
+            ? [{ label: "Full Game Unlocked", onSelect: () => {} }]
+            : [{ label: "Unlock Full Game", onSelect: handleUnlockFullGame }]),
+          ...(auth.user
+            ? [{ label: `Sign out ${auth.user.email ?? ""}`.trim(), onSelect: () => void auth.signOut() }]
+            : []),
+        ],
         onReplayTutorial: () => {},
         onSetRobotColorId: setRobotColorId,
-        onSetShowAllActions: setShowAllActions,
         robotColorId,
-        showAllActions,
+        ...(isAdmin
+          ? {
+              onSetShowAllActions: setShowAllActions,
+              showAllActions,
+            }
+          : {}),
+      },
+      monetization: {
+        checkoutStatus: auth.checkoutStatus,
+        hasFullGame: auth.hasFullGame,
+        isAuthConfigured: auth.isAuthConfigured,
+        isPurchasePromptOpen,
+        message: purchaseMessage,
+        onClosePurchasePrompt: closePurchasePrompt,
+        onRefreshEntitlements: auth.refreshEntitlements,
+        onSignIn: handleSignIn,
+        onSignOut: auth.signOut,
+        onSignUp: handleSignUp,
+        onUnlockFullGame: handleUnlockFullGame,
+        syncStatus: auth.syncStatus,
+        userEmail: auth.user?.email ?? null,
       },
     },
     successDialog: showSuccessPopup

@@ -12,8 +12,11 @@ The rules prioritize deterministic execution, legible failure, and authorable le
 - Tile kinds in version 1:
   - `NORMAL`
   - `TARGET`
-  - `BLOCKED`
+  - `SWITCH`
 - `VOID` is a semantic absence, not a placed traversable tile.
+- `NORMAL` tiles may optionally belong to a toggle group and declare a `moveTo` position.
+  When that group is active, the tile resolves at `moveTo`; otherwise it resolves at its default
+  coordinate.
 
 ## Robot State
 
@@ -45,7 +48,7 @@ Runtime state additionally tracks:
 
 - Compute the adjacent coordinate in the current facing direction.
 - The move is legal only if a tile exists at the destination and its height equals the current height.
-- Moving into `BLOCKED`, off the board, or onto a different height fails with `FAILED_INVALID_MOVE`.
+- Moving off the board or onto a different height fails with `FAILED_INVALID_MOVE`.
 
 ### TURN_LEFT / TURN_RIGHT
 
@@ -60,7 +63,7 @@ Runtime state additionally tracks:
   - destination height is lower than the current height
 - Jumping sideways to the same height is illegal.
 - Jumping up by more than one level is illegal.
-- Jumping into `BLOCKED` or off the board is illegal.
+- Jumping off the board is illegal.
 - Illegal jumps fail with `FAILED_INVALID_JUMP`.
 
 ### ACTIVATE
@@ -69,6 +72,14 @@ Runtime state additionally tracks:
 - Executing `ACTIVATE` on a non-target tile fails with `FAILED_WRONG_LIGHT`.
 - Executing `ACTIVATE` on a target marks that target as activated.
 - Re-lighting an already activated target is legal and leaves activation unchanged.
+
+### TOGGLE
+
+- The robot must be standing on a `SWITCH` tile.
+- Executing `TOGGLE` on a non-switch tile fails with `FAILED_INVALID_TOGGLE`.
+- A switch flips its `toggleGroup` between inactive and active.
+- Active toggle groups move their linked `NORMAL` tiles to each tile's `moveTo` position.
+- Toggling is deterministic and affects all tiles in the same group at once.
 
 ### CALL_P1 / CALL_P2
 
@@ -80,6 +91,7 @@ Runtime state additionally tracks:
 
 - `FAILED_INVALID_MOVE`
 - `FAILED_INVALID_JUMP`
+- `FAILED_INVALID_TOGGLE`
 - `FAILED_WRONG_LIGHT`
 - `FAILED_INCOMPLETE`
 - `FAILED_MAX_STEPS`
@@ -109,7 +121,9 @@ Levels must satisfy:
 7. Allowed commands must be unique
 8. Slot limits must be positive integers when present
 9. Procedures cannot have slot limits unless the command palette includes the matching call command
-10. Star thresholds, if present, must be monotonically non-increasing from one star to three stars when treated as maximum command counts:
+10. Switch tiles must declare a toggle group
+11. Movable normal tiles must declare both a toggle group and a different `moveTo` position
+12. Star thresholds, if present, must be monotonically non-increasing from one star to three stars when treated as maximum command counts:
    - `three <= two <= one`
 
 ## Extension Points
@@ -118,8 +132,6 @@ Reserved future additions:
 
 - Counted loops
 - Tile-condition commands
-- Switches and toggles
-- Teleports
 - One-way tiles
 - Fragile tiles
 

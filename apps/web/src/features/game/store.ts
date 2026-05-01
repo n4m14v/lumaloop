@@ -9,16 +9,7 @@ import {
   type RunResult,
 } from "@lumaloop/engine";
 import {
-  world01Basics,
-  world03Height,
-  world04Procedures,
-  world05Recursion,
-  world06Hard,
-  world07VeryHard,
-  world08Mastery,
-  world09Trickery,
-  world10Phantoms,
-  world11Switches,
+  campaignLevels,
 } from "@lumaloop/level-data";
 
 import type { RobotColorId } from "./robotColors";
@@ -31,19 +22,6 @@ const DEFAULT_PROC_SLOTS = 4;
 
 const MAX_STEPS = 1000;
 const MAX_CALL_DEPTH = 100;
-
-export const campaignLevels = [
-  ...world01Basics,
-  ...world03Height,
-  ...world04Procedures,
-  ...world11Switches,
-  ...world05Recursion,
-  ...world06Hard,
-  ...world07VeryHard,
-  ...world08Mastery,
-  ...world09Trickery,
-  ...world10Phantoms,
-];
 
 function createRoutineSlots(level: LevelDefinition): RoutineSlots {
   return {
@@ -124,6 +102,7 @@ interface GameStoreState {
   removeCommand: (routine: RoutineName, index: number) => void;
   rotateCamera: (delta: number) => void;
   setActiveRoutine: (routine: RoutineName) => void;
+  setLevelProgram: (levelId: string, slots: RoutineSlots) => void;
   setRobotColorId: (value: RobotColorId) => void;
   setShowAllActions: (value: boolean) => void;
   setLevelIndex: (levelIndex: number) => void;
@@ -148,7 +127,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   programs: {},
   result: null,
   robotColorId: "gold",
-  showAllActions: true,
+  showAllActions: false,
   speed: 1,
   activeFrameIndex: null,
   appendCommand: (command) => {
@@ -296,6 +275,20 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
   setActiveRoutine: (routine) => {
     set({ activeRoutine: routine });
+  },
+  setLevelProgram: (levelId, slots) => {
+    const state = get();
+
+    set({
+      activeFrameIndex: null,
+      committedFrames: 0,
+      isAutoRunning: false,
+      programs: {
+        ...state.programs,
+        [levelId]: cloneSlots(slots),
+      },
+      result: null,
+    });
   },
   setRobotColorId: (value) => {
     set({ robotColorId: value });

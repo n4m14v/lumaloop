@@ -10,7 +10,14 @@ interface GameMenuAction {
   onSelect: () => void;
 }
 
+interface GameMenuAccountStatus {
+  email: string | null;
+  label: string;
+  syncStatus: string;
+}
+
 export function GameMenu({
+  accountStatus,
   title,
   extraActions = [],
   onSetRobotColorId,
@@ -20,6 +27,7 @@ export function GameMenu({
   showAllActions,
   titleEyebrow,
 }: {
+  accountStatus?: GameMenuAccountStatus;
   title: string;
   extraActions?: GameMenuAction[];
   onSetRobotColorId?: (value: RobotColorId) => void;
@@ -35,7 +43,8 @@ export function GameMenu({
   const canToggleActions = showAllActions !== undefined && onSetShowAllActions !== undefined;
   const canPickRobotColor = robotColorId !== undefined && onSetRobotColorId !== undefined;
   const hasReplayTutorial = onReplayTutorial !== undefined;
-  const hasAnyActions = canToggleActions || canPickRobotColor || hasReplayTutorial || extraActions.length > 0;
+  const hasAnyActions =
+    accountStatus !== undefined || canToggleActions || canPickRobotColor || hasReplayTutorial || extraActions.length > 0;
 
   useEffect(() => {
     if (!open) {
@@ -102,6 +111,23 @@ export function GameMenu({
           </div>
 
           <div className="space-y-2">
+            {accountStatus ? (
+              <div className="ui-button flex w-full items-start justify-between rounded-[14px] px-4 py-3 text-left">
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">Account</p>
+                  <p className="mt-1 truncate text-[11px] text-[var(--text-muted)]">
+                    {accountStatus.email ?? "Not signed in"}
+                  </p>
+                </div>
+                <div className="ml-3 shrink-0 text-right">
+                  <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-primary)]">{accountStatus.label}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                    {accountStatus.syncStatus}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             {canToggleActions ? (
               <button
                 aria-pressed={showAllActions}

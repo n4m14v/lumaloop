@@ -104,6 +104,14 @@ export const localeData: LocaleData = {
         return "Switches";
       }
 
+      if (worldId === "world-12-switchbacks") {
+        return "Switchbacks";
+      }
+
+      if (worldId === "world-13-landscapes") {
+        return "Landscapes";
+      }
+
       return fallbackName;
     },
     worldCurrent: "Current World",

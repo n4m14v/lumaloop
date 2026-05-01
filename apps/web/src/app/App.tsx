@@ -2,15 +2,18 @@ import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 
 import { I18nProvider, detectPreferredLocale, useI18n } from "../i18n/I18nProvider";
 import { loadLocaleData, type Locale, type LocaleData } from "../i18n/translations";
+import { AuthProvider } from "../features/auth/AuthProvider";
 import { GameScreenLoadingShell } from "./GameScreenLoadingShell";
 import { GameSplashScreen } from "./GameSplashScreen";
+import { withBasePath, withoutBasePath } from "./basePath";
 
 const MIN_LOADER_VISIBLE_MS = 1500;
 const POST_SCENE_READY_DELAY_MS = 500;
 const LOADER_FADE_OUT_MS = 500;
 const SPLASH_FADE_OUT_MS = 420;
+const PLAY_ROUTE_SESSION_KEY = "lumaloop:play-route-opened-from-splash";
 
-type AppRoute = "/" | "/play";
+type AppRoute = "/" | "/play" | "/unlock";
 
 const loadGameScreen = async () => {
   const module = await import("../screens/GameScreen");
@@ -20,10 +23,45 @@ const loadGameScreen = async () => {
 const GameScreen = lazy(loadGameScreen);
 
 function normalizeRoute(pathname: string): AppRoute {
-  if (pathname === "/play") {
-    return "/play";
+  if (pathname === "/play" || pathname === "/unlock") {
+    return pathname;
   }
 
+  return "/";
+}
+
+function shouldAllowPlayRoute() {
+  try {
+    return window.sessionStorage.getItem(PLAY_ROUTE_SESSION_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function markPlayRouteAllowed() {
+  try {
+    window.sessionStorage.setItem(PLAY_ROUTE_SESSION_KEY, "true");
+  } catch {
+    // Session storage can be unavailable in strict privacy contexts.
+  }
+}
+
+function clearPlayRouteAllowed() {
+  try {
+    window.sessionStorage.removeItem(PLAY_ROUTE_SESSION_KEY);
+  } catch {
+    // Session storage can be unavailable in strict privacy contexts.
+  }
+}
+
+function resolveBrowserRoute() {
+  const normalizedRoute = normalizeRoute(withoutBasePath(window.location.pathname));
+
+  if (normalizedRoute !== "/play" || shouldAllowPlayRoute()) {
+    return normalizedRoute;
+  }
+
+  window.history.replaceState(null, "", withBasePath("/"));
   return "/";
 }
 
@@ -175,6 +213,7 @@ function RoutedApp({
     }
 
     setIsStarting(true);
+    markPlayRouteAllowed();
     void loadGameScreen();
     navigate("/play");
   }, [isStarting, navigate]);
@@ -202,13 +241,13 @@ function RoutedApp({
 
 export function App() {
   const [route, setRoute] = useState<AppRoute>(() =>
-    typeof window === "undefined" ? "/" : normalizeRoute(window.location.pathname),
+    typeof window === "undefined" ? "/" : resolveBrowserRoute(),
   );
   const [localeBootstrap, setLocaleBootstrap] = useState<{ locale: Locale; localeData: LocaleData } | null>(null);
 
   useEffect(() => {
     function handlePopState() {
-      setRoute(normalizeRoute(window.location.pathname));
+      setRoute(resolveBrowserRoute());
     }
 
     window.addEventListener("popstate", handlePopState);
@@ -238,11 +277,15 @@ export function App() {
   const navigate = useCallback((nextRoute: AppRoute) => {
     const normalizedRoute = normalizeRoute(nextRoute);
 
+    if (normalizedRoute === "/") {
+      clearPlayRouteAllowed();
+    }
+
     if (normalizedRoute === route) {
       return;
     }
 
-    window.history.pushState(null, "", normalizedRoute);
+    window.history.pushState(null, "", withBasePath(normalizedRoute));
     setRoute(normalizedRoute);
   }, [route]);
 
@@ -252,7 +295,9 @@ export function App() {
 
   return (
     <I18nProvider initialLocale={localeBootstrap.locale} initialLocaleData={localeBootstrap.localeData}>
-      <RoutedApp navigate={navigate} route={route} />
+      <AuthProvider>
+        <RoutedApp navigate={navigate} route={route} />
+      </AuthProvider>
     </I18nProvider>
   );
 }

@@ -1,9 +1,13 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { withBasePath } from "../../app/basePath";
+
+import { Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 
 import { CircleHelp, ChevronDown } from "lucide-react";
 
 import type { LevelDefinition } from "@lumaloop/engine";
 
+import type { LevelAccessState } from "../../features/monetization/access";
 import type { RobotColorId } from "../../features/game/robotColors";
 import type { LevelProgressState } from "../../screens/game-screen/levelProgressStorage";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -11,7 +15,7 @@ import { BrandLogo } from "../BrandLogo";
 import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
 import { GameStatusSnackbar, type GameStatusFeedback } from "./GameStatusSnackbar";
-import { LevelMapBackdrop, type LevelMapSection } from "./LevelMapBackdrop";
+import { LevelMapBackdrop, LevelMapOverlayBackdrop, type LevelMapSection } from "./LevelMapBackdrop";
 import { RunModeSplitButton } from "./RunModeSplitButton";
 
 const GameWalkthroughDialog = lazy(async () => {
@@ -46,6 +50,22 @@ interface HeaderMenuConfig {
   titleEyebrow?: string;
 }
 
+interface MonetizationConfig {
+  checkoutStatus: "cancelled" | "idle" | "success";
+  hasFullGame: boolean;
+  isAuthConfigured: boolean;
+  isPurchasePromptOpen: boolean;
+  message: string | null;
+  onClosePurchasePrompt: () => void;
+  onRefreshEntitlements: () => Promise<void>;
+  onSignIn: (email: string, password: string) => Promise<void>;
+  onSignOut: () => Promise<void>;
+  onSignUp: (email: string, password: string) => Promise<void>;
+  onUnlockFullGame: () => Promise<void>;
+  syncStatus: "local" | "offline" | "syncing" | "synced" | "error";
+  userEmail: string | null;
+}
+
 interface GameHeaderBarProps {
   canStartRun: boolean;
   currentLevelIndex: number;
@@ -55,8 +75,10 @@ interface GameHeaderBarProps {
   levelName: string;
   levelProgress: LevelProgressState;
   localizedLevels?: LevelDefinition[];
+  levelAccessStates?: LevelAccessState[];
   levelMapSections?: LevelMapSection[];
   menu?: HeaderMenuConfig;
+  monetization?: MonetizationConfig;
   objectivePopover?: HeaderObjectivePopover;
   onCloseLevelMap: () => void;
   onOpenLevelMap: () => void;
@@ -97,8 +119,10 @@ export function GameHeaderBar({
   levelName,
   levelProgress,
   localizedLevels,
+  levelAccessStates,
   levelMapSections,
   menu,
+  monetization,
   objectivePopover,
   onCloseLevelMap,
   onOpenLevelMap,
@@ -119,6 +143,19 @@ export function GameHeaderBar({
   const helpRef = useRef<HTMLDivElement | null>(null);
   const objectiveRef = useRef<HTMLDivElement | null>(null);
   const menuProps = {
+    ...(monetization !== undefined
+      ? {
+          accountStatus: {
+            email: monetization.userEmail,
+            label: monetization.hasFullGame
+              ? "Full game"
+              : monetization.userEmail
+                ? "Free account"
+                : "Guest",
+            syncStatus: monetization.syncStatus,
+          },
+        }
+      : {}),
     title: levelName,
     ...(menu?.extraActions !== undefined ? { extraActions: menu.extraActions } : {}),
     ...(menu?.onReplayTutorial !== undefined ? { onReplayTutorial: menu.onReplayTutorial } : {}),
@@ -135,6 +172,7 @@ export function GameHeaderBar({
     onClose: onCloseLevelMap,
     onSelectLevel: onSetLevelIndex,
     unlockedLevels,
+    ...(levelAccessStates !== undefined ? { levelAccessStates } : {}),
     ...(localizedLevels !== undefined ? { localizedLevels } : {}),
     ...(levelMapSections !== undefined ? { sections: levelMapSections } : {}),
   };
@@ -368,8 +406,215 @@ export function GameHeaderBar({
           <GameWalkthroughDialog onClose={() => setIsWalkthroughOpen(false)} open={isWalkthroughOpen} />
         </Suspense>
       ) : null}
+      {monetization?.isPurchasePromptOpen ? (
+        <PurchaseDialog monetization={monetization} />
+      ) : null}
 
       <div className="flex-1" />
     </div>
+  );
+}
+
+function PurchaseDialog({ monetization }: { monetization: MonetizationConfig }) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
+  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        monetization.onClosePurchasePrompt();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [monetization]);
+
+  async function submitAuth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setIsBusy(true);
+
+    try {
+      if (mode === "sign-in") {
+        await monetization.onSignIn(email, password);
+      } else {
+        await monetization.onSignUp(email, password);
+      }
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Authentication failed.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function unlock() {
+    setError(null);
+    setIsBusy(true);
+
+    try {
+      await monetization.onUnlockFullGame();
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Checkout failed.");
+      setIsBusy(false);
+    }
+  }
+
+  return createPortal(
+    <LevelMapOverlayBackdrop
+      contentClassName="relative flex h-full items-center justify-center px-4"
+      isOpen
+      onClick={monetization.onClosePurchasePrompt}
+      overlayClassName="z-[100]"
+    >
+      <div
+        className="ui-gloss-panel relative flex w-full max-w-[56rem] flex-col overflow-hidden rounded-[24px] shadow-2xl md:flex-row"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          className="ui-button absolute right-4 top-4 z-20 h-8 w-8 justify-center rounded-full px-0 hover:bg-white/5 hover:text-white"
+          onClick={monetization.onClosePurchasePrompt}
+          type="button"
+        >
+          ✕
+        </button>
+
+        {/* Left: Form Content */}
+        <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
+          <div className="mx-auto flex w-full max-w-[22rem] flex-col">
+            <h2 className="font-display text-3xl font-semibold text-white">
+              {mode === "sign-in" ? "Sign in to continue" : "Create your account"}
+            </h2>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              {mode === "sign-in"
+                ? "Use the account you want tied to your unlock and cloud progress."
+                : "Create an account so your unlock and progress stay with you."}
+            </p>
+
+            {!monetization.isAuthConfigured ? (
+              <div className="mt-8 rounded-[12px] border border-amber-300/30 bg-amber-300/10 px-4 py-4 text-sm text-amber-50">
+                Supabase is not configured yet. Add the VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables to enable sign in.
+              </div>
+            ) : monetization.userEmail ? (
+              <div className="mt-8 rounded-[12px] border border-emerald-300/30 bg-emerald-300/10 px-4 py-4 text-center text-sm text-emerald-50">
+                Signed in as <br /><span className="font-semibold text-emerald-100">{monetization.userEmail}</span>.
+              </div>
+            ) : (
+              <form className="mt-8 space-y-4" onSubmit={submitAuth}>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-[var(--text-secondary)]">Email</label>
+                  <input
+                    className="ui-input w-full rounded-[10px] px-3 py-2.5 text-sm outline-none transition-colors focus:border-[var(--accent)]"
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="Enter your email"
+                    type="email"
+                    value={email}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-[var(--text-secondary)]">Password</label>
+                  <input
+                    className="ui-input w-full rounded-[10px] px-3 py-2.5 text-sm outline-none transition-colors focus:border-[var(--accent)]"
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="••••••••"
+                    type="password"
+                    value={password}
+                  />
+                </div>
+                
+                <div className="pt-2">
+                  <button className="ui-button-accent h-10 w-full justify-center text-sm font-semibold" disabled={isBusy} type="submit">
+                    {mode === "sign-in" ? "Sign in and continue" : "Create account and continue"}
+                  </button>
+                </div>
+
+                <p className="mt-4 text-center text-sm text-[var(--text-secondary)]">
+                  {mode === "sign-in" ? "Don't have an account? " : "Already have an account? "}
+                  <button
+                    className="font-medium text-white transition-colors hover:text-[var(--accent)]"
+                    disabled={isBusy}
+                    onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+                    type="button"
+                  >
+                    {mode === "sign-in" ? "Sign up" : "Sign in"}
+                  </button>
+                </p>
+              </form>
+            )}
+
+            {error ? (
+              <div className="mt-4 rounded-[12px] border border-rose-300/35 bg-rose-300/10 px-4 py-3 text-sm text-rose-50 shadow-sm">{error}</div>
+            ) : null}
+
+            <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6">
+              <button
+                className="ui-button-accent h-11 w-full justify-center rounded-[12px] text-[13px] font-semibold tracking-wide"
+                disabled={isBusy || monetization.hasFullGame || !monetization.userEmail}
+                onClick={() => void unlock()}
+                type="button"
+              >
+                {monetization.hasFullGame ? "Full game unlocked" : "Continue to secure checkout"}
+              </button>
+              <button
+                className="ui-button h-11 w-full justify-center rounded-[12px] text-[13px] font-medium"
+                disabled={isBusy || !monetization.userEmail}
+                onClick={() => void monetization.onRefreshEntitlements()}
+                type="button"
+              >
+                Restore previous purchase
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Graphic Content */}
+        <div className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden border-l border-white/5 bg-black/40 p-8 text-center md:flex md:p-12">
+          <img
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            src={withBasePath("/splash.webp")}
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,9,19,0.72)_0%,rgba(4,9,19,0.58)_42%,rgba(4,9,19,0.86)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--accent-soft)_0%,transparent_60%)] opacity-30" />
+          
+          <div className="relative z-10 flex max-w-[22rem] flex-col items-center">
+            <h2 className="font-display text-4xl font-semibold leading-tight text-white">
+              Unlock the full campaign
+            </h2>
+            <h3 className="mt-2 font-display text-2xl font-medium text-[var(--accent)]">
+              One account. Every level. Synced progress.
+            </h3>
+            <p className="mt-5 text-sm leading-6 text-[var(--text-secondary)]">
+              {monetization.message ?? "Sign in or create an account, then continue to Stripe to unlock premium levels and keep your progress available across devices."}
+            </p>
+
+            <div className="mt-10 flex w-full flex-col gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-5 text-left shadow-inner backdrop-blur-sm">
+              {[
+                "Unlock every premium puzzle in the campaign.",
+                "Sync completed levels and best solutions.",
+                "Restore your purchase from any signed-in device.",
+              ].map((benefit) => (
+                <div className="flex items-start gap-3 text-sm leading-6 text-[var(--text-secondary)]" key={benefit}>
+                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--accent)] shadow-[0_0_8px_var(--accent)]" />
+                  <span>{benefit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </LevelMapOverlayBackdrop>,
+    document.body,
   );
 }
