@@ -28,6 +28,26 @@ Free users progress through this free sequence only. Premium levels remain visib
 
 After purchase, send the player to the earliest premium level in full campaign order that was locked before payment. With the current campaign, this is `world-03-level-01`.
 
+## Free Preview Conversion Flow
+
+The free preview should stay game-first until the player shows intent to continue. Do not open with a login form or checkout copy immediately after the final free level.
+
+1. Final free-level success screen:
+   - Reinforce progress with dynamic counts from `freeLevelIds.length` and `campaignLevels.length`.
+   - Show the next world by name, currently `Rising Paths`.
+   - Frame the threshold as progress and curiosity, not account/payment friction.
+   - Keep performance metrics such as `Program Size` and `Ideal Size` near the stars, not inside the progression block.
+
+2. Unlock prompt intro:
+   - Lead with the next world and its subtitle, not the payment form.
+   - Primary CTA: `Play Next Level`.
+   - Secondary CTA: `Unlock Full Game`.
+   - Only after either CTA should the dialog move to the account/checkout step.
+
+3. Checkout/account step:
+   - Use game-driven value language: harder systems, multi-path puzzles, full progression, and progress kept across devices.
+   - Keep sign-in/account creation as part of purchase fulfillment, not the first emotional beat.
+
 ## Backend, Auth, and Payments
 
 Supabase tables:

@@ -210,10 +210,7 @@ export function LevelMapBackdrop({
 
       return {
         completedCount: worldProgress.completedCount,
-        focusLine:
-          group.focusLabels.length > 0
-            ? group.focusLabels.join(" · ")
-            : group.levels[0]?.levelName ?? "",
+        focusLine: t.worldSubtitle(worldId) || group.levels[0]?.levelName || "",
         id: worldId,
         isCurrentWorld: group.levels.some((levelEntry) => levelEntry.isCurrent),
         isPerfectedWorld: worldProgress.perfectedCount === group.levels.length,

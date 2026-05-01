@@ -54,6 +54,25 @@ noise often increases confusion without creating better gameplay.
 
 ## Campaign Revision
 
+### World Naming
+
+World names should feel like places or game chapters, not programming lessons. Avoid raw curriculum names such as `Procedures`, `Switches`, and `Recursion` in player-facing UI. The current campaign order uses:
+
+1. `First Sparks` - Wake the first lights
+2. `Rising Paths` - Paths move upward
+3. `Echo Systems` - Repeat ideas with intent
+4. `Control Nodes` - Paths that react to you
+5. `Endless Patterns` - Where loops begin
+6. `Spiral Systems` - Nested logic tightens
+7. `Chain Reactions` - Systems trigger systems
+8. `Final Control` - Precision under pressure
+9. `False Signals` - Not everything is true
+10. `Broken Routes` - Dead ends learn to lie
+11. `Return Loops` - Go back with purpose
+12. `The Final Grid` - Everything comes together
+
+These names intentionally move from spark -> path -> system -> pattern -> complexity -> mastery. Subtitles provide clarity without turning the world map into a lesson list.
+
 ### Keep
 
 - Basics, because the early teaching ramp is clear.

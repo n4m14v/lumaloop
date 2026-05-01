@@ -41,6 +41,12 @@ export type Messages = {
   play: string;
   povMode: string;
   povPlay: string;
+  premiumPreviewCompleteBody: string;
+  premiumPreviewCompleteCta: string;
+  premiumPreviewCompleteSubtitle: string;
+  premiumPreviewCompleteTitle: string;
+  premiumPreviewPerfectNote: string;
+  premiumPreviewProgress: (completed: number, total: number) => string;
   proc1Routine: string;
   proc2Routine: string;
   proceduralHierarchy: string;
@@ -67,6 +73,7 @@ export type Messages = {
   currentLabel: string;
   perfectLabel: string;
   worldDisplayName: (worldId: string, fallbackName: string) => string;
+  worldSubtitle: (worldId: string) => string;
   worldCurrent: string;
   worldCompleted: string;
   worldPerfected: string;

@@ -16,6 +16,7 @@ import { GameMenu } from "../GameMenu";
 import { LanguageSelect } from "../LanguageSelect";
 import { GameStatusSnackbar, type GameStatusFeedback } from "./GameStatusSnackbar";
 import { LevelMapBackdrop, LevelMapOverlayBackdrop, type LevelMapSection } from "./LevelMapBackdrop";
+import { PremiumProgressBlock } from "./PremiumProgressBlock";
 import { RunModeSplitButton } from "./RunModeSplitButton";
 
 const GameWalkthroughDialog = lazy(async () => {
@@ -56,6 +57,9 @@ interface MonetizationConfig {
   isAuthConfigured: boolean;
   isPurchasePromptOpen: boolean;
   message: string | null;
+  previewNextWorldName: string;
+  previewProgressCompleted: number;
+  previewProgressTotal: number;
   onClosePurchasePrompt: () => void;
   onRefreshEntitlements: () => Promise<void>;
   onSignIn: (email: string, password: string) => Promise<void>;
@@ -407,7 +411,7 @@ export function GameHeaderBar({
         </Suspense>
       ) : null}
       {monetization?.isPurchasePromptOpen ? (
-        <PurchaseDialog monetization={monetization} />
+        <PurchaseDialog monetization={monetization} t={t} />
       ) : null}
 
       <div className="flex-1" />
@@ -415,12 +419,13 @@ export function GameHeaderBar({
   );
 }
 
-function PurchaseDialog({ monetization }: { monetization: MonetizationConfig }) {
+function PurchaseDialog({ monetization, t }: { monetization: MonetizationConfig; t: ReturnType<typeof useI18n>["t"] }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [password, setPassword] = useState("");
+  const [stage, setStage] = useState<"intro" | "checkout">("intro");
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -470,6 +475,11 @@ function PurchaseDialog({ monetization }: { monetization: MonetizationConfig }) 
     }
   }
 
+  function continueToCheckout() {
+    setError(null);
+    setStage("checkout");
+  }
+
   return createPortal(
     <LevelMapOverlayBackdrop
       contentClassName="relative flex h-full items-center justify-center px-4"
@@ -478,7 +488,7 @@ function PurchaseDialog({ monetization }: { monetization: MonetizationConfig }) 
       overlayClassName="z-[100]"
     >
       <div
-        className="ui-gloss-panel relative flex w-full max-w-[56rem] flex-col overflow-hidden rounded-[24px] shadow-2xl md:flex-row"
+        className="ui-gloss-panel relative flex w-full max-w-[54rem] flex-col overflow-hidden rounded-[24px] shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -489,130 +499,174 @@ function PurchaseDialog({ monetization }: { monetization: MonetizationConfig }) 
           ✕
         </button>
 
-        {/* Left: Form Content */}
-        <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
-          <div className="mx-auto flex w-full max-w-[22rem] flex-col">
-            <h2 className="font-display text-3xl font-semibold text-white">
-              {mode === "sign-in" ? "Sign in to continue" : "Create your account"}
-            </h2>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              {mode === "sign-in"
-                ? "Use the account you want tied to your unlock and cloud progress."
-                : "Create an account so your unlock and progress stay with you."}
-            </p>
-
-            {!monetization.isAuthConfigured ? (
-              <div className="mt-8 rounded-[12px] border border-amber-300/30 bg-amber-300/10 px-4 py-4 text-sm text-amber-50">
-                Supabase is not configured yet. Add the VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables to enable sign in.
-              </div>
-            ) : monetization.userEmail ? (
-              <div className="mt-8 rounded-[12px] border border-emerald-300/30 bg-emerald-300/10 px-4 py-4 text-center text-sm text-emerald-50">
-                Signed in as <br /><span className="font-semibold text-emerald-100">{monetization.userEmail}</span>.
-              </div>
-            ) : (
-              <form className="mt-8 space-y-4" onSubmit={submitAuth}>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-[var(--text-secondary)]">Email</label>
-                  <input
-                    className="ui-input w-full rounded-[10px] px-3 py-2.5 text-sm outline-none transition-colors focus:border-[var(--accent)]"
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Enter your email"
-                    type="email"
-                    value={email}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-[var(--text-secondary)]">Password</label>
-                  <input
-                    className="ui-input w-full rounded-[10px] px-3 py-2.5 text-sm outline-none transition-colors focus:border-[var(--accent)]"
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder="••••••••"
-                    type="password"
-                    value={password}
-                  />
-                </div>
-                
-                <div className="pt-2">
-                  <button className="ui-button-accent h-10 w-full justify-center text-sm font-semibold" disabled={isBusy} type="submit">
-                    {mode === "sign-in" ? "Sign in and continue" : "Create account and continue"}
-                  </button>
-                </div>
-
-                <p className="mt-4 text-center text-sm text-[var(--text-secondary)]">
-                  {mode === "sign-in" ? "Don't have an account? " : "Already have an account? "}
-                  <button
-                    className="font-medium text-white transition-colors hover:text-[var(--accent)]"
-                    disabled={isBusy}
-                    onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
-                    type="button"
-                  >
-                    {mode === "sign-in" ? "Sign up" : "Sign in"}
-                  </button>
-                </p>
-              </form>
-            )}
-
-            {error ? (
-              <div className="mt-4 rounded-[12px] border border-rose-300/35 bg-rose-300/10 px-4 py-3 text-sm text-rose-50 shadow-sm">{error}</div>
-            ) : null}
-
-            <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6">
-              <button
-                className="ui-button-accent h-11 w-full justify-center rounded-[12px] text-[13px] font-semibold tracking-wide"
-                disabled={isBusy || monetization.hasFullGame || !monetization.userEmail}
-                onClick={() => void unlock()}
-                type="button"
-              >
-                {monetization.hasFullGame ? "Full game unlocked" : "Continue to secure checkout"}
-              </button>
-              <button
-                className="ui-button h-11 w-full justify-center rounded-[12px] text-[13px] font-medium"
-                disabled={isBusy || !monetization.userEmail}
-                onClick={() => void monetization.onRefreshEntitlements()}
-                type="button"
-              >
-                Restore previous purchase
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Graphic Content */}
-        <div className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden border-l border-white/5 bg-black/40 p-8 text-center md:flex md:p-12">
+        <div className="absolute inset-0 overflow-hidden">
           <img
             alt=""
             aria-hidden="true"
             className="absolute inset-0 h-full w-full object-cover object-center"
             src={withBasePath("/splash.webp")}
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,9,19,0.72)_0%,rgba(4,9,19,0.58)_42%,rgba(4,9,19,0.86)_100%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--accent-soft)_0%,transparent_60%)] opacity-30" />
-          
-          <div className="relative z-10 flex max-w-[22rem] flex-col items-center">
-            <h2 className="font-display text-4xl font-semibold leading-tight text-white">
-              Unlock the full campaign
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,9,19,0.76)_0%,rgba(4,9,19,0.68)_44%,rgba(4,9,19,0.9)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_32%,rgba(90,255,108,0.18)_0%,transparent_42%)]" />
+        </div>
+
+        {stage === "intro" ? (
+          <div className="relative z-10 mx-auto flex w-full max-w-[38rem] flex-col items-center px-6 py-10 text-center md:px-10 md:py-12">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-100">
+              Next world
+            </p>
+            <h2 className="mt-3 font-display text-[clamp(2.1rem,5vw,4.2rem)] font-semibold leading-[0.95] text-white">
+              {monetization.previewNextWorldName}
             </h2>
-            <h3 className="mt-2 font-display text-2xl font-medium text-[var(--accent)]">
-              One account. Every level. Synced progress.
-            </h3>
-            <p className="mt-5 text-sm leading-6 text-[var(--text-secondary)]">
-              {monetization.message ?? "Sign in or create an account, then continue to Stripe to unlock premium levels and keep your progress available across devices."}
+            <p className="mt-4 max-w-[24rem] text-[16px] font-semibold leading-7 text-[var(--text-secondary)]">
+              {t.worldSubtitle("world-03-height")}
             </p>
 
-            <div className="mt-10 flex w-full flex-col gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-5 text-left shadow-inner backdrop-blur-sm">
-              {[
-                "Unlock every premium puzzle in the campaign.",
-                "Sync completed levels and best solutions.",
-                "Restore your purchase from any signed-in device.",
-              ].map((benefit) => (
-                <div className="flex items-start gap-3 text-sm leading-6 text-[var(--text-secondary)]" key={benefit}>
-                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--accent)] shadow-[0_0_8px_var(--accent)]" />
-                  <span>{benefit}</span>
-                </div>
-              ))}
+            <PremiumProgressBlock
+              className="mt-8 w-full max-w-[430px]"
+              completed={monetization.previewProgressCompleted}
+              nextLabel={`Next: ${monetization.previewNextWorldName}`}
+              progressLabel={t.premiumPreviewProgress(monetization.previewProgressCompleted, monetization.previewProgressTotal)}
+              total={monetization.previewProgressTotal}
+            />
+
+            <p className="mt-7 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#ffe08a]">
+              You are not done yet.
+            </p>
+            <div className="mt-7 flex w-full max-w-[360px] flex-col gap-3">
+              <button
+                className="ui-button-accent h-12 w-full justify-center rounded-[16px] text-[13px] font-black uppercase tracking-[0.12em] shadow-[0_0_34px_rgba(89,217,87,0.32)]"
+                onClick={continueToCheckout}
+                type="button"
+              >
+                Play Next Level
+              </button>
+              <button
+                className="ui-button h-10 w-full justify-center rounded-[14px] border-white/10 bg-white/[0.025] text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]"
+                onClick={continueToCheckout}
+                type="button"
+              >
+                Unlock Full Game
+              </button>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="relative z-10 grid w-full gap-0 md:grid-cols-[1fr_0.9fr]">
+            <div className="flex flex-col justify-center p-8 md:p-12">
+              <div className="max-w-[28rem]">
+                <button
+                  className="mb-6 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)] transition hover:text-white"
+                  onClick={() => setStage("intro")}
+                  type="button"
+                >
+                  Back
+                </button>
+                <h2 className="font-display text-4xl font-semibold leading-tight text-white">
+                  Continue the campaign
+                </h2>
+                <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">
+                  {monetization.message ?? "Unlock the next systems and keep your progress across devices."}
+                </p>
+
+                <div className="mt-8 grid gap-3">
+                  {[
+                    "Harder systems and multi-path puzzles.",
+                    "Processes, recursion, switches, and full progression.",
+                    "Progress kept across devices.",
+                  ].map((benefit) => (
+                    <div className="flex items-start gap-3 rounded-[14px] border border-white/8 bg-white/[0.035] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]" key={benefit}>
+                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--accent)] shadow-[0_0_8px_var(--accent)]" />
+                      <span>{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6">
+                  <button
+                    className="ui-button-accent h-12 w-full justify-center rounded-[14px] text-[13px] font-black uppercase tracking-[0.1em]"
+                    disabled={isBusy || monetization.hasFullGame || !monetization.userEmail}
+                    onClick={() => void unlock()}
+                    type="button"
+                  >
+                    {monetization.hasFullGame ? "Full game unlocked" : "Unlock Full Game"}
+                  </button>
+                  <button
+                    className="ui-button h-10 w-full justify-center rounded-[12px] text-[13px] font-medium"
+                    disabled={isBusy || !monetization.userEmail}
+                    onClick={() => void monetization.onRefreshEntitlements()}
+                    type="button"
+                  >
+                    Restore purchase
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-white/8 bg-black/26 p-8 md:border-l md:border-t-0 md:p-10">
+              <div className="mx-auto max-w-[22rem]">
+                <h3 className="font-display text-2xl font-semibold text-white">
+                  {monetization.userEmail ? "Ready to unlock" : mode === "sign-in" ? "Sign in to save progress" : "Create an account"}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                  {monetization.userEmail
+                    ? "Your unlock and progress will stay with this account."
+                    : "Use an account so your unlock and progress are not tied to this browser."}
+                </p>
+
+                {!monetization.isAuthConfigured ? (
+                  <div className="mt-6 rounded-[12px] border border-amber-300/30 bg-amber-300/10 px-4 py-4 text-sm text-amber-50">
+                    Supabase is not configured yet. Add the VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables to enable sign in.
+                  </div>
+                ) : monetization.userEmail ? (
+                  <div className="mt-6 rounded-[12px] border border-emerald-300/30 bg-emerald-300/10 px-4 py-4 text-center text-sm text-emerald-50">
+                    Signed in as <br /><span className="font-semibold text-emerald-100">{monetization.userEmail}</span>.
+                  </div>
+                ) : (
+                  <form className="mt-6 space-y-4" onSubmit={submitAuth}>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-[var(--text-secondary)]">Email</label>
+                      <input
+                        className="ui-input w-full rounded-[10px] px-3 py-2.5 text-sm outline-none transition-colors focus:border-[var(--accent)]"
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="Enter your email"
+                        type="email"
+                        value={email}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-[var(--text-secondary)]">Password</label>
+                      <input
+                        className="ui-input w-full rounded-[10px] px-3 py-2.5 text-sm outline-none transition-colors focus:border-[var(--accent)]"
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="Password"
+                        type="password"
+                        value={password}
+                      />
+                    </div>
+                    <button className="ui-button h-10 w-full justify-center text-sm font-semibold" disabled={isBusy} type="submit">
+                      {mode === "sign-in" ? "Sign in" : "Create account"}
+                    </button>
+                    <p className="text-center text-sm text-[var(--text-secondary)]">
+                      {mode === "sign-in" ? "Need an account? " : "Already have one? "}
+                      <button
+                        className="font-medium text-white transition-colors hover:text-[var(--accent)]"
+                        disabled={isBusy}
+                        onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+                        type="button"
+                      >
+                        {mode === "sign-in" ? "Create one" : "Sign in"}
+                      </button>
+                    </p>
+                  </form>
+                )}
+
+                {error ? (
+                  <div className="mt-4 rounded-[12px] border border-rose-300/35 bg-rose-300/10 px-4 py-3 text-sm text-rose-50 shadow-sm">{error}</div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </LevelMapOverlayBackdrop>,
     document.body,

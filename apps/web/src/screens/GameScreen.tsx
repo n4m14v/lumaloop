@@ -172,17 +172,28 @@ export function GameScreen({ onSceneReady }: { onSceneReady?: () => void }) {
                 <Suspense fallback={null}>
                   <GameSuccessDialog
                     {...controller.successDialog}
-                    body={t.successBody}
+                    body={controller.successDialog.showPremiumPreviewGate ? t.premiumPreviewCompleteBody : t.successBody}
                     idealSizeLabel={
                       controller.successDialog.idealSolutionLength
                         ? t.idealSize(controller.successDialog.idealSolutionLength)
                         : undefined
                     }
                     idealSizeLevelOnlyNote={t.idealSizeLevelOnlyNote}
-                    nextLabel={t.next}
+                    nextLabel={controller.successDialog.showPremiumPreviewGate ? t.premiumPreviewCompleteCta : t.next}
+                    premiumProgressLabel={
+                      controller.successDialog.showPremiumPreviewGate
+                        ? t.premiumPreviewProgress(
+                          controller.successDialog.premiumProgressCompleted,
+                          controller.successDialog.premiumProgressTotal,
+                        )
+                        : undefined
+                    }
+                    premiumPerfectNote={t.premiumPreviewPerfectNote}
+                    premiumNextWorldName={controller.successDialog.premiumNextWorldName}
                     programSizeLabel={t.programSize(controller.successDialog.programLength)}
                     replayLabel={t.replay}
-                    title={t.puzzleSolved}
+                    subtitle={controller.successDialog.showPremiumPreviewGate ? t.premiumPreviewCompleteSubtitle : undefined}
+                    title={controller.successDialog.showPremiumPreviewGate ? t.premiumPreviewCompleteTitle : t.puzzleSolved}
                   />
                 </Suspense>
               ) : null}

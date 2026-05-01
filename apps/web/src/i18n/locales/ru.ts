@@ -38,6 +38,13 @@ export const localeData: LocaleData = {
     play: "Старт",
     povMode: "POV-режим",
     povPlay: "POV-старт",
+    premiumPreviewCompleteBody:
+      "Теперь все перестает быть очевидным.",
+    premiumPreviewCompleteCta: "Продолжить",
+    premiumPreviewCompleteSubtitle: "Вы только что открыли свою первую настоящую систему.",
+    premiumPreviewCompleteTitle: "Основы освоены.",
+    premiumPreviewPerfectNote: "Вот где становится интересно.",
+    premiumPreviewProgress: (completed, total) => `${completed} / ${total} уровней пройдено`,
     proc1Routine: "Процесс 1",
     proc2Routine: "Процесс 2",
     proceduralHierarchy: "Процессы",
@@ -65,54 +72,69 @@ export const localeData: LocaleData = {
     perfectLabel: "Идеально",
     worldDisplayName: (worldId, fallbackName) => {
       if (worldId === "world-01-basics") {
-        return "Основы";
+        return "First Sparks";
       }
 
       if (worldId === "world-03-height") {
-        return "Высота";
+        return "Rising Paths";
       }
 
       if (worldId === "world-04-procedures") {
-        return "Процедуры";
+        return "Echo Systems";
       }
 
       if (worldId === "world-05-recursion") {
-        return "Рекурсия";
+        return "Endless Patterns";
       }
 
       if (worldId === "world-06-hard") {
-        return "Рекурсивные паттерны";
+        return "Spiral Systems";
       }
 
       if (worldId === "world-07-very-hard") {
-        return "Продвинутая композиция";
+        return "Chain Reactions";
       }
 
       if (worldId === "world-08-mastery") {
-        return "Мастерство";
+        return "Final Control";
       }
 
       if (worldId === "world-09-trickery") {
-        return "Ложные ориентиры";
+        return "False Signals";
       }
 
       if (worldId === "world-10-phantoms") {
-        return "Ложные пути";
+        return "Broken Routes";
       }
 
       if (worldId === "world-11-switches") {
-        return "Переключатели";
+        return "Control Nodes";
       }
 
       if (worldId === "world-12-switchbacks") {
-        return "Серпантин";
+        return "Return Loops";
       }
 
       if (worldId === "world-13-landscapes") {
-        return "Ландшафты";
+        return "The Final Grid";
       }
 
       return fallbackName;
+    },
+    worldSubtitle: (worldId) => {
+      if (worldId === "world-01-basics") return "Wake the first lights";
+      if (worldId === "world-03-height") return "Paths move upward";
+      if (worldId === "world-04-procedures") return "Repeat ideas with intent";
+      if (worldId === "world-11-switches") return "Paths that react to you";
+      if (worldId === "world-05-recursion") return "Where loops begin";
+      if (worldId === "world-06-hard") return "Nested logic tightens";
+      if (worldId === "world-07-very-hard") return "Systems trigger systems";
+      if (worldId === "world-08-mastery") return "Precision under pressure";
+      if (worldId === "world-09-trickery") return "Not everything is true";
+      if (worldId === "world-10-phantoms") return "Dead ends learn to lie";
+      if (worldId === "world-12-switchbacks") return "Go back with purpose";
+      if (worldId === "world-13-landscapes") return "Everything comes together";
+      return "";
     },
     worldCurrent: "Текущий мир",
     worldCompleted: "Мир завершен",
@@ -122,7 +144,7 @@ export const localeData: LocaleData = {
     worldLabel: (index, name) => `МИР ${String(index).padStart(2, "0")}: ${name}`,
     worldProgressSummary: (completed, total, perfected, stars, totalStars) =>
       `${completed} / ${total} завершено • ${perfected} идеально • ${stars} / ${totalStars} звезд`,
-    worldTheme: (label) => `Тема: ${label}`,
+    worldTheme: (label) => label,
     failureBodies: {
       SUCCESS: "Запуск уже завершился успешно.",
       FAILED_INVALID_MOVE: "Робот попытался шагнуть на клетку, до которой нельзя дойти из текущей позиции.",

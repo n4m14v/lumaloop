@@ -38,6 +38,13 @@ export const localeData: LocaleData = {
     play: "Play",
     povMode: "POV Mode",
     povPlay: "POV Play",
+    premiumPreviewCompleteBody:
+      "Now it stops being obvious.",
+    premiumPreviewCompleteCta: "Keep Going",
+    premiumPreviewCompleteSubtitle: "You just unlocked your first real system.",
+    premiumPreviewCompleteTitle: "You've mastered the basics.",
+    premiumPreviewPerfectNote: "This is where it gets interesting.",
+    premiumPreviewProgress: (completed, total) => `${completed} / ${total} Levels Complete`,
     proc1Routine: "Process 1",
     proc2Routine: "Process 2",
     proceduralHierarchy: "Processes",
@@ -65,54 +72,69 @@ export const localeData: LocaleData = {
     perfectLabel: "Perfect",
     worldDisplayName: (worldId, fallbackName) => {
       if (worldId === "world-01-basics") {
-        return "Basics";
+        return "First Sparks";
       }
 
       if (worldId === "world-03-height") {
-        return "Height";
+        return "Rising Paths";
       }
 
       if (worldId === "world-04-procedures") {
-        return "Procedures";
+        return "Echo Systems";
       }
 
       if (worldId === "world-05-recursion") {
-        return "Recursion";
+        return "Endless Patterns";
       }
 
       if (worldId === "world-06-hard") {
-        return "Recursive Patterns";
+        return "Spiral Systems";
       }
 
       if (worldId === "world-07-very-hard") {
-        return "Advanced Composition";
+        return "Chain Reactions";
       }
 
       if (worldId === "world-08-mastery") {
-        return "Mastery";
+        return "Final Control";
       }
 
       if (worldId === "world-09-trickery") {
-        return "Misdirection";
+        return "False Signals";
       }
 
       if (worldId === "world-10-phantoms") {
-        return "False Paths";
+        return "Broken Routes";
       }
 
       if (worldId === "world-11-switches") {
-        return "Switches";
+        return "Control Nodes";
       }
 
       if (worldId === "world-12-switchbacks") {
-        return "Switchbacks";
+        return "Return Loops";
       }
 
       if (worldId === "world-13-landscapes") {
-        return "Landscapes";
+        return "The Final Grid";
       }
 
       return fallbackName;
+    },
+    worldSubtitle: (worldId) => {
+      if (worldId === "world-01-basics") return "Wake the first lights";
+      if (worldId === "world-03-height") return "Paths move upward";
+      if (worldId === "world-04-procedures") return "Repeat ideas with intent";
+      if (worldId === "world-11-switches") return "Paths that react to you";
+      if (worldId === "world-05-recursion") return "Where loops begin";
+      if (worldId === "world-06-hard") return "Nested logic tightens";
+      if (worldId === "world-07-very-hard") return "Systems trigger systems";
+      if (worldId === "world-08-mastery") return "Precision under pressure";
+      if (worldId === "world-09-trickery") return "Not everything is true";
+      if (worldId === "world-10-phantoms") return "Dead ends learn to lie";
+      if (worldId === "world-12-switchbacks") return "Go back with purpose";
+      if (worldId === "world-13-landscapes") return "Everything comes together";
+      return "";
     },
     worldCurrent: "Current World",
     worldCompleted: "World Complete",
@@ -122,7 +144,7 @@ export const localeData: LocaleData = {
     worldLabel: (index, name) => `WORLD ${String(index).padStart(2, "0")}: ${name}`,
     worldProgressSummary: (completed, total, perfected, stars, totalStars) =>
       `${completed} / ${total} Completed • ${perfected} Perfected • ${stars} / ${totalStars} Stars`,
-    worldTheme: (label) => `Theme: ${label}`,
+    worldTheme: (label) => label,
     failureBodies: {
       SUCCESS: "The run already succeeded.",
       FAILED_INVALID_MOVE: "The robot tried to walk onto a tile that was not reachable from its current position.",

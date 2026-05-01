@@ -41,8 +41,22 @@ const ROBOT_DEATH_STATUSES = new Set([
   "FAILED_WRONG_LIGHT",
 ]);
 const LEVEL_INDEX_STORAGE_KEY = "lumaloop-level-index";
+const RUN_MODE_STORAGE_KEY = "lumaloop-run-mode";
 
 type RunMode = "normal" | "fast" | "instant" | "pov";
+
+function isRunMode(value: string | null): value is RunMode {
+  return value === "normal" || value === "fast" || value === "instant" || value === "pov";
+}
+
+function getInitialRunMode(): RunMode {
+  if (typeof window === "undefined") {
+    return "normal";
+  }
+
+  const savedRunMode = window.localStorage.getItem(RUN_MODE_STORAGE_KEY);
+  return isRunMode(savedRunMode) ? savedRunMode : "normal";
+}
 
 function countFilledSlots(slots: ReturnType<typeof createSlotsForLevel>) {
   return [...slots.main, ...slots.p1, ...slots.p2].filter(Boolean).length;
@@ -50,14 +64,14 @@ function countFilledSlots(slots: ReturnType<typeof createSlotsForLevel>) {
 
 export function useGameScreenController() {
   const auth = useAuth();
-  const { localizeLevel } = useI18n();
+  const { localizeLevel, t } = useI18n();
   const [unlockedLevelIndex, setUnlockedLevelIndex] = useState(0);
   const [hasHydratedLevelIndex, setHasHydratedLevelIndex] = useState(false);
   const [isVictorySequenceComplete, setIsVictorySequenceComplete] = useState(false);
   const [levelProgress, setLevelProgress] = useState<LevelProgressState>(createEmptyLevelProgressState());
   const [isPurchasePromptOpen, setIsPurchasePromptOpen] = useState(false);
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
-  const [selectedRunMode, setSelectedRunMode] = useState<RunMode>("normal");
+  const [selectedRunMode, setSelectedRunMode] = useState<RunMode>(getInitialRunMode);
   const isPovActive = selectedRunMode === "pov";
   const lastResolvedSuccessRef = useRef<object | null>(null);
   const lastPersistedSuccessRef = useRef<object | null>(null);
@@ -146,6 +160,10 @@ export function useGameScreenController() {
   useEffect(() => {
     ensureLevelProgram();
   }, [ensureLevelProgram, levelIndex]);
+
+  useEffect(() => {
+    window.localStorage.setItem(RUN_MODE_STORAGE_KEY, selectedRunMode);
+  }, [selectedRunMode]);
 
   useEffect(() => {
     if (!isAdmin && showAllActions) {
@@ -400,6 +418,8 @@ export function useGameScreenController() {
   const showVictorySequence = isSuccessResolved && !isVictorySequenceComplete;
   const showSuccessPopup = isSuccessResolved && isVictorySequenceComplete;
   const hasNextLevel = levelIndex < campaignLevels.length - 1;
+  const isFinalFreePreviewLevel = freeLevelIds[freeLevelIds.length - 1] === level.id;
+  const shouldShowPremiumPreviewGate = isFinalFreePreviewLevel && !auth.hasFullGame && !isAdmin;
   const isRotationLocked = isAutoRunning || activeFrame !== null || showVictorySequence || showSuccessPopup;
   const canStartRun = currentProgramLength > 0;
 
@@ -471,7 +491,6 @@ export function useGameScreenController() {
     }
 
     stopRun();
-    setSelectedRunMode("normal");
 
     if (!auth.hasFullGame && !isAdmin) {
       const currentFreeIndex = freeLevelIds.findIndex((freeLevelId) => freeLevelId === level.id);
@@ -495,7 +514,6 @@ export function useGameScreenController() {
 
   function handleReplayLevel() {
     stopRun();
-    setSelectedRunMode("normal");
   }
 
   return {
@@ -603,6 +621,9 @@ export function useGameScreenController() {
         isAuthConfigured: auth.isAuthConfigured,
         isPurchasePromptOpen,
         message: purchaseMessage,
+        previewNextWorldName: t.worldDisplayName("world-03-height", "Rising Paths"),
+        previewProgressCompleted: freeLevelIds.length,
+        previewProgressTotal: campaignLevels.length,
         onClosePurchasePrompt: closePurchasePrompt,
         onRefreshEntitlements: auth.refreshEntitlements,
         onSignIn: handleSignIn,
@@ -619,6 +640,10 @@ export function useGameScreenController() {
           idealSolutionLength: level.metadata?.idealSolutionLength,
           onNext: handleAdvanceToNextLevel,
           onReplay: handleReplayLevel,
+          premiumNextWorldName: t.worldDisplayName("world-03-height", "Rising Paths"),
+          premiumProgressCompleted: freeLevelIds.length,
+          premiumProgressTotal: campaignLevels.length,
+          showPremiumPreviewGate: shouldShowPremiumPreviewGate,
           programLength: result?.score.programLength ?? currentProgramLength,
           showLevelOnlyIdealNote: showAllActions,
           starsEarned: result?.score.starsEarned ?? 0,

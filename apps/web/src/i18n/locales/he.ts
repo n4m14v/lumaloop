@@ -38,6 +38,13 @@ export const localeData: LocaleData = {
     play: "הפעל",
     povMode: "מצב POV",
     povPlay: "הרצת POV",
+    premiumPreviewCompleteBody:
+      "עכשיו זה מפסיק להיות ברור מאליו.",
+    premiumPreviewCompleteCta: "להמשיך",
+    premiumPreviewCompleteSubtitle: "הרגע פתחת את המערכת האמיתית הראשונה שלך.",
+    premiumPreviewCompleteTitle: "שליטה ביסודות.",
+    premiumPreviewPerfectNote: "כאן זה מתחיל להיות מעניין.",
+    premiumPreviewProgress: (completed, total) => `${completed} / ${total} שלבים הושלמו`,
     proc1Routine: "תהליך 1",
     proc2Routine: "תהליך 2",
     proceduralHierarchy: "תהליכים",
@@ -65,54 +72,69 @@ export const localeData: LocaleData = {
     perfectLabel: "מושלם",
     worldDisplayName: (worldId, fallbackName) => {
       if (worldId === "world-01-basics") {
-        return "יסודות";
+        return "First Sparks";
       }
 
       if (worldId === "world-03-height") {
-        return "גובה";
+        return "Rising Paths";
       }
 
       if (worldId === "world-04-procedures") {
-        return "פרוצדורות";
+        return "Echo Systems";
       }
 
       if (worldId === "world-05-recursion") {
-        return "רקורסיה";
+        return "Endless Patterns";
       }
 
       if (worldId === "world-06-hard") {
-        return "דפוסים רקורסיביים";
+        return "Spiral Systems";
       }
 
       if (worldId === "world-07-very-hard") {
-        return "קומפוזיציה מתקדמת";
+        return "Chain Reactions";
       }
 
       if (worldId === "world-08-mastery") {
-        return "שליטה";
+        return "Final Control";
       }
 
       if (worldId === "world-09-trickery") {
-        return "הטעיה";
+        return "False Signals";
       }
 
       if (worldId === "world-10-phantoms") {
-        return "נתיבי שווא";
+        return "Broken Routes";
       }
 
       if (worldId === "world-11-switches") {
-        return "מתגים";
+        return "Control Nodes";
       }
 
       if (worldId === "world-12-switchbacks") {
-        return "פיתולי מתגים";
+        return "Return Loops";
       }
 
       if (worldId === "world-13-landscapes") {
-        return "נופים";
+        return "The Final Grid";
       }
 
       return fallbackName;
+    },
+    worldSubtitle: (worldId) => {
+      if (worldId === "world-01-basics") return "Wake the first lights";
+      if (worldId === "world-03-height") return "Paths move upward";
+      if (worldId === "world-04-procedures") return "Repeat ideas with intent";
+      if (worldId === "world-11-switches") return "Paths that react to you";
+      if (worldId === "world-05-recursion") return "Where loops begin";
+      if (worldId === "world-06-hard") return "Nested logic tightens";
+      if (worldId === "world-07-very-hard") return "Systems trigger systems";
+      if (worldId === "world-08-mastery") return "Precision under pressure";
+      if (worldId === "world-09-trickery") return "Not everything is true";
+      if (worldId === "world-10-phantoms") return "Dead ends learn to lie";
+      if (worldId === "world-12-switchbacks") return "Go back with purpose";
+      if (worldId === "world-13-landscapes") return "Everything comes together";
+      return "";
     },
     worldCurrent: "העולם הנוכחי",
     worldCompleted: "העולם הושלם",
@@ -122,7 +144,7 @@ export const localeData: LocaleData = {
     worldLabel: (index, name) => `עולם ${String(index).padStart(2, "0")}: ${name}`,
     worldProgressSummary: (completed, total, perfected, stars, totalStars) =>
       `${completed} / ${total} הושלמו • ${perfected} מושלמים • ${stars} / ${totalStars} כוכבים`,
-    worldTheme: (label) => `נושא: ${label}`,
+    worldTheme: (label) => label,
     failureBodies: {
       SUCCESS: "ההרצה כבר הסתיימה בהצלחה.",
       FAILED_INVALID_MOVE: "הרובוט ניסה ללכת אל אריח שלא ניתן להגיע אליו מהמיקום הנוכחי.",
