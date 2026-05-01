@@ -64,99 +64,213 @@ interface TileBlockProps {
   failurePulseToken: object | null;
   isActive: boolean;
   isLit: boolean;
+  isToggleGroupHighlighted?: boolean;
+  isToggleGroupActive?: boolean;
+  onToggleGroupHover?: ((toggleGroup: string | null) => void) | undefined;
   tile: LevelDefinition["board"][number];
   victoryGlow: boolean;
 }
 
-function ToggleGlyph({ isActive, activeCommand }: { isActive: boolean; activeCommand: string | null }) {
-  const glyphGroupRef = useRef<Group>(null);
-  const baseColor = "#97efff";
-  const sharedMaterial = useMemo(
-    () => new MeshPhysicalMaterial({
-      color: baseColor,
-      emissive: "#47d7ff",
-      emissiveIntensity: 0.4,
-      roughness: 0.1,
-      metalness: 0.5,
-      transmission: 0.4,
-      thickness: 0.1,
-      clearcoat: 1,
-      clearcoatRoughness: 0.1,
-    }),
-    []
-  );
+type ToggleSystemColor = {
+  active: string;
+  activeEdge: string;
+  activeGlow: string;
+  inactive: string;
+  inactiveEdge: string;
+  inactiveGlow: string;
+};
+
+const DEFAULT_TOGGLE_SYSTEM_COLOR: ToggleSystemColor = {
+  active: "#6eea55",
+  activeEdge: "#c9ffd5",
+  activeGlow: "#54d944",
+  inactive: "#66776a",
+  inactiveEdge: "#91d89f",
+  inactiveGlow: "#3f9d59",
+};
+
+const TOGGLE_SYSTEM_COLORS: Record<string, ToggleSystemColor> = {
+  amber: {
+    ...DEFAULT_TOGGLE_SYSTEM_COLOR,
+  },
+  blue: {
+    ...DEFAULT_TOGGLE_SYSTEM_COLOR,
+  },
+  violet: {
+    ...DEFAULT_TOGGLE_SYSTEM_COLOR,
+  },
+};
+
+function getToggleSystemColor(toggleGroup?: string): ToggleSystemColor {
+  return TOGGLE_SYSTEM_COLORS[toggleGroup ?? ""] ?? DEFAULT_TOGGLE_SYSTEM_COLOR;
+}
+
+function SwitchCore({
+  activeCommand,
+  isToggleGroupActive,
+  systemColor,
+}: {
+  activeCommand: string | null;
+  isToggleGroupActive: boolean;
+  systemColor: ToggleSystemColor;
+}) {
+  const coreGroupRef = useRef<Group>(null);
+  const coreMaterialRef = useRef<MeshPhysicalMaterial>(null);
+  const rimMaterialRef = useRef<MeshBasicMaterial>(null);
+  const haloMaterialRef = useRef<MeshBasicMaterial>(null);
+  const coreLightRef = useRef<PointLight>(null);
 
   useEffect(() => {
-    let targetEmissive = new Color("#47d7ff");
-    let targetIntensity = 0.4;
+    const coreMaterial = coreMaterialRef.current;
+    const rimMaterial = rimMaterialRef.current;
+    const haloMaterial = haloMaterialRef.current;
+    const coreLight = coreLightRef.current;
+
+    if (!coreMaterial || !rimMaterial || !haloMaterial || !coreLight || !coreGroupRef.current) {
+      return;
+    }
+
+    const coreColor = new Color(isToggleGroupActive ? systemColor.active : systemColor.inactive);
+    const glowColor = new Color(isToggleGroupActive ? systemColor.activeGlow : systemColor.inactiveGlow);
+    const timeline = gsap.timeline();
+    const targetIntensity = isToggleGroupActive ? 0.62 : 0.14;
+    const targetHaloOpacity = 0.44;
+    const targetRimOpacity = isToggleGroupActive ? 0.9 : 0.16;
+    const recessColor = new Color("#0b1110");
+    const targetLightIntensity = isToggleGroupActive ? 0.26 : 0.06;
+
+    timeline.to(coreMaterial.color, { duration: 0.24, r: coreColor.r, g: coreColor.g, b: coreColor.b }, 0);
+    timeline.to(coreMaterial.emissive, { duration: 0.24, r: glowColor.r, g: glowColor.g, b: glowColor.b }, 0);
+    timeline.to(coreMaterial, { duration: 0.24, emissiveIntensity: targetIntensity }, 0);
+    timeline.to(rimMaterial.color, { duration: 0.24, r: glowColor.r, g: glowColor.g, b: glowColor.b }, 0);
+    timeline.to(rimMaterial, { duration: 0.24, opacity: targetRimOpacity }, 0);
+    timeline.to(haloMaterial.color, { duration: 0.24, r: recessColor.r, g: recessColor.g, b: recessColor.b }, 0);
+    timeline.to(haloMaterial, { duration: 0.24, opacity: targetHaloOpacity }, 0);
+    timeline.to(coreLight.color, { duration: 0.24, r: glowColor.r, g: glowColor.g, b: glowColor.b }, 0);
+    timeline.to(coreLight, { duration: 0.24, intensity: targetLightIntensity }, 0);
+    timeline.to(coreGroupRef.current.position, { duration: 0.24, ease: "power2.out", y: isToggleGroupActive ? BLOCK_HEIGHT * 0.5 + 0.005 : BLOCK_HEIGHT * 0.5 - 0.055 }, 0);
 
     if (activeCommand === "TOGGLE") {
-      targetEmissive = new Color("#00ffff");
-      targetIntensity = 2.5;
-
-      const tl = gsap.timeline();
-      tl.to(sharedMaterial, { emissiveIntensity: targetIntensity, duration: 0.1 });
-      tl.to(sharedMaterial.emissive, { r: targetEmissive.r, g: targetEmissive.g, b: targetEmissive.b, duration: 0.1 }, 0);
-
-      const activeEmissive = new Color("#00aaff");
-      tl.to(sharedMaterial, { emissiveIntensity: 1.2, duration: 0.3 }, 0.2);
-      tl.to(sharedMaterial.emissive, { r: activeEmissive.r, g: activeEmissive.g, b: activeEmissive.b, duration: 0.3 }, 0.2);
-    } else if (isActive) {
-      targetEmissive = new Color("#00aaff");
-      targetIntensity = 1.2;
-
-      gsap.to(sharedMaterial, { emissiveIntensity: targetIntensity, duration: 0.3 });
-      gsap.to(sharedMaterial.emissive, { r: targetEmissive.r, g: targetEmissive.g, b: targetEmissive.b, duration: 0.3 });
-    } else {
-      gsap.to(sharedMaterial, { emissiveIntensity: targetIntensity, duration: 0.3 });
-      gsap.to(sharedMaterial.emissive, { r: targetEmissive.r, g: targetEmissive.g, b: targetEmissive.b, duration: 0.3 });
+      timeline.to(coreMaterial, { duration: 0.12, emissiveIntensity: isToggleGroupActive ? 1.1 : 0.34 }, 0);
+      timeline.to(rimMaterial, { duration: 0.12, opacity: isToggleGroupActive ? 1 : 0.28 }, 0);
+      timeline.to(coreLight, { duration: 0.12, intensity: isToggleGroupActive ? 0.45 : 0.18 }, 0);
+      timeline.to(coreGroupRef.current.position, { duration: 0.11, ease: "power2.out", y: BLOCK_HEIGHT * 0.5 - 0.085 }, 0);
+      timeline.to(coreGroupRef.current.position, { duration: 0.28, ease: "elastic.out(1,0.62)", y: isToggleGroupActive ? BLOCK_HEIGHT * 0.5 + 0.005 : BLOCK_HEIGHT * 0.5 - 0.055 }, 0.12);
     }
-  }, [isActive, activeCommand, sharedMaterial]);
+
+    return () => {
+      timeline.kill();
+    };
+  }, [activeCommand, isToggleGroupActive, systemColor]);
 
   useFrame(({ clock }) => {
-    if (!glyphGroupRef.current) return;
+    if (!coreGroupRef.current || !isToggleGroupActive) {
+      return;
+    }
+
     const elapsed = clock.getElapsedTime();
-    // Smooth, consistent rotation around the Y axis for dynamic "sync/swap" feel
-    glyphGroupRef.current.rotation.y = elapsed * 0.8;
+    const pulse = (Math.sin(elapsed * 3.1) + 1) * 0.5;
+    coreGroupRef.current.scale.set(1 + pulse * 0.035, 1, 1 + pulse * 0.035);
   });
 
-  const R = 0.18;
-  const tube = 0.035;
-  const arc = Math.PI * 0.65; // ~117 degrees length for each arrow
+  return (
+    <group ref={coreGroupRef} position={[0, isToggleGroupActive ? BLOCK_HEIGHT * 0.5 + 0.005 : BLOCK_HEIGHT * 0.5 - 0.055, 0]}>
+      <pointLight
+        color={isToggleGroupActive ? systemColor.activeGlow : systemColor.inactiveGlow}
+        distance={2.2}
+        intensity={isToggleGroupActive ? 0.26 : 0.06}
+        position={[0, 0.22, 0]}
+        ref={coreLightRef}
+      />
+      <group>
+        <mesh position={[0, -0.018, 0]} rotation-x={-Math.PI / 2}>
+          <ringGeometry args={[0.38, 0.58, 48]} />
+          <meshBasicMaterial
+            color="#0b1110"
+            depthWrite={false}
+            opacity={0.44}
+            ref={haloMaterialRef}
+            toneMapped={false}
+            transparent
+          />
+        </mesh>
+        <mesh position={[0, 0.002, 0]} rotation-x={-Math.PI / 2}>
+          <ringGeometry args={[0.48, 0.55, 48]} />
+          <meshBasicMaterial
+            color={isToggleGroupActive ? systemColor.activeGlow : systemColor.inactiveGlow}
+            depthWrite={false}
+            opacity={isToggleGroupActive ? 0.9 : 0.16}
+            ref={rimMaterialRef}
+            toneMapped={false}
+            transparent
+          />
+        </mesh>
+        <mesh position={[0, 0.04, 0]}>
+          <cylinderGeometry args={[0.42, 0.47, 0.1, 48]} />
+          <meshPhysicalMaterial
+            clearcoat={1}
+            color={isToggleGroupActive ? "#225f33" : "#4b575d"}
+            emissive={isToggleGroupActive ? systemColor.activeGlow : systemColor.inactiveGlow}
+            emissiveIntensity={isToggleGroupActive ? 0.2 : 0.04}
+            metalness={0.18}
+            roughness={0.18}
+          />
+        </mesh>
+        <mesh position={[0, 0.112, 0]} scale={[1, 0.24, 1]}>
+          <sphereGeometry args={[0.38, 48, 18]} />
+          <meshPhysicalMaterial
+            clearcoat={1}
+            clearcoatRoughness={0.08}
+            color={isToggleGroupActive ? systemColor.active : "#839198"}
+            emissive={isToggleGroupActive ? systemColor.activeGlow : systemColor.inactiveGlow}
+            emissiveIntensity={isToggleGroupActive ? 0.62 : 0.14}
+            metalness={0.2}
+            ref={coreMaterialRef}
+            roughness={0.12}
+          />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+function SwitchSideAccents({
+  isToggleGroupActive,
+  systemColor,
+}: {
+  isToggleGroupActive: boolean;
+  systemColor: ToggleSystemColor;
+}) {
+  const accentColor = isToggleGroupActive ? systemColor.activeGlow : "#18251d";
+  const accentOpacity = isToggleGroupActive ? 0.9 : 0.42;
+  const emissiveIntensity = isToggleGroupActive ? 1.15 : 0.08;
 
   return (
-    <group ref={glyphGroupRef} position={[0, BLOCK_HEIGHT * 0.5 - 0.015, 0]}>
-      {/* Lay flat conceptually on top of the tile, scaled up to be larger */}
-      <group rotation={[-Math.PI / 2, 0, 0]} scale={1.4}>
-
-        {/* Core resting dot */}
-        <mesh position={[0, 0, 0]} material={sharedMaterial}>
-          <sphereGeometry args={[0.04, 16, 16]} />
-        </mesh>
-
-        {/* Curved Arrow 1 */}
-        <group>
-          <mesh material={sharedMaterial}>
-            {/* The tail trail */}
-            <torusGeometry args={[R, tube, 12, 32, arc]} />
-          </mesh>
-          {/* Arrowhead pointed tangentially at the terminal of the arc */}
-          <mesh position={[R * Math.cos(arc), R * Math.sin(arc), 0]} rotation={[0, 0, arc + Math.PI / 2]} material={sharedMaterial}>
-            <coneGeometry args={[0.08, 0.18, 12]} />
-          </mesh>
-        </group>
-
-        {/* Curved Arrow 2 - Mirrors Arrow 1 exactly 180 degrees */}
-        <group rotation={[0, 0, Math.PI]}>
-          <mesh material={sharedMaterial}>
-            <torusGeometry args={[R, tube, 12, 32, arc]} />
-          </mesh>
-          <mesh position={[R * Math.cos(arc), R * Math.sin(arc), 0]} rotation={[0, 0, arc + Math.PI / 2]} material={sharedMaterial}>
-            <coneGeometry args={[0.08, 0.18, 12]} />
-          </mesh>
-        </group>
-
-      </group>
+    <group>
+      {[
+        { position: [0, 0, 0.985] as const, rotationY: 0 },
+        { position: [0, 0, -0.985] as const, rotationY: 0 },
+        { position: [0.985, 0, 0] as const, rotationY: Math.PI / 2 },
+        { position: [-0.985, 0, 0] as const, rotationY: Math.PI / 2 },
+      ].map(({ position, rotationY }, index) => (
+        <RoundedBox
+          args={[0.52, 0.055, 0.035]}
+          key={index}
+          position={[position[0], BLOCK_HEIGHT * 0.5, position[2]]}
+          radius={0.018}
+          rotation-y={rotationY}
+          smoothness={3}
+        >
+          <meshStandardMaterial
+            color={accentColor}
+            emissive={accentColor}
+            emissiveIntensity={emissiveIntensity}
+            opacity={accentOpacity}
+            roughness={0.2}
+            transparent
+          />
+        </RoundedBox>
+      ))}
     </group>
   );
 }
@@ -168,6 +282,9 @@ function TileBlockInner({
   failurePulseToken,
   isActive,
   isLit,
+  isToggleGroupHighlighted = false,
+  isToggleGroupActive = false,
+  onToggleGroupHover,
   tile,
   victoryGlow,
 }: TileBlockProps) {
@@ -184,12 +301,20 @@ function TileBlockInner({
   const stackCount = tile.z + 1;
   const isSwitch = tile.kind === "SWITCH";
   const isTarget = tile.kind === "TARGET";
+  const isControlledTile = tile.kind === "NORMAL" && Boolean(tile.toggleGroup && tile.moveTo);
+  const isToggleSystemTile = Boolean(isSwitch || isControlledTile);
+  const isToggleSystemHighlighted = isToggleSystemTile && isToggleGroupHighlighted;
+  const systemColor = getToggleSystemColor(tile.toggleGroup);
   const tileStyle = DARK_TILE_STYLE;
   const chamberCenterY = stackCount * BLOCK_HEIGHT * 0.5;
   const shellColor = isTarget
     ? isLit
       ? tileStyle.targetShellColorLit
       : tileStyle.targetShellColor
+    : isControlledTile
+      ? isToggleGroupActive || isToggleSystemHighlighted
+        ? systemColor.active
+        : tileStyle.frostedShellColor
     : tileStyle.frostedShellColor;
   const shellOpacity = isTarget ? tileStyle.targetShellOpacity : tileStyle.frostedShellOpacity;
   const shellTransmission = isTarget ? tileStyle.targetShellTransmission : tileStyle.frostedShellTransmission;
@@ -197,42 +322,69 @@ function TileBlockInner({
     ? isLit
       ? tileStyle.targetShellEmissiveLit
       : tileStyle.targetShellEmissive
+    : isControlledTile
+      ? isToggleGroupActive || isToggleSystemHighlighted
+        ? systemColor.activeGlow
+        : systemColor.inactiveGlow
     : tileStyle.frostedShellEmissive;
   const shellEmissiveIntensity = isTarget
     ? isLit
       ? tileStyle.targetShellEmissiveIntensityLit
       : tileStyle.targetShellEmissiveIntensity
+    : isControlledTile
+      ? isToggleGroupActive
+        ? 0.62
+        : isToggleSystemHighlighted
+          ? 0.32
+        : 0.06
     : tileStyle.frostedShellEmissiveIntensity;
   const surfaceOpacity = isTarget ? tileStyle.targetSurfaceOpacity : tileStyle.frostedSurfaceOpacity;
   const innerFillColor = isTarget
     ? isLit
       ? tileStyle.targetInnerFillColorLit
       : tileStyle.targetInnerFillColor
+    : isControlledTile
+      ? isToggleGroupActive || isToggleSystemHighlighted
+        ? systemColor.active
+        : systemColor.inactive
     : tileStyle.frostedInnerFillColor;
   const innerFillOpacity = isTarget ? tileStyle.targetInnerFillOpacity : tileStyle.frostedInnerFillOpacity;
   const edgeColor = isTarget
     ? isLit
       ? tileStyle.targetEdgeColorLit
       : tileStyle.targetEdgeColor
+    : isToggleSystemTile
+      ? isToggleGroupActive || isToggleSystemHighlighted
+        ? systemColor.activeEdge
+        : systemColor.inactiveEdge
     : tileStyle.edgeColor;
   const shellColorValue = useMemo(() => {
     const color = new Color(shellColor);
+
+    if (isControlledTile && !isToggleGroupActive && !isToggleSystemHighlighted) {
+      color.lerp(new Color(systemColor.inactive), 0.52);
+      color.lerp(new Color("#0a1018"), 0.2);
+    }
 
     if (dimmed && !isTarget) {
       color.lerp(new Color("#0a1018"), 0.44);
     }
 
     return color;
-  }, [dimmed, isTarget, shellColor]);
+  }, [dimmed, isControlledTile, isTarget, isToggleGroupActive, isToggleSystemHighlighted, shellColor, systemColor]);
   const innerFillColorValue = useMemo(() => {
     const color = new Color(innerFillColor);
+
+    if (isControlledTile && !isToggleGroupActive && !isToggleSystemHighlighted) {
+      color.lerp(new Color("#101820"), 0.34);
+    }
 
     if (dimmed && !isTarget) {
       color.lerp(new Color("#090d14"), 0.52);
     }
 
     return color;
-  }, [dimmed, innerFillColor, isTarget]);
+  }, [dimmed, innerFillColor, isControlledTile, isTarget, isToggleGroupActive, isToggleSystemHighlighted]);
   const edgeColorValue = useMemo(() => {
     const color = new Color(edgeColor);
 
@@ -242,10 +394,18 @@ function TileBlockInner({
 
     return color;
   }, [dimmed, edgeColor, isTarget]);
-  const shellOpacityValue = dimmed && !isTarget ? Math.max(0.84, shellOpacity * 0.96) : shellOpacity;
+  const shellOpacityValue = isControlledTile && !isToggleGroupActive && !isToggleSystemHighlighted
+    ? 0.72
+    : dimmed && !isTarget ? Math.max(0.84, shellOpacity * 0.96) : shellOpacity;
   const shellEmissiveIntensityValue = dimmed && !isTarget ? shellEmissiveIntensity * 0.16 : shellEmissiveIntensity;
-  const innerFillOpacityValue = dimmed && !isTarget ? innerFillOpacity * 0.34 : innerFillOpacity;
-  const surfaceOpacityValue = dimmed && !isTarget ? surfaceOpacity * 0.42 : surfaceOpacity;
+  const innerFillOpacityValue = isControlledTile && !isToggleGroupActive && !isToggleSystemHighlighted
+    ? 0.08
+    : dimmed && !isTarget ? innerFillOpacity * 0.34 : innerFillOpacity;
+  const surfaceOpacityValue = isControlledTile
+    ? isToggleGroupActive || isToggleSystemHighlighted
+      ? 0.18
+      : 0.08
+    : dimmed && !isTarget ? surfaceOpacity * 0.42 : surfaceOpacity;
 
   useEffect(() => {
     const topMaterial = topMaterialRef.current;
@@ -530,20 +690,18 @@ function TileBlockInner({
 
     const elapsed = clock.getElapsedTime();
     const pulse = (Math.sin(elapsed * 2.6 + tile.x * 0.42 + tile.y * 0.33) + 1) * 0.5;
-    const baseScale = isActive ? 1.03 : 1;
-    const baseOpacity = isActive ? 0.12 : 0.08;
-    const baseLightIntensity = isActive ? 0.34 : 0.16;
+    const baseScale = isToggleGroupActive ? 1.04 : 1;
 
     switchPulseGroupRef.current.scale.setScalar(baseScale + pulse * 0.1);
-    switchPulseMaterialRef.current.opacity = baseOpacity + pulse * 0.08;
-    switchLightRef.current.intensity = baseLightIntensity + pulse * 0.18;
+    switchPulseMaterialRef.current.opacity = 0;
+    switchLightRef.current.intensity = 0;
   });
 
   useLayoutEffect(() => {
     if (isSwitch && activeCommand === "TOGGLE" && tileRootGroupRef.current) {
       const tl = gsap.timeline();
-      tl.to(tileRootGroupRef.current.position, { y: -0.15, duration: 0.15, ease: "power2.out" });
-      tl.to(tileRootGroupRef.current.position, { y: 0, duration: 0.4, ease: "power2.inOut" }, 0.2);
+      tl.to(tileRootGroupRef.current.position, { y: -0.2, duration: 0.12, ease: "power2.out" });
+      tl.to(tileRootGroupRef.current.position, { y: 0, duration: 0.34, ease: "elastic.out(1,0.58)" }, 0.16);
 
       return () => {
         tl.kill();
@@ -568,19 +726,37 @@ function TileBlockInner({
     const timeline = gsap.timeline();
 
     timeline.to(pulseGroup.scale, { duration: 0.12, ease: "power2.out", x: 1.42, y: 1.42, z: 1.42 }, 0);
-    timeline.to(pulseMaterial, { duration: 0.12, ease: "power2.out", opacity: 0.52 }, 0);
-    timeline.to(switchLight, { duration: 0.12, ease: "power2.out", intensity: 1.7 }, 0);
+    timeline.to(pulseMaterial, { duration: 0.12, ease: "power2.out", opacity: 0 }, 0);
+    timeline.to(switchLight, { duration: 0.12, ease: "power2.out", intensity: 0 }, 0);
     timeline.to(pulseGroup.scale, { duration: 0.32, ease: "power2.inOut", x: 1.04, y: 1.04, z: 1.04 }, 0.12);
-    timeline.to(pulseMaterial, { duration: 0.32, ease: "power2.inOut", opacity: 0.16 }, 0.12);
-    timeline.to(switchLight, { duration: 0.32, ease: "power2.inOut", intensity: 0.34 }, 0.12);
+    timeline.to(pulseMaterial, { duration: 0.32, ease: "power2.inOut", opacity: 0 }, 0.12);
+    timeline.to(switchLight, { duration: 0.32, ease: "power2.inOut", intensity: 0 }, 0.12);
 
     return () => {
       timeline.kill();
     };
-  }, [activeCommand, isSwitch]);
+  }, [activeCommand, isSwitch, isToggleGroupActive]);
 
   return (
-    <group position={[tile.x * TILE_SIZE, 0, tile.y * TILE_SIZE]}>
+    <group
+      onPointerEnter={(event) => {
+        if (!isToggleSystemTile || !tile.toggleGroup) {
+          return;
+        }
+
+        event.stopPropagation();
+        onToggleGroupHover?.(tile.toggleGroup);
+      }}
+      onPointerLeave={(event) => {
+        if (!isToggleSystemTile || !tile.toggleGroup) {
+          return;
+        }
+
+        event.stopPropagation();
+        onToggleGroupHover?.(null);
+      }}
+      position={[tile.x * TILE_SIZE, 0, tile.y * TILE_SIZE]}
+    >
       <group ref={tileRootGroupRef}>
         {Array.from({ length: stackCount }, (_, layer) => (
           <group key={layer} position={[0, BLOCK_HEIGHT * (layer + 0.5), 0]}>
@@ -606,26 +782,43 @@ function TileBlockInner({
                 <meshBasicMaterial color="#f9fcff" depthWrite={false} opacity={surfaceOpacityValue} toneMapped={false} transparent />
                 <Edges color={edgeColorValue} scale={1} threshold={30} />
               </RoundedBox>
-              {isSwitch && layer === stackCount - 1 ? <ToggleGlyph isActive={isActive} activeCommand={activeCommand ?? null} /> : null}
+              {isSwitch && layer === stackCount - 1 ? (
+                <SwitchCore
+                  activeCommand={activeCommand ?? null}
+                  isToggleGroupActive={isToggleGroupActive}
+                  systemColor={systemColor}
+                />
+              ) : null}
             </>
           </group>
         ))}
         {isSwitch ? (
           <group position={[0, chamberCenterY, 0]} ref={switchPulseGroupRef}>
-            <pointLight color="#6de9ff" distance={4.8} intensity={0.16} position={[0, 0.12, 0]} ref={switchLightRef} />
+            <pointLight
+              color={isToggleGroupActive ? systemColor.activeGlow : systemColor.inactiveGlow}
+              distance={4.8}
+              intensity={0}
+              position={[0, 0.12, 0]}
+              ref={switchLightRef}
+            />
             <mesh position={[0, BLOCK_HEIGHT * 0.5 - 0.02, 0]} rotation-x={-Math.PI / 2} renderOrder={2}>
               <ringGeometry args={[0.2, 0.62, 32]} />
               <meshBasicMaterial
                 blending={AdditiveBlending}
-                color="#8cefff"
+                color={isToggleGroupActive ? systemColor.activeGlow : systemColor.inactiveGlow}
                 depthTest
                 depthWrite={false}
-                opacity={0.08}
+                opacity={0}
                 ref={switchPulseMaterialRef}
                 toneMapped={false}
                 transparent
               />
             </mesh>
+          </group>
+        ) : null}
+        {isSwitch ? (
+          <group position={[0, (stackCount - 1) * BLOCK_HEIGHT, 0]}>
+            <SwitchSideAccents isToggleGroupActive={isToggleGroupActive} systemColor={systemColor} />
           </group>
         ) : null}
         {isTarget ? (
@@ -692,6 +885,8 @@ export const TileBlock = memo(TileBlockInner, (previousProps, nextProps) => {
     previousProps.failurePulseToken === nextProps.failurePulseToken &&
     previousProps.isActive === nextProps.isActive &&
     previousProps.isLit === nextProps.isLit &&
+    previousProps.isToggleGroupHighlighted === nextProps.isToggleGroupHighlighted &&
+    previousProps.isToggleGroupActive === nextProps.isToggleGroupActive &&
     previousProps.tile === nextProps.tile &&
     previousProps.victoryGlow === nextProps.victoryGlow
   );

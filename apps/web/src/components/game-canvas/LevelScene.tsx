@@ -4,7 +4,7 @@
  * - It keeps GameCanvas focused on the canvas container and global render configuration.
  */
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { useFrame } from "@react-three/fiber";
 import { getResolvedBoardTiles, type LevelDefinition, type RobotState, type TraceFrame } from "@lumaloop/engine";
@@ -38,7 +38,9 @@ interface LevelSceneProps {
 }
 
 interface ToggleTeleportTransition {
+  destinationActive: boolean;
   movedTile: LevelDefinition["board"][number];
+  sourceActive: boolean;
   destination: { x: number; y: number; z: number };
   source: { x: number; y: number; z: number };
 }
@@ -78,12 +80,16 @@ function getToggleTeleportTransition(
   const isActivated = nextGroups.has(toggledGroup);
   return isActivated
     ? {
+        destinationActive: true,
         movedTile,
+        sourceActive: true,
         source: { x: movedTile.x, y: movedTile.y, z: movedTile.z },
         destination: movedTile.moveTo,
       }
     : {
+        destinationActive: true,
         movedTile,
+        sourceActive: true,
         source: movedTile.moveTo,
         destination: { x: movedTile.x, y: movedTile.y, z: movedTile.z },
       };
@@ -91,8 +97,10 @@ function getToggleTeleportTransition(
 
 function ToggleTeleportEffect({
   destination,
+  destinationActive,
   playbackSpeed,
   source,
+  sourceActive,
   movedTile,
 }: ToggleTeleportTransition & { playbackSpeed: number }) {
   const animationStartRef = useRef<number | null>(null);
@@ -100,13 +108,15 @@ function ToggleTeleportEffect({
   const destinationGroupRef = useRef<Group>(null);
   const originalOpacitiesRef = useRef<Map<string, number>>(new Map());
 
-  const applyOpacity = (group: Group | null, multiplier: number) => {
+  const applyTransitionState = (group: Group | null, opacityMultiplier: number, scale: number, lift: number) => {
     if (!group) return;
-    if (multiplier <= 0.01) {
+    if (opacityMultiplier <= 0.01) {
       group.visible = false;
       return;
     }
     group.visible = true;
+    group.scale.set(scale, scale, scale);
+    group.position.y = lift;
     group.traverse((child: any) => {
       if (child.isMesh && child.material) {
         const materials = Array.isArray(child.material) ? child.material : [child.material];
@@ -117,7 +127,7 @@ function ToggleTeleportEffect({
           }
           const baseOpacity = originalOpacitiesRef.current.get(mat.uuid) || 1;
           mat.transparent = true;
-          mat.opacity = baseOpacity * multiplier;
+          mat.opacity = baseOpacity * opacityMultiplier;
         });
       }
     });
@@ -129,20 +139,15 @@ function ToggleTeleportEffect({
       animationStartRef.current = elapsed;
     }
 
-    const duration = getScaledDuration(0.56, playbackSpeed, 0.26);
+    const duration = getScaledDuration(0.74, playbackSpeed, 0.34);
     const progress = Math.min((elapsed - animationStartRef.current) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const sourceOpacity = Math.max(0, 1 - eased * 1.08);
+    const destinationOpacity = Math.min(1, Math.max(0, (eased - 0.18) / 0.82));
+    const arc = Math.sin(progress * Math.PI) * 0.16;
 
-    if (progress <= 0.5) {
-      // First half: strict fade out
-      const localProgress = progress * 2;
-      applyOpacity(sourceGroupRef.current, 1 - localProgress);
-      applyOpacity(destinationGroupRef.current, 0);
-    } else {
-      // Second half: strict fade in
-      const localProgress = (progress - 0.5) * 2;
-      applyOpacity(sourceGroupRef.current, 0);
-      applyOpacity(destinationGroupRef.current, localProgress);
-    }
+    applyTransitionState(sourceGroupRef.current, sourceOpacity, 1 - eased * 0.08, arc);
+    applyTransitionState(destinationGroupRef.current, destinationOpacity, 0.92 + destinationOpacity * 0.08, arc);
   });
 
   const sourceTile = { ...movedTile, x: source.x, y: source.y, z: source.z };
@@ -151,10 +156,28 @@ function ToggleTeleportEffect({
   return (
     <>
       <group ref={sourceGroupRef}>
-        <TileBlock failureBlink={false} failurePulseToken={null} isActive={false} isLit={false} victoryGlow={false} tile={sourceTile} />
+        <TileBlock
+          failureBlink={false}
+          failurePulseToken={null}
+          isActive={false}
+          isLit={false}
+          isToggleGroupHighlighted={false}
+          isToggleGroupActive={sourceActive}
+          victoryGlow={false}
+          tile={sourceTile}
+        />
       </group>
       <group ref={destinationGroupRef}>
-        <TileBlock failureBlink={false} failurePulseToken={null} isActive={false} isLit={false} victoryGlow={false} tile={destTile} />
+        <TileBlock
+          failureBlink={false}
+          failurePulseToken={null}
+          isActive={false}
+          isLit={false}
+          isToggleGroupHighlighted={false}
+          isToggleGroupActive={destinationActive}
+          victoryGlow={false}
+          tile={destTile}
+        />
       </group>
     </>
   );
@@ -179,6 +202,7 @@ export function LevelScene({
   robotModelRef,
   isAutoRunning,
 }: LevelSceneProps) {
+  const [hoveredToggleGroup, setHoveredToggleGroup] = useState<string | null>(null);
   const { centerX, centerZ } = getBoardMetrics(level);
   const litTargetIds = useMemo(() => new Set(litTargets), [litTargets]);
   const activeToggleGroups = useMemo(
@@ -219,7 +243,10 @@ export function LevelScene({
             failurePulseToken={failurePulseToken}
             isActive={tileKey === activeTileKey}
             isLit={tile.kind === "TARGET" && litTargetIds.has(tile.id as string)}
+            isToggleGroupHighlighted={Boolean(tile.toggleGroup && hoveredToggleGroup === tile.toggleGroup)}
+            isToggleGroupActive={tile.toggleGroup ? activeToggleGroups.has(tile.toggleGroup) : false}
             key={tile.kind === "TARGET" ? tile.id : tile.toggleGroup ? `${tile.toggleGroup}:${tileKey}` : tileKey}
+            onToggleGroupHover={setHoveredToggleGroup}
             tile={tile}
             victoryGlow={showVictorySequence && tileKey === victoryTileKey}
           />

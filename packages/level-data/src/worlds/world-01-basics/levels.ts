@@ -209,8 +209,8 @@ export const world01Basics: LevelDefinition[] = [
     name: "Bridge Key",
     world: "world-01-basics",
     board: [
-      { x: 0, y: 0, z: 0, kind: "SWITCH", toggleGroup: "amber" },
-      { x: 0, y: 1, z: 0, kind: "NORMAL", toggleGroup: "amber", moveTo: { x: 1, y: 0, z: 0 } },
+      { x: 0, y: 0, z: 0, kind: "SWITCH", toggleGroup: "blue" },
+      { x: 0, y: 1, z: 0, kind: "NORMAL", toggleGroup: "blue", moveTo: { x: 1, y: 0, z: 0 } },
       { id: "goal-1", x: 2, y: 0, z: 0, kind: "TARGET" },
     ],
     start: { x: 0, y: 0, z: 0, facing: "E" },
