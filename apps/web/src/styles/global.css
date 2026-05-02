@@ -12,10 +12,10 @@ html[data-theme="dark"] {
     radial-gradient(circle at top, rgba(74, 222, 238, 0.08), transparent 26%),
     radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.03), transparent 24%),
     linear-gradient(180deg, #11151c 0%, #171c24 100%);
-  --panel-bg: rgba(39, 46, 58, 0.78);
-  --panel-bg-strong: rgba(44, 51, 65, 0.92);
-  --panel-bg-soft: rgba(48, 56, 71, 0.7);
-  --panel-border: rgba(112, 128, 154, 0.55);
+  --panel-bg: rgba(36, 43, 55, 0.68);
+  --panel-bg-strong: rgba(41, 49, 63, 0.8);
+  --panel-bg-soft: rgba(48, 56, 71, 0.58);
+  --panel-border: rgba(112, 128, 154, 0.45);
   --panel-border-strong: rgba(149, 166, 194, 0.3);
   --action-bg: rgba(56, 68, 88, 0.9);
   --action-surface:
@@ -98,7 +98,7 @@ select {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.52;
+  opacity: 0.46;
 }
 
 button:focus-visible,

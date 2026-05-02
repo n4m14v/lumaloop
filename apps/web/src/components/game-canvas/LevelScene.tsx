@@ -8,10 +8,11 @@ import { useMemo, useRef, useState } from "react";
 
 import { useFrame } from "@react-three/fiber";
 import { getResolvedBoardTiles, type LevelDefinition, type RobotState, type TraceFrame } from "@lumaloop/engine";
-import type { Group, Material } from "three";
+import type { Group, Material, Mesh } from "three";
 
 import type { RobotColorId } from "../../features/game/robotColors";
 import { Robot } from "../Robot";
+import { BLOCK_HEIGHT, TILE_SIZE } from "./constants";
 import { getBoardMetrics, getTileKey } from "./sceneMath";
 import { GridFloor } from "./GridFloor";
 import { TileBlock } from "./TileBlock";
@@ -106,6 +107,7 @@ function ToggleTeleportEffect({
   const animationStartRef = useRef<number | null>(null);
   const sourceGroupRef = useRef<Group>(null);
   const destinationGroupRef = useRef<Group>(null);
+  const pulseRef = useRef<Mesh>(null);
   const originalOpacitiesRef = useRef<Map<string, number>>(new Map());
 
   const applyTransitionState = (group: Group | null, opacityMultiplier: number, scale: number, lift: number) => {
@@ -148,6 +150,17 @@ function ToggleTeleportEffect({
 
     applyTransitionState(sourceGroupRef.current, sourceOpacity, 1 - eased * 0.08, arc);
     applyTransitionState(destinationGroupRef.current, destinationOpacity, 0.92 + destinationOpacity * 0.08, arc);
+
+    if (pulseRef.current) {
+      const pulseProgress = Math.min(1, Math.max(0, (progress - 0.08) / 0.58));
+      pulseRef.current.visible = pulseProgress < 1;
+      pulseRef.current.position.set(
+        (source.x + (destination.x - source.x) * pulseProgress) * TILE_SIZE,
+        (Math.max(source.z, destination.z) + 1.22) * BLOCK_HEIGHT + Math.sin(pulseProgress * Math.PI) * 0.22,
+        (source.y + (destination.y - source.y) * pulseProgress) * TILE_SIZE,
+      );
+      pulseRef.current.scale.setScalar(0.1 + Math.sin(pulseProgress * Math.PI) * 0.12);
+    }
   });
 
   const sourceTile = { ...movedTile, x: source.x, y: source.y, z: source.z };
@@ -179,6 +192,10 @@ function ToggleTeleportEffect({
           tile={destTile}
         />
       </group>
+      <mesh ref={pulseRef} visible={false}>
+        <sphereGeometry args={[1, 16, 16]} />
+        <meshBasicMaterial color="#78ff77" transparent opacity={0.5} toneMapped={false} />
+      </mesh>
     </>
   );
 }
@@ -221,6 +238,7 @@ export function LevelScene({
     activeFrame === null ? null : getTileKey(activeFrame.robotAfter.x, activeFrame.robotAfter.y, activeFrame.robotAfter.z);
   const failureTileKey = failurePulse ? getTileKey(committedRobot.x, committedRobot.y, committedRobot.z) : null;
   const victoryTileKey = getTileKey(committedRobot.x, committedRobot.y, committedRobot.z);
+  const focusRobot = activeFrame?.robotAfter ?? committedRobot;
 
   return (
     <group position={[-centerX, 0, -centerZ]}>
@@ -239,6 +257,11 @@ export function LevelScene({
         return (
           <TileBlock
             activeCommand={tileKey === activeTileKey ? (activeFrame?.command ?? null) : null}
+            dimmed={
+              tile.kind === "NORMAL" &&
+              !tile.toggleGroup &&
+              Math.abs(tile.x - focusRobot.x) + Math.abs(tile.y - focusRobot.y) > 4
+            }
             failureBlink={tileKey === failureTileKey}
             failurePulseToken={failurePulseToken}
             isActive={tileKey === activeTileKey}

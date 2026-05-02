@@ -165,6 +165,10 @@ export function GameCanvas({
           isAutoRunning={isAutoRunning}
         />
       </Canvas>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,transparent_0%,transparent_58%,rgba(2,6,14,0.22)_100%)]"
+      />
     </div>
   );
 }

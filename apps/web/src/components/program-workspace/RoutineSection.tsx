@@ -95,7 +95,7 @@ export function RoutineSection({
       className={[
         "ui-panel relative rounded-[16px] p-3 transition",
         isActive ? "ui-panel-active" : "",
-        isLocked ? "opacity-60" : "",
+        isLocked ? "opacity-50 saturate-75" : "",
       ].join(" ")}
       data-onboarding={onboardingId}
       onClick={() => {

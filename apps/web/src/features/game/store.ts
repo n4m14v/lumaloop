@@ -359,16 +359,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     const slots = state.programs[level.id] ?? createRoutineSlots(level);
 
-    if (state.result && state.committedFrames < state.result.trace.length) {
-      set({ isAutoRunning: true });
-      return;
-    }
-
     const result = getRunResult(level, slots, state.showAllActions);
     const shouldAnimate = result.trace.length > 0;
 
     set({
-      activeFrameIndex: shouldAnimate ? 0 : null,
+      activeFrameIndex: null,
       committedFrames: 0,
       isAutoRunning: shouldAnimate,
       result,

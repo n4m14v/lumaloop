@@ -23,19 +23,19 @@ import { getBoardMetrics } from "./sceneMath";
 
 const CIRCUIT_TEXTURE_SIZE = 256;
 const CIRCUIT_GRID_STEP = 32;
-const CIRCUIT_TRACE_COLORS = ["rgba(255, 255, 255, 0.9)", "rgba(232, 242, 255, 0.88)", "rgba(244, 250, 255, 0.92)"];
+const CIRCUIT_TRACE_COLORS = ["rgba(235, 245, 255, 0.42)", "rgba(214, 230, 250, 0.38)", "rgba(244, 250, 255, 0.36)"];
 
 const DARK_FLOOR_STYLE = {
-  circuitOpacity: 0.72,
-  edgeColor: "#ffffff",
+  circuitOpacity: 0.32,
+  edgeColor: "#b8c7d8",
   sideColor: "#eef6ff",
-  sideOpacity: 0.18,
+  sideOpacity: 0.08,
   sideRoughness: 0.14,
   topColor: "#ffffff",
-  topOpacity: 0.12,
+  topOpacity: 0.052,
   topRoughness: 0.1,
   undershadowColor: "#d7e6f4",
-  undershadowOpacity: 0.22,
+  undershadowOpacity: 0.1,
   undershadowRoughness: 0.18,
 } as const;
 
@@ -92,11 +92,11 @@ function createCircuitTexture(seed: number, anisotropy: number) {
     const x = clampToGrid(random() * (CIRCUIT_TEXTURE_SIZE - width));
     const y = clampToGrid(random() * (CIRCUIT_TEXTURE_SIZE - height));
 
-    context.strokeStyle = "rgba(255, 255, 255, 0.72)";
+    context.strokeStyle = "rgba(230, 240, 255, 0.28)";
     context.lineWidth = 2;
     context.strokeRect(x + 6, y + 6, width - 12, height - 12);
 
-    context.fillStyle = "rgba(255, 255, 255, 0.82)";
+    context.fillStyle = "rgba(235, 245, 255, 0.34)";
     const padRadius = 2.5;
     const pads = [
       { x: x + 10, y: y + 10 },
@@ -135,7 +135,7 @@ function createCircuitTexture(seed: number, anisotropy: number) {
     context.lineJoin = "round";
     context.stroke();
 
-    context.fillStyle = "rgba(255, 255, 255, 0.9)";
+    context.fillStyle = "rgba(245, 250, 255, 0.42)";
     context.beginPath();
     context.arc(current.x, current.y, 3 + random() * 2, 0, Math.PI * 2);
     context.fill();
@@ -143,7 +143,7 @@ function createCircuitTexture(seed: number, anisotropy: number) {
 
   for (let index = 0; index < 16; index += 1) {
     const point = pickTracePoint(random);
-    context.fillStyle = "rgba(245, 251, 255, 0.9)";
+    context.fillStyle = "rgba(245, 251, 255, 0.36)";
     context.beginPath();
     context.arc(point.x, point.y, 2 + random() * 2, 0, Math.PI * 2);
     context.fill();

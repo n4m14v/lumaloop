@@ -28,7 +28,7 @@ export function CameraRig({
   useLayoutEffect(() => {
     const { maxHeight, planeSize } = getBoardMetrics(level);
     const targetY = maxHeight * 0.35;
-    const radius = Math.max(35, planeSize * 1.52) * zoom;
+    const radius = Math.max(35, planeSize * 1.52) * zoom * 0.94;
     const planarRadius = Math.cos(elevation) * radius;
 
     camera.position.set(
